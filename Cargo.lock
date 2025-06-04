@@ -2429,6 +2429,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "tonic",
+ "wiremock",
 ]
 
 [[package]]

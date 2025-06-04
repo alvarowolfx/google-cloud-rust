@@ -89,6 +89,7 @@ scoped-env.workspace  = true
 serde_with.workspace  = true
 serial_test.workspace = true
 test-case.workspace   = true
+wiremock.workspace    = true
 tokio                 = { workspace = true, features = ["test-util"] }
 # Local crates
 echo-server = { path = "echo-server" }

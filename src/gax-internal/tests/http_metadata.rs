@@ -14,16 +14,16 @@
 
 #[cfg(all(test, feature = "_internal-http-client"))]
 mod test {
-    use axum::http::{HeaderName, HeaderValue, StatusCode};
     use gax::options::RequestOptions;
     use google_cloud_gax_internal::http::ReqwestClient;
     use google_cloud_gax_internal::options::ClientConfig;
+    use http::HeaderValue;
     use serde_json::json;
-    use tokio::task::JoinHandle;
+    use wiremock::{Mock, MockServer, ResponseTemplate, matchers::*};
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn capture_headers() -> anyhow::Result<()> {
-        let (endpoint, _server) = start().await?;
+        let endpoint = start().await?;
 
         let client = ReqwestClient::new(test_config(), &endpoint).await?;
         let builder = client.builder(reqwest::Method::GET, "/hello".into());
@@ -46,27 +46,20 @@ mod test {
         Ok(())
     }
 
-    pub async fn start() -> anyhow::Result<(String, JoinHandle<()>)> {
-        let app = axum::Router::new().route("/hello", axum::routing::get(hello));
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await?;
-        let addr = listener.local_addr()?;
-        let server = tokio::spawn(async {
-            axum::serve(listener, app).await.unwrap();
-        });
+    pub async fn start() -> anyhow::Result<String> {
+        let echo_response_body = ResponseTemplate::new(200)
+            .append_header("x-test-header", "test-only")
+            .set_body_json(serde_json::json!({
+                "greeting": "Hello World!",
+            }));
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/hello"))
+            .respond_with(echo_response_body)
+            .mount(&server)
+            .await;
 
-        Ok((format!("http://{}:{}", addr.ip(), addr.port()), server))
-    }
-
-    async fn hello() -> impl axum::response::IntoResponse {
-        use axum::response::Json;
-        (
-            StatusCode::OK,
-            [(
-                HeaderName::from_static("x-test-header"),
-                HeaderValue::from_static("test-only"),
-            )],
-            Json(json!({"greeting": "Hello World!"})),
-        )
+        Ok(server.uri())
     }
 
     fn test_config() -> ClientConfig {
