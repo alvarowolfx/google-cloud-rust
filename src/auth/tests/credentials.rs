@@ -26,12 +26,31 @@ mod test {
     use google_cloud_auth::errors::CredentialsError;
     use http::header::{AUTHORIZATION, HeaderName, HeaderValue};
     use http::{Extensions, HeaderMap};
-    use httptest::{Expectation, Server, matchers::*, responders::*};
     use scoped_env::ScopedEnv;
     use serde_json::json;
+    use url::form_urlencoded;
+    use wiremock::{Match, Mock, MockServer, Request, ResponseTemplate, matchers::*};
 
     type Result<T> = anyhow::Result<T>;
     type TestResult = anyhow::Result<(), Box<dyn std::error::Error>>;
+
+    struct FormUrlEncodedContainsMatcher(String, String);
+
+    fn form_url_encoded_contains<K, V>(key: K, value: V) -> FormUrlEncodedContainsMatcher
+    where
+        K: Into<String>,
+        V: Into<String>,
+    {
+        FormUrlEncodedContainsMatcher(key.into(), value.into())
+    }
+
+    impl Match for FormUrlEncodedContainsMatcher {
+        fn matches(&self, request: &Request) -> bool {
+            form_urlencoded::parse(request.body.as_ref())
+                .into_owned()
+                .any(|(k, v)| k == self.0 && v == self.1)
+        }
+    }
 
     #[tokio::test]
     #[serial_test::serial]
@@ -186,53 +205,49 @@ mod test {
 
     #[tokio::test]
     async fn create_external_account_access_token() -> TestResult {
-        let source_token_response_body = json!({
+        let source_token_response_body = ResponseTemplate::new(200).set_body_json(json!({
             "access_token":"an_example_token",
-        })
-        .to_string();
+        }));
 
-        let token_response_body = json!({
+        let token_response_body = ResponseTemplate::new(200).set_body_json(json!({
             "access_token":"an_exchanged_token",
             "issued_token_type":"urn:ietf:params:oauth:token-type:access_token",
             "token_type":"Bearer",
             "expires_in":3600,
             "scope":"https://www.googleapis.com/auth/cloud-platform"
-        })
-        .to_string();
+        }));
 
-        let server = Server::run();
-        server.expect(
-            Expectation::matching(all_of![
-                request::method_path("GET", "/source_token"),
-                request::headers(contains(("metadata", "True",))),
-            ])
-            .respond_with(status_code(200).body(source_token_response_body)),
-        );
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/source_token"))
+            .and(header("metadata", "True"))
+            .respond_with(source_token_response_body)
+            .mount(&server)
+            .await;
 
-        server.expect(
-            Expectation::matching(all_of![
-                request::method_path("POST", "/token"),
-                request::body(url_decoded(contains(("subject_token", "an_example_token")))),
-                request::body(url_decoded(contains((
-                    "subject_token_type",
-                    "urn:ietf:params:oauth:token-type:jwt"
-                )))),
-                request::body(url_decoded(contains(("audience", "some-audience")))),
-                request::headers(contains((
-                    "content-type",
-                    "application/x-www-form-urlencoded"
-                ))),
-            ])
-            .respond_with(status_code(200).body(token_response_body)),
-        );
+        Mock::given(method("POST"))
+            .and(path("/token"))
+            .and(form_url_encoded_contains(
+                "subject_token",
+                "an_example_token",
+            ))
+            .and(form_url_encoded_contains(
+                "subject_token_type",
+                "urn:ietf:params:oauth:token-type:jwt",
+            ))
+            .and(form_url_encoded_contains("audience", "some-audience"))
+            .and(header("content-type", "application/x-www-form-urlencoded"))
+            .respond_with(token_response_body)
+            .mount(&server)
+            .await;
 
         let contents = json!({
           "type": "external_account",
           "audience": "some-audience",
           "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
-          "token_url": server.url("/token").to_string(),
+          "token_url": format!("{}/token", server.uri()).to_string(),
           "credential_source": {
-            "url": server.url("/source_token").to_string(),
+            "url": format!("{}/source_token", server.uri()).to_string(),
             "headers": {
               "Metadata": "True"
             },

@@ -162,11 +162,30 @@ mod test {
     use super::*;
     use crate::constants::DEFAULT_SCOPE;
     use http::StatusCode;
-    use httptest::{Expectation, Server, matchers::*, responders::*};
     use serde_json::json;
     use std::error::Error as _;
+    use url::form_urlencoded;
+    use wiremock::{Match, Mock, MockServer, Request, ResponseTemplate, matchers::*};
 
     type TestResult = std::result::Result<(), Box<dyn std::error::Error>>;
+
+    struct FormUrlEncodedContainsMatcher(String, String);
+
+    fn form_url_encoded_contains<K, V>(key: K, value: V) -> FormUrlEncodedContainsMatcher
+    where
+        K: Into<String>,
+        V: Into<String>,
+    {
+        FormUrlEncodedContainsMatcher(key.into(), value.into())
+    }
+
+    impl Match for FormUrlEncodedContainsMatcher {
+        fn matches(&self, request: &Request) -> bool {
+            form_urlencoded::parse(request.body.as_ref())
+                .into_owned()
+                .any(|(k, v)| k == self.0 && v == self.1)
+        }
+    }
 
     #[tokio::test]
     async fn exchange_token() -> TestResult {
@@ -174,53 +193,45 @@ mod test {
             client_id: Some("client_id".to_string()),
             client_secret: Some("supersecret".to_string()),
         };
-        let response_body = json!({
+        let response_body = ResponseTemplate::new(200).set_body_json(json!({
             "access_token":"an_example_token",
             "issued_token_type":"urn:ietf:params:oauth:token-type:access_token",
             "token_type":"Bearer",
             "expires_in":3600,
             "scope":DEFAULT_SCOPE
-        })
-        .to_string();
+        }));
 
-        let expected_basic_auth =
-            base64::engine::general_purpose::URL_SAFE_NO_PAD.encode("client_id:supersecret");
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/sts"))
+            .and(form_url_encoded_contains(
+                "grant_type",
+                TOKEN_EXCHANGE_GRANT_TYPE,
+            ))
+            .and(form_url_encoded_contains(
+                "subject_token",
+                "an_example_token",
+            ))
+            .and(form_url_encoded_contains(
+                "requested_token_type",
+                ACCESS_TOKEN_TYPE,
+            ))
+            .and(form_url_encoded_contains(
+                "subject_token_type",
+                JWT_TOKEN_TYPE,
+            ))
+            .and(form_url_encoded_contains(
+                "audience",
+                "32555940559.apps.googleusercontent.com",
+            ))
+            .and(form_url_encoded_contains("scope", DEFAULT_SCOPE))
+            .and(basic_auth("client_id", "supersecret"))
+            .and(header("content-type", "application/x-www-form-urlencoded"))
+            .respond_with(response_body)
+            .mount(&server)
+            .await;
 
-        let server = Server::run();
-        server.expect(
-            Expectation::matching(all_of![
-                request::method_path("POST", "/sts"),
-                request::body(url_decoded(contains((
-                    "grant_type",
-                    TOKEN_EXCHANGE_GRANT_TYPE
-                )))),
-                request::body(url_decoded(contains(("subject_token", "an_example_token")))),
-                request::body(url_decoded(contains((
-                    "requested_token_type",
-                    ACCESS_TOKEN_TYPE
-                )))),
-                request::body(url_decoded(contains((
-                    "subject_token_type",
-                    JWT_TOKEN_TYPE
-                )))),
-                request::body(url_decoded(contains((
-                    "audience",
-                    "32555940559.apps.googleusercontent.com"
-                )))),
-                request::body(url_decoded(contains(("scope", DEFAULT_SCOPE)))),
-                request::headers(contains((
-                    "authorization",
-                    format!("Basic {expected_basic_auth}")
-                ))),
-                request::headers(contains((
-                    "content-type",
-                    "application/x-www-form-urlencoded"
-                ))),
-            ])
-            .respond_with(status_code(200).body(response_body)),
-        );
-
-        let url = server.url("/sts").to_string();
+        let url = format!("{}/sts", server.uri()).to_string();
         let mut headers = http::HeaderMap::new();
         headers.insert(
             http::header::CONTENT_TYPE,
@@ -259,44 +270,37 @@ mod test {
             client_id: Some("client_id".to_string()),
             client_secret: Some("supersecret".to_string()),
         };
-        let response_body = json!({
+
+        let response_body = ResponseTemplate::new(400).set_body_json(json!({
             "error":"bad request",
-        })
-        .to_string();
+        }));
 
-        let expected_basic_auth =
-            base64::engine::general_purpose::URL_SAFE_NO_PAD.encode("client_id:supersecret");
+        let server = MockServer::start().await;
+        Mock::given(method("POST"))
+            .and(path("/fail"))
+            .and(form_url_encoded_contains(
+                "subject_token",
+                "an_example_token",
+            ))
+            .and(form_url_encoded_contains(
+                "subject_token_type",
+                JWT_TOKEN_TYPE,
+            ))
+            .and(form_url_encoded_contains(
+                "grant_type",
+                TOKEN_EXCHANGE_GRANT_TYPE,
+            ))
+            .and(form_url_encoded_contains(
+                "requested_token_type",
+                ACCESS_TOKEN_TYPE,
+            ))
+            .and(basic_auth("client_id", "supersecret"))
+            .and(header("content-type", "application/x-www-form-urlencoded"))
+            .respond_with(response_body)
+            .mount(&server)
+            .await;
 
-        let server = Server::run();
-        server.expect(
-            Expectation::matching(all_of![
-                request::method_path("POST", "/fail"),
-                request::body(url_decoded(contains((
-                    "grant_type",
-                    TOKEN_EXCHANGE_GRANT_TYPE
-                )))),
-                request::body(url_decoded(contains(("subject_token", "an_example_token")))),
-                request::body(url_decoded(contains((
-                    "requested_token_type",
-                    ACCESS_TOKEN_TYPE
-                )))),
-                request::body(url_decoded(contains((
-                    "subject_token_type",
-                    JWT_TOKEN_TYPE
-                )))),
-                request::headers(contains((
-                    "authorization",
-                    format!("Basic {expected_basic_auth}")
-                ))),
-                request::headers(contains((
-                    "content-type",
-                    "application/x-www-form-urlencoded"
-                ))),
-            ])
-            .respond_with(status_code(400).body(response_body)),
-        );
-
-        let url = server.url("/fail").to_string();
+        let url = format!("{}/fail", server.uri()).to_string();
         let headers = http::HeaderMap::new();
         let token_req = ExchangeTokenRequest {
             url,

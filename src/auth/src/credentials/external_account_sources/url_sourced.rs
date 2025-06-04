@@ -87,29 +87,27 @@ impl SubjectTokenProvider for UrlSourcedCredentials {
 #[cfg(test)]
 mod test {
     use super::*;
-    use httptest::{Expectation, Server, matchers::*, responders::*};
     use serde_json::json;
     use std::{collections::HashMap, error::Error};
+    use wiremock::{Mock, MockServer, ResponseTemplate, matchers::*};
 
     type TestResult = std::result::Result<(), Box<dyn std::error::Error>>;
 
     #[tokio::test]
     async fn get_json_token() -> TestResult {
-        let response_body = json!({
+        let response_body = ResponseTemplate::new(200).set_body_json(json!({
             "access_token":"an_example_token",
-        })
-        .to_string();
+        }));
 
-        let server = Server::run();
-        server.expect(
-            Expectation::matching(all_of![
-                request::method_path("GET", "/token"),
-                request::headers(contains(("metadata", "True"))),
-            ])
-            .respond_with(status_code(200).body(response_body)),
-        );
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/token"))
+            .and(header("metadata", "True"))
+            .respond_with(response_body)
+            .mount(&server)
+            .await;
 
-        let url = server.url("/token").to_string();
+        let url = format!("{}/token", server.uri()).to_string();
         let token_provider = UrlSourcedCredentials {
             url,
             format: Some(CredentialSourceFormat {
@@ -130,15 +128,16 @@ mod test {
 
     #[tokio::test]
     async fn get_text_token() -> TestResult {
-        let response_body = "an_example_token".to_string();
+        let response_body = ResponseTemplate::new(200).set_body_string("an_example_token");
 
-        let server = Server::run();
-        server.expect(
-            Expectation::matching(all_of![request::method_path("GET", "/token"),])
-                .respond_with(status_code(200).body(response_body)),
-        );
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/token"))
+            .respond_with(response_body)
+            .mount(&server)
+            .await;
 
-        let url = server.url("/token").to_string();
+        let url = format!("{}/token", server.uri()).to_string();
         let token_provider = UrlSourcedCredentials {
             url,
             format: None,
@@ -153,21 +152,19 @@ mod test {
 
     #[tokio::test]
     async fn get_json_token_missing_field() -> TestResult {
-        let response_body = json!({
+        let response_body = ResponseTemplate::new(200).set_body_json(json!({
             "wrong_field":"an_example_token",
-        })
-        .to_string();
+        }));
 
-        let server = Server::run();
-        server.expect(
-            Expectation::matching(all_of![
-                request::method_path("GET", "/token"),
-                request::headers(contains(("metadata", "True"))),
-            ])
-            .respond_with(status_code(200).body(response_body)),
-        );
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/token"))
+            .and(header("metadata", "True"))
+            .respond_with(response_body)
+            .mount(&server)
+            .await;
 
-        let url = server.url("/token").to_string();
+        let url = format!("{}/token", server.uri()).to_string();
         let token_provider = UrlSourcedCredentials {
             url,
             format: Some(CredentialSourceFormat {

@@ -18,12 +18,12 @@ use auth::credentials::{
     external_account::Builder as ExternalAccountCredentialsBuilder,
 };
 use bigquery::client::DatasetService;
-use httptest::{Expectation, Server, matchers::*, responders::*};
 use iamcredentials::client::IAMCredentials;
 use language::client::LanguageService;
 use language::model::Document;
 use scoped_env::ScopedEnv;
 use secretmanager::client::SecretManagerService;
+use wiremock::{Mock, MockServer, ResponseTemplate, matchers::*};
 
 pub async fn service_account() -> anyhow::Result<()> {
     let project = std::env::var("GOOGLE_CLOUD_PROJECT").expect("GOOGLE_CLOUD_PROJECT not set");
@@ -133,18 +133,17 @@ pub async fn workload_identity_provider_url_sourced() -> anyhow::Result<()> {
 
     let id_token = generate_id_token(audience.clone(), client_email, service_account).await?;
 
-    let source_token_response_body = serde_json::json!({
+    let source_token_response_body = ResponseTemplate::new(200).set_body_json(serde_json::json!({
         "id_token": id_token,
-    });
+    }));
 
-    let server = Server::run();
-    server.expect(
-        Expectation::matching(all_of![
-            request::method_path("GET", "/source_token"),
-            request::headers(contains(("metadata", "True",))),
-        ])
-        .respond_with(json_encoded(source_token_response_body)),
-    );
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/source_token"))
+        .and(header("metadata", "True"))
+        .respond_with(source_token_response_body)
+        .mount(&server)
+        .await;
 
     let contents = serde_json::json!({
       "type": "external_account",
@@ -152,7 +151,7 @@ pub async fn workload_identity_provider_url_sourced() -> anyhow::Result<()> {
       "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
       "token_url": "https://sts.googleapis.com/v1/token",
       "credential_source": {
-        "url": server.url("/source_token").to_string(),
+        "url": format!("{}/source_token", server.uri()).to_string(),
         "headers": {
           "Metadata": "True"
         },
