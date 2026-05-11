@@ -1843,6 +1843,8 @@ dependencies = [
  "anyhow",
  "async-trait",
  "bytes",
+ "google-cloud-auth",
+ "google-cloud-bigquery-v2",
  "google-cloud-gax",
  "google-cloud-gax-internal",
  "google-cloud-rpc",
@@ -1854,6 +1856,8 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_with",
+ "thiserror",
+ "tokio",
  "tracing",
 ]
 
@@ -5908,6 +5912,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "futures",
+ "google-cloud-bigquery",
  "google-cloud-bigquery-v2",
  "google-cloud-gax",
  "google-cloud-test-utils",

@@ -36,11 +36,15 @@ prost-types.workspace      = true
 serde.workspace            = true
 serde_json.workspace       = true
 serde_with.workspace       = true
+thiserror.workspace        = true
+tokio                      = { workspace = true, features = ["time"] }
 tracing.workspace          = true
+google-cloud-auth          = { workspace = true }
+google-cloud-bigquery-v2   = { workspace = true }
 google-cloud-gax.workspace = true
 google-cloud-rpc.workspace = true
 wkt.workspace              = true
-gaxi                       = { workspace = true, features = ["_internal-common", "_internal-grpc-client"] }
+gaxi                       = { workspace = true, features = ["_internal-common", "_internal-grpc-client", "_internal-http-client"] }
 
 [dev-dependencies]
 anyhow.workspace = true

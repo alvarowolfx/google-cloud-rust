@@ -219,6 +219,63 @@ pub async fn job_service() -> Result<()> {
     Ok(())
 }
 
+pub async fn query_client() -> Result<()> {
+    let project_id = project_id()?;
+    let bq = google_cloud_bigquery::client::BigQuery::builder()
+        .with_project_id(&project_id)
+        .build()
+        .await?;
+
+    println!("STARTING HIGH-LEVEL SMOKE TEST QUERY");
+    let mut query = bq.query("SELECT 1 as one").run().await?;
+    query.wait().await?;
+
+    assert!(query.completed());
+
+    let mut rows = query.read().await?;
+    let mut count = 0;
+    while let Some(row) = rows.next().await {
+        let _row = row?;
+        count += 1;
+    }
+
+    println!("READ {count} ROWS SUCCESSFULLY");
+    assert_eq!(count, 1);
+
+    Ok(())
+}
+
+pub async fn query_client_multi_page() -> Result<()> {
+    let project_id = project_id()?;
+    let bq = google_cloud_bigquery::client::BigQuery::builder()
+        .with_project_id(&project_id)
+        .build()
+        .await?;
+
+    println!("STARTING HIGH-LEVEL MULTI-PAGE QUERY");
+    let req = google_cloud_bigquery_v2::model::QueryRequest::new()
+        .set_query("SELECT * FROM UNNEST(GENERATE_ARRAY(1, 10000)) AS val")
+        .set_use_legacy_sql(false)
+        .set_max_results(1000_u32);
+
+    let mut query = bq.query(req).run().await?;
+    query.wait().await?;
+
+    assert!(query.completed());
+
+    let mut rows = query.read().await?;
+    let mut count = 0;
+    while let Some(row) = rows.next().await {
+        let _row = row?;
+        count += 1;
+    }
+
+    println!("READ {count} ROWS SUCCESSFULLY ACROSS MULTIPLE PAGES");
+    assert_eq!(count, 10000);
+
+    Ok(())
+}
+
 async fn cleanup_stale_jobs(client: &JobService, project_id: &str) -> Result<()> {
     use std::time::{Duration, SystemTime, UNIX_EPOCH};
     let stale_deadline = SystemTime::now().duration_since(UNIX_EPOCH)?;
