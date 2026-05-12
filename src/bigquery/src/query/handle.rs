@@ -13,8 +13,11 @@
 // limitations under the License.
 
 use crate::Result;
-use crate::query::{IteratorError, Row, RowIterator, Schema};
+use crate::query::{JobReference, Row, RowIterator, Schema};
 use google_cloud_bigquery_v2::client::JobService;
+use google_cloud_bigquery_v2::model::{
+    GetQueryResultsRequest, GetQueryResultsResponse, QueryResponse,
+};
 use std::collections::VecDeque;
 use std::sync::Arc;
 
@@ -31,34 +34,37 @@ pub enum Error {
 #[derive(Debug, Clone)]
 pub struct Query {
     pub(crate) job_service: Arc<JobService>,
-    pub(crate) project_id: String,
-    pub(crate) job_id: String,
-    pub(crate) location: String,
+    pub(crate) job_ref: JobReference,
     pub(crate) completed: bool,
-    pub(crate) total_rows: u64,
-    pub(crate) num_dml_affected_rows: i64,
-    pub(crate) cached_rows: VecDeque<wkt::Struct>,
-    pub(crate) schema: Option<Arc<Schema>>,
-    pub(crate) page_token: String,
+    pub(crate) creation_metadata: QueryCreationMetadata,
+}
+
+#[derive(Debug, Clone)]
+pub enum QueryCreationMetadata {
+    JobsQuery(google_cloud_bigquery_v2::model::QueryResponse),
+    JobsInsert(google_cloud_bigquery_v2::model::Job),
 }
 
 impl Query {
     /// Periodically checks the status of the background job until it finishes.
     /// Returns an error if a remote service or connection failure happens during polling.
-    pub async fn wait(&mut self) -> Result<()> {
+    pub async fn wait(&self) -> Result<CompleteQuery> {
         if self.completed {
-            return Ok(());
+            return Ok(CompleteQuery::from_complete_query(self));
         }
 
-        let mut delay = std::time::Duration::from_millis(500);
-        let max_delay = std::time::Duration::from_secs(10);
-
         loop {
-            let mut req = google_cloud_bigquery_v2::model::GetQueryResultsRequest::new()
-                .set_project_id(self.project_id.clone())
-                .set_job_id(self.job_id.clone());
-            if !self.location.is_empty() {
-                req = req.set_location(self.location.clone());
+            let Some(job_ref) = self.job_ref.as_job_ref() else {
+                return Err(google_cloud_gax::error::Error::io(
+                    "can't poll stateless queries",
+                ));
+            };
+
+            let mut req = GetQueryResultsRequest::new()
+                .set_project_id(job_ref.project_id.clone())
+                .set_job_id(job_ref.job_id.clone());
+            if let Some(location) = job_ref.location.clone() {
+                req = req.set_location(location);
             }
 
             let res = self
@@ -68,88 +74,161 @@ impl Query {
                 .send()
                 .await?;
 
-            if let Some(first_err) = res.errors.into_iter().next() {
+            if let Some(first_err) = res.errors.clone().into_iter().next() {
                 let rpc_status = google_cloud_gax::error::rpc::Status::default()
                     .set_code(google_cloud_gax::error::rpc::Code::Unknown)
                     .set_message(first_err.message);
                 return Err(google_cloud_gax::error::Error::service(rpc_status));
             }
 
-            if res.job_complete.unwrap_or(false) {
-                self.completed = true;
-                self.total_rows = res.total_rows.unwrap_or(0);
-                self.num_dml_affected_rows = res.num_dml_affected_rows.unwrap_or(0);
-                if let Some(s) = res.schema {
-                    self.schema = Some(Arc::new(s));
-                }
-                self.cached_rows = VecDeque::from(res.rows);
-                self.page_token = res.page_token;
-                return Ok(());
+            let completed = res.job_complete.clone().unwrap_or(false);
+            if completed {
+                return Ok(CompleteQuery::from_get_query_results_response(self, res));
             }
+        }
+    }
 
-            tokio::time::sleep(delay).await;
-            delay = std::cmp::min(delay * 2, max_delay);
+    pub fn creation_metadata(&self) -> &QueryCreationMetadata {
+        &self.creation_metadata
+    }
+
+    /// Returns the underlying job reference for this query.
+    pub fn job_reference(&self) -> Option<google_cloud_bigquery_v2::model::JobReference> {
+        self.job_ref.as_job_ref()
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct CompleteQuery {
+    pub(crate) job_service: Arc<JobService>,
+    pub(crate) job_ref: JobReference,
+    pub(crate) cached_rows: VecDeque<wkt::Struct>,
+    pub(crate) schema: Arc<Schema>,
+    pub(crate) page_token: Option<String>,
+    pub(crate) query_metadata: QueryMetadata,
+}
+
+#[derive(Debug, Clone)]
+pub enum QueryMetadata {
+    JobsQuery(google_cloud_bigquery_v2::model::QueryResponse),
+    GetQueryResultsResponse(google_cloud_bigquery_v2::model::GetQueryResultsResponse),
+}
+
+impl QueryMetadata {
+    /// Returns the total number of rows in the complete query result set.
+    pub fn total_rows(&self) -> u64 {
+        match self {
+            QueryMetadata::GetQueryResultsResponse(res) => res.total_rows.unwrap_or(0),
+            QueryMetadata::JobsQuery(res) => res.total_rows.unwrap_or(0),
+        }
+    }
+
+    /// Returns the total number of rows in the complete query result set.
+    pub fn num_dml_affected_rows(&self) -> i64 {
+        match self {
+            QueryMetadata::GetQueryResultsResponse(res) => res.num_dml_affected_rows.unwrap_or(0),
+            QueryMetadata::JobsQuery(res) => res.num_dml_affected_rows.unwrap_or(0),
+        }
+    }
+}
+
+impl CompleteQuery {
+    fn from_complete_query(q: &Query) -> Self {
+        let res = match q.creation_metadata.clone() {
+            QueryCreationMetadata::JobsQuery(res) => res,
+            _ => unreachable!("running queries via jobs.insert are not gonna be complete"),
+        };
+
+        Self::from_query_response(q, &res)
+    }
+
+    fn from_get_query_results_response(q: &Query, res: GetQueryResultsResponse) -> Self {
+        let schema = res
+            .schema
+            .clone()
+            .expect("complete query should have schema");
+        let schema = Arc::new(schema);
+        let page_token = if res.page_token.is_empty() {
+            None
+        } else {
+            Some(res.page_token.clone())
+        };
+        let cached_rows = VecDeque::from(res.rows.clone());
+        Self {
+            job_service: q.job_service.clone(),
+            job_ref: q.job_ref.clone(),
+            cached_rows,
+            page_token,
+            schema,
+            query_metadata: QueryMetadata::GetQueryResultsResponse(res.clone()),
+        }
+    }
+
+    fn from_query_response(q: &Query, res: &QueryResponse) -> Self {
+        let schema = res
+            .schema
+            .clone()
+            .expect("complete query should have schema");
+        let schema = Arc::new(schema);
+        let page_token = if res.page_token.is_empty() {
+            None
+        } else {
+            Some(res.page_token.clone())
+        };
+        let cached_rows = VecDeque::from(res.rows.clone());
+        Self {
+            job_service: q.job_service.clone(),
+            job_ref: q.job_ref.clone(),
+            cached_rows,
+            page_token,
+            schema,
+            query_metadata: QueryMetadata::JobsQuery(res.clone()),
         }
     }
 
     /// Transitions the completed query into a paginated row stream.
-    /// Returns `Err(Error::NotComplete)` if called before the background job has finished.
     pub async fn read(self) -> Result<RowIterator> {
-        if !self.completed {
-            return Err(google_cloud_gax::error::Error::io(Error::NotComplete));
-        }
-
-        let schema_arc = if let Some(s) = self.schema {
-            s
-        } else {
-            return Err(google_cloud_gax::error::Error::io(
-                IteratorError::MissingSchema,
-            ));
-        };
-
+        let schema = self.schema;
         let rows: VecDeque<Row> = self
             .cached_rows
             .into_iter()
             .map(|st| Row {
                 values: wkt::Value::Object(st),
-                schema: schema_arc.clone(),
+                schema: schema.clone(),
             })
             .collect();
 
         Ok(RowIterator {
             job_service: self.job_service,
-            project_id: self.project_id,
-            job_id: self.job_id,
-            location: self.location,
+            job_ref: self.job_ref,
             page_token: self.page_token,
-            schema: Some(schema_arc),
+            schema,
             rows,
         })
     }
 
-    /// Returns the underlying job reference for this query.
-    pub fn job_reference(&self) -> Option<google_cloud_bigquery_v2::model::JobReference> {
-        let mut jr = google_cloud_bigquery_v2::model::JobReference::new()
-            .set_project_id(self.project_id.clone())
-            .set_job_id(self.job_id.clone());
-        if !self.location.is_empty() {
-            jr = jr.set_location(self.location.clone());
-        }
-        Some(jr)
+    pub fn query_metadata(&self) -> QueryMetadata {
+        self.query_metadata.clone()
     }
+}
 
-    /// Returns whether the query job is complete.
-    pub fn completed(&self) -> bool {
-        self.completed
-    }
-
-    /// Returns the total number of rows in the complete query result set.
-    pub fn total_rows(&self) -> u64 {
-        self.total_rows
-    }
-
-    /// Returns the number of rows affected by a DML statement.
-    pub fn num_dml_affected_rows(&self) -> i64 {
-        self.num_dml_affected_rows
-    }
+fn from_get_query_results_response(res: GetQueryResultsResponse) -> QueryResponse {
+    let location = res
+        .job_reference
+        .clone()
+        .map(|jr| jr.location.unwrap_or_default())
+        .unwrap_or_default();
+    QueryResponse::new()
+        .set_or_clear_schema(res.schema)
+        .set_or_clear_job_reference(res.job_reference)
+        .set_location(location)
+        .set_or_clear_total_rows(res.total_rows)
+        .set_page_token(res.page_token)
+        .set_rows(res.rows)
+        .set_or_clear_total_bytes_processed(res.total_bytes_processed)
+        .set_or_clear_total_bytes_billed(res.total_bytes_processed)
+        .set_or_clear_job_complete(res.job_complete)
+        .set_errors(res.errors)
+        .set_or_clear_cache_hit(res.cache_hit)
+        .set_or_clear_num_dml_affected_rows(res.num_dml_affected_rows)
 }

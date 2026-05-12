@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use crate::Result;
+use crate::query::job_reference::JobReference;
 use crate::query::{Row, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::GetQueryResultsRequest;
@@ -31,11 +32,9 @@ pub enum Error {
 /// A paginated stream over the rows of a query result.
 pub struct RowIterator {
     pub(crate) job_service: Arc<JobService>,
-    pub(crate) project_id: String,
-    pub(crate) job_id: String,
-    pub(crate) location: String,
-    pub(crate) page_token: String,
-    pub(crate) schema: Option<Arc<Schema>>,
+    pub(crate) job_ref: JobReference,
+    pub(crate) page_token: Option<String>,
+    pub(crate) schema: Arc<Schema>,
     pub(crate) rows: VecDeque<Row>,
 }
 
@@ -47,16 +46,22 @@ impl RowIterator {
             return Some(Ok(row));
         }
 
-        if self.page_token.is_empty() {
+        let Some(page_token) = &self.page_token else {
             return None;
-        }
+        };
+
+        let Some(job_ref) = self.job_ref.as_job_ref() else {
+            return Some(Err(google_cloud_gax::error::Error::io(
+                "Stateless queries can't have more pages",
+            )));
+        };
 
         let mut req = GetQueryResultsRequest::new()
-            .set_project_id(self.project_id.clone())
-            .set_job_id(self.job_id.clone())
-            .set_page_token(self.page_token.clone());
-        if !self.location.is_empty() {
-            req = req.set_location(self.location.clone());
+            .set_project_id(job_ref.project_id.clone())
+            .set_job_id(job_ref.job_id.clone())
+            .set_page_token(page_token);
+        if let Some(location) = job_ref.location.clone() {
+            req = req.set_location(location);
         }
 
         let res = match self
@@ -77,20 +82,16 @@ impl RowIterator {
             return Some(Err(google_cloud_gax::error::Error::service(rpc_status)));
         }
 
-        self.page_token = res.page_token;
-
-        let schema = if let Some(ref s) = self.schema {
-            s.clone()
+        self.page_token = if res.page_token.is_empty() {
+            None
         } else {
-            return Some(Err(google_cloud_gax::error::Error::io(
-                Error::MissingSchema,
-            )));
+            Some(res.page_token)
         };
 
         self.rows = res
             .rows
             .into_iter()
-            .map(|st| Row::new(st, schema.clone()))
+            .map(|st| Row::new(st, self.schema.clone()))
             .collect();
 
         self.rows.pop_front().map(Ok)

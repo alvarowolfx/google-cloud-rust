@@ -13,10 +13,10 @@
 // limitations under the License.
 
 use crate::Result;
-use crate::query::Query;
+use crate::query::handle::QueryCreationMetadata;
+use crate::query::{JobReference, Query};
 use google_cloud_bigquery_v2::client::JobService;
-use google_cloud_bigquery_v2::model::{InsertJobRequest, Job, JobReference, PostQueryRequest};
-use std::collections::VecDeque;
+use google_cloud_bigquery_v2::model::{InsertJobRequest, Job, PostQueryRequest};
 use std::sync::Arc;
 
 pub(crate) struct PostQueryExecutor {
@@ -38,6 +38,7 @@ impl PostQueryExecutor {
             .send()
             .await?;
 
+        let stored_res = res.clone();
         if let Some(first_err) = res.errors.into_iter().next() {
             let rpc_status = google_cloud_gax::error::rpc::Status::default()
                 .set_code(google_cloud_gax::error::rpc::Code::Unknown)
@@ -46,27 +47,17 @@ impl PostQueryExecutor {
         }
 
         let completed = res.job_complete.unwrap_or(false);
-        let total_rows = res.total_rows.unwrap_or(0);
-        let num_dml_affected_rows = res.num_dml_affected_rows.unwrap_or(0);
-        let schema = res.schema.map(Arc::new);
-        let cached_rows = VecDeque::from(res.rows);
-        let job_id = if let Some(ref jr) = res.job_reference {
-            jr.job_id.clone()
+        let job_ref = if let Some(job_ref) = res.job_reference {
+            job_ref.into()
         } else {
-            res.query_id.clone()
+            JobReference::from_query_id(res.query_id)
         };
 
         Ok(Query {
             job_service: self.job_service.clone(),
-            project_id: self.billing_project,
-            job_id,
-            location: res.location,
+            job_ref,
             completed,
-            total_rows,
-            num_dml_affected_rows,
-            cached_rows,
-            schema,
-            page_token: res.page_token,
+            creation_metadata: QueryCreationMetadata::JobsQuery(stored_res),
         })
     }
 }
@@ -78,7 +69,7 @@ pub(crate) struct InsertJobExecutor {
 }
 
 impl InsertJobExecutor {
-    pub(crate) async fn execute(mut self) -> Result<Query> {
+    pub(crate) async fn execute(self) -> Result<Query> {
         let is_query = self
             .job
             .configuration
@@ -92,15 +83,6 @@ impl InsertJobExecutor {
             return Err(google_cloud_gax::error::Error::service(rpc_status));
         }
 
-        if self.job.job_reference.is_none() {
-            self.job.job_reference =
-                Some(JobReference::new().set_project_id(self.billing_project.clone()));
-        } else if let Some(ref mut jr) = self.job.job_reference {
-            if jr.project_id.is_empty() {
-                jr.project_id = self.billing_project.clone();
-            }
-        }
-
         let insert_req = InsertJobRequest::new()
             .set_project_id(self.billing_project.clone())
             .set_job(self.job);
@@ -112,6 +94,7 @@ impl InsertJobExecutor {
             .send()
             .await?;
 
+        let stored_res = res.clone();
         if let Some(ref status) = res.status {
             if let Some(ref err) = status.error_result {
                 let rpc_status = google_cloud_gax::error::rpc::Status::default()
@@ -121,28 +104,14 @@ impl InsertJobExecutor {
             }
         }
 
-        let completed = res
-            .status
-            .as_ref()
-            .map(|s| s.state == "DONE")
-            .unwrap_or(false);
-        let (job_id, location) = if let Some(ref jr) = res.job_reference {
-            (jr.job_id.clone(), jr.location.clone().unwrap_or_default())
-        } else {
-            (res.id.clone(), String::new())
-        };
-
+        let job_ref = res
+            .job_reference
+            .expect("newly insert job should have job reference");
         Ok(Query {
             job_service: self.job_service.clone(),
-            project_id: self.billing_project,
-            job_id,
-            location,
-            completed,
-            total_rows: 0,
-            num_dml_affected_rows: 0,
-            cached_rows: VecDeque::new(),
-            schema: None,
-            page_token: String::new(),
+            job_ref: job_ref.into(),
+            completed: false,
+            creation_metadata: QueryCreationMetadata::JobsInsert(stored_res),
         })
     }
 }

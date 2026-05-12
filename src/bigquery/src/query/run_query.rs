@@ -34,7 +34,7 @@ impl RunQuery {
     }
 
     /// Executes the configured query request.
-    pub async fn send(self) -> Result<Query> {
+    async fn send(self) -> Result<Query> {
         let billing_project = self.billing_project_id.unwrap_or(self.client_project_id);
         match self.request {
             QueryRequest::PostQueryRequest(request) => {

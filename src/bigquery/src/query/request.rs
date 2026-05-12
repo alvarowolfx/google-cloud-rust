@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use google_cloud_bigquery_v2::model::{Job, JobConfigurationQuery, JobConfiguration, PostQueryRequest};
+use google_cloud_bigquery_v2::model::{
+    Job, JobConfiguration, JobConfigurationQuery, PostQueryRequest,
+};
 
 /// A request to execute a query, which can be either a stateless `PostQueryRequest` or an advanced `Job`.
 #[derive(Debug, Clone)]

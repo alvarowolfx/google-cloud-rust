@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::Result;
 use crate::client_builder::ClientBuilder;
-use crate::query::{Query, QueryRequest, RunQuery};
+use crate::query::{JobReference, Query, QueryCreationMetadata, QueryRequest, RunQuery};
 use google_cloud_bigquery_v2::client::JobService;
-use google_cloud_bigquery_v2::model::JobReference;
 use std::sync::Arc;
 
 /// A high-level BigQuery client for executing queries and managing jobs.
@@ -43,29 +43,30 @@ impl BigQuery {
             billing_project_id: None,
         }
     }
-}
 
-impl BigQuery {
-    /// Path 3: Re-attach hook to bind an existing out-of-process job reference.
-    pub fn attach_job(&self, job_ref: JobReference) -> Query {
-        let project_id = if job_ref.project_id.is_empty() {
-            self.project_id.clone()
-        } else {
-            job_ref.project_id.clone()
-        };
-        let location = job_ref.location.clone().unwrap_or_default();
+    /// Re-attach hook to bind an existing out-of-process job reference.
+    pub async fn attach_job(
+        &self,
+        job_ref: google_cloud_bigquery_v2::model::JobReference,
+    ) -> Result<Query> {
+        let internal_job_ref: JobReference = job_ref.clone().into();
+        let mut req = self
+            .job_service
+            .get_job()
+            .set_job_id(job_ref.job_id)
+            .set_project_id(job_ref.project_id);
 
-        Query {
-            job_service: self.job_service.clone(),
-            project_id,
-            job_id: job_ref.job_id,
-            location,
-            completed: false,
-            total_rows: 0,
-            num_dml_affected_rows: 0,
-            cached_rows: std::collections::VecDeque::new(),
-            schema: None,
-            page_token: String::new(),
+        if let Some(location) = job_ref.location {
+            req = req.set_location(location);
         }
+
+        let job = req.send().await?;
+
+        Ok(Query {
+            job_service: self.job_service.clone(),
+            job_ref: internal_job_ref,
+            completed: false,
+            creation_metadata: QueryCreationMetadata::JobsInsert(job),
+        })
     }
 }

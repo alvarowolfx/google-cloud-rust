@@ -227,12 +227,13 @@ pub async fn query_client() -> Result<()> {
         .await?;
 
     println!("STARTING HIGH-LEVEL SMOKE TEST QUERY");
-    let mut query = bq.query("SELECT 1 as one").run().await?;
-    query.wait().await?;
+    let query = bq.query("SELECT 1 as one").run().await?;
 
-    assert!(query.completed());
+    let complete_query = query.wait().await?;
 
-    let mut rows = query.read().await?;
+    assert_eq!(complete_query.query_metadata().total_rows(), 1);
+
+    let mut rows = complete_query.read().await?;
     let mut count = 0;
     while let Some(row) = rows.next().await {
         let _row = row?;
@@ -258,12 +259,12 @@ pub async fn query_client_multi_page() -> Result<()> {
         .set_use_legacy_sql(false)
         .set_max_results(1000_u32);
 
-    let mut query = bq.query(req).run().await?;
-    query.wait().await?;
+    let query = bq.query(req).run().await?;
+    let complete_query = query.wait().await?;
 
-    assert!(query.completed());
+    assert_eq!(complete_query.query_metadata().total_rows(), 10000);
 
-    let mut rows = query.read().await?;
+    let mut rows = complete_query.read().await?;
     let mut count = 0;
     while let Some(row) = rows.next().await {
         let _row = row?;
@@ -272,6 +273,36 @@ pub async fn query_client_multi_page() -> Result<()> {
 
     println!("READ {count} ROWS SUCCESSFULLY ACROSS MULTIPLE PAGES");
     assert_eq!(count, 10000);
+
+    Ok(())
+}
+
+pub async fn query_client_job() -> Result<()> {
+    let project_id = project_id()?;
+    let bq = google_cloud_bigquery::client::BigQuery::builder()
+        .with_project_id(&project_id)
+        .build()
+        .await?;
+
+    println!("STARTING HIGH-LEVEL QUERY FROM JOB");
+    let req = google_cloud_bigquery_v2::model::JobConfigurationQuery::new()
+        .set_query("SELECT 2 as two")
+        .set_use_legacy_sql(false);
+
+    let query = bq.query(req).run().await?;
+    let complete_query = query.wait().await?;
+
+    assert_eq!(complete_query.query_metadata().total_rows(), 1);
+
+    let mut rows = complete_query.read().await?;
+    let mut count = 0;
+    while let Some(row) = rows.next().await {
+        let _row = row?;
+        count += 1;
+    }
+
+    println!("READ {count} ROWS SUCCESSFULLY");
+    assert_eq!(count, 1);
 
     Ok(())
 }
