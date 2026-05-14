@@ -13,6 +13,7 @@
 // limitations under the License.
 
 use crate::client::BigQuery;
+use gaxi::options::ClientConfig;
 use google_cloud_auth::credentials::Credentials;
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_gax::client_builder::Result;
@@ -20,8 +21,8 @@ use std::sync::Arc;
 
 /// A builder for creating and configuring a BigQuery client instance.
 pub struct ClientBuilder {
+    pub(crate) config: ClientConfig,
     pub(crate) project_id: Option<String>,
-    pub(crate) credentials: Option<Credentials>,
     pub(crate) job_service: Option<Arc<JobService>>,
 }
 
@@ -35,8 +36,8 @@ impl ClientBuilder {
     /// Creates a new default `ClientBuilder`.
     pub fn new() -> Self {
         Self {
+            config: ClientConfig::default(),
             project_id: None,
-            credentials: None,
             job_service: None,
         }
     }
@@ -49,7 +50,7 @@ impl ClientBuilder {
 
     /// Sets custom credentials for the client.
     pub fn with_credentials<V: Into<Credentials>>(mut self, credentials: V) -> Self {
-        self.credentials = Some(credentials.into());
+        self.config.cred = Some(credentials.into());
         self
     }
 
@@ -61,23 +62,6 @@ impl ClientBuilder {
 
     /// Builds the `BigQuery` client instance.
     pub async fn build(self) -> Result<BigQuery> {
-        let job_service = if let Some(js) = self.job_service {
-            js
-        } else {
-            let mut builder = JobService::builder();
-            if let Some(creds) = self.credentials {
-                builder = builder.with_credentials(creds);
-            }
-            Arc::new(builder.build().await?)
-        };
-
-        let project_id = self
-            .project_id
-            .unwrap_or_else(|| std::env::var("GOOGLE_CLOUD_PROJECT").unwrap_or_default());
-
-        Ok(BigQuery {
-            job_service,
-            project_id,
-        })
+        BigQuery::new(self).await
     }
 }
