@@ -92,6 +92,14 @@ impl Query {
         &self.creation_metadata
     }
 
+    /// Returns the query id of the query if it was created as a stateless query.
+    pub fn query_id(&self) -> Option<String> {
+        match self.job_ref {
+            JobReference::StatelessJob { ref query_id } => Some(query_id.clone()),
+            _ => None,
+        }
+    }
+
     /// Returns the underlying job reference for this query.
     pub fn job_reference(&self) -> Option<google_cloud_bigquery_v2::model::JobReference> {
         self.job_ref.as_job_ref()
@@ -187,9 +195,44 @@ impl CompleteQuery {
     }
 
     /// Transitions the completed query into a paginated row stream.
-    pub async fn read(self) -> Result<RowIterator> {
-        let schema = self.schema;
+    pub fn read(self) -> ReadRequest {
+        ReadRequest::new(self)
+    }
+
+    pub fn query_metadata(&self) -> QueryMetadata {
+        self.query_metadata.clone()
+    }
+}
+
+pub struct ReadRequest {
+    query: CompleteQuery,
+    page_token: Option<String>,
+    max_results: Option<u32>,
+}
+
+impl ReadRequest {
+    fn new(query: CompleteQuery) -> Self {
+        Self {
+            query,
+            page_token: None,
+            max_results: None,
+        }
+    }
+
+    pub fn with_page_token(mut self, page_token: impl Into<String>) -> Self {
+        self.page_token = Some(page_token.into());
+        self
+    }
+
+    pub fn with_max_results(mut self, max_results: u32) -> Self {
+        self.max_results = Some(max_results);
+        self
+    }
+
+    async fn execute(self) -> Result<RowIterator> {
+        let schema = self.query.schema;
         let rows: VecDeque<Row> = self
+            .query
             .cached_rows
             .into_iter()
             .map(|st| Row {
@@ -199,36 +242,21 @@ impl CompleteQuery {
             .collect();
 
         Ok(RowIterator {
-            job_service: self.job_service,
-            job_ref: self.job_ref,
-            page_token: self.page_token,
+            job_service: self.query.job_service,
+            job_ref: self.query.job_ref,
+            page_token: self.page_token.or(self.query.page_token),
+            max_results: self.max_results,
             schema,
             rows,
         })
     }
-
-    pub fn query_metadata(&self) -> QueryMetadata {
-        self.query_metadata.clone()
-    }
 }
 
-fn from_get_query_results_response(res: GetQueryResultsResponse) -> QueryResponse {
-    let location = res
-        .job_reference
-        .clone()
-        .map(|jr| jr.location.unwrap_or_default())
-        .unwrap_or_default();
-    QueryResponse::new()
-        .set_or_clear_schema(res.schema)
-        .set_or_clear_job_reference(res.job_reference)
-        .set_location(location)
-        .set_or_clear_total_rows(res.total_rows)
-        .set_page_token(res.page_token)
-        .set_rows(res.rows)
-        .set_or_clear_total_bytes_processed(res.total_bytes_processed)
-        .set_or_clear_total_bytes_billed(res.total_bytes_processed)
-        .set_or_clear_job_complete(res.job_complete)
-        .set_errors(res.errors)
-        .set_or_clear_cache_hit(res.cache_hit)
-        .set_or_clear_num_dml_affected_rows(res.num_dml_affected_rows)
+impl std::future::IntoFuture for ReadRequest {
+    type Output = crate::Result<crate::query::RowIterator>;
+    type IntoFuture = futures::future::BoxFuture<'static, Self::Output>;
+
+    fn into_future(self) -> Self::IntoFuture {
+        Box::pin(self.execute())
+    }
 }

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use google_cloud_bigquery_v2::model::{
-    Job, JobConfiguration, JobConfigurationQuery, PostQueryRequest,
+    DataFormatOptions, Job, JobConfiguration, JobConfigurationQuery, PostQueryRequest,
 };
 
 /// A request to execute a query, which can be either a stateless `PostQueryRequest` or an advanced `Job`.
@@ -29,6 +29,7 @@ impl From<String> for QueryRequest {
     fn from(v: String) -> Self {
         let req = google_cloud_bigquery_v2::model::QueryRequest::new()
             .set_query(v)
+            .set_format_options(DataFormatOptions::new().set_use_int64_timestamp(true))
             .set_use_legacy_sql(false);
         let post_req = PostQueryRequest::new().set_query_request(req);
         QueryRequest::PostQueryRequest(post_req)
@@ -43,6 +44,7 @@ impl From<&str> for QueryRequest {
 
 impl From<google_cloud_bigquery_v2::model::QueryRequest> for QueryRequest {
     fn from(req: google_cloud_bigquery_v2::model::QueryRequest) -> Self {
+        let req = req.set_format_options(DataFormatOptions::new().set_use_int64_timestamp(true));
         let post_req = PostQueryRequest::new().set_query_request(req);
         QueryRequest::PostQueryRequest(post_req)
     }
@@ -80,6 +82,8 @@ mod tests {
                 let inner = post_req.query_request.expect("missing inner req");
                 assert_eq!(inner.query, "SELECT * FROM my_table");
                 assert_eq!(inner.use_legacy_sql, Some(false));
+                let format_opts = inner.format_options.unwrap_or_default();
+                assert!(format_opts.use_int64_timestamp, "{format_opts:?}");
             }
             _ => panic!("expected PostQueryRequest variant"),
         }
@@ -94,6 +98,8 @@ mod tests {
             QueryRequest::PostQueryRequest(post_req) => {
                 let inner = post_req.query_request.expect("missing inner req");
                 assert_eq!(inner.query, "SELECT 1");
+                let format_opts = inner.format_options.unwrap_or_default();
+                assert!(format_opts.use_int64_timestamp, "{format_opts:?}");
             }
             _ => panic!("expected PostQueryRequest variant"),
         }

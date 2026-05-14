@@ -1843,6 +1843,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "bytes",
+ "futures",
  "google-cloud-auth",
  "google-cloud-bigquery-v2",
  "google-cloud-gax",

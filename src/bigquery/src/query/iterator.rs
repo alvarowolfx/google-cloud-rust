@@ -34,6 +34,7 @@ pub struct RowIterator {
     pub(crate) job_service: Arc<JobService>,
     pub(crate) job_ref: JobReference,
     pub(crate) page_token: Option<String>,
+    pub(crate) max_results: Option<u32>,
     pub(crate) schema: Arc<Schema>,
     pub(crate) rows: VecDeque<Row>,
 }
@@ -58,6 +59,7 @@ impl RowIterator {
 
         let mut req = GetQueryResultsRequest::new()
             .set_project_id(job_ref.project_id.clone())
+            .set_or_clear_max_results(self.max_results)
             .set_job_id(job_ref.job_id.clone())
             .set_page_token(page_token);
         if let Some(location) = job_ref.location.clone() {
