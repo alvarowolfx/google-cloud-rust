@@ -528,3 +528,186 @@ impl QueryMetadata {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashSet;
+    use std::path::PathBuf;
+    use syn::{Fields, Item};
+
+    #[test]
+    fn test_metadata_fields_sync_warning() {
+        // Locate the generated model.rs file relative to the current crate manifest
+        let manifest_dir = env!("CARGO_MANIFEST_DIR");
+        let model_path =
+            PathBuf::from(manifest_dir).join("../generated/cloud/bigquery/v2/src/model.rs");
+
+        let content = match std::fs::read_to_string(&model_path) {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!(
+                    "WARNING: Could not read model.rs for metadata sync check: {}",
+                    e
+                );
+                return;
+            }
+        };
+
+        let syntax_tree = match syn::parse_file(&content) {
+            Ok(tree) => tree,
+            Err(e) => {
+                eprintln!("WARNING: Could not parse model.rs with syn: {}", e);
+                return;
+            }
+        };
+
+        // Helper to extract fields for a given struct name from the AST using a flat iterator chain
+        let extract_fields = |struct_name: &str| -> HashSet<String> {
+            syntax_tree
+                .items
+                .iter()
+                .filter_map(|item| match item {
+                    Item::Struct(s) if s.ident == struct_name => Some(s),
+                    _ => None,
+                })
+                .flat_map(|s| match &s.fields {
+                    Fields::Named(named) => named.named.iter().collect::<Vec<_>>(),
+                    _ => Vec::new(),
+                })
+                .filter_map(|field| field.ident.as_ref())
+                .map(|ident| ident.to_string())
+                .filter(|name| !name.starts_with('_'))
+                .collect()
+        };
+
+        let query_response_fields = extract_fields("QueryResponse");
+        let job_fields = extract_fields("Job");
+        let get_query_results_fields = extract_fields("GetQueryResultsResponse");
+
+        // Dynamically derive known fields implemented in QueryCreationMetadata and QueryMetadata
+        // directly from the AST of metadata.rs using a flat functional pipeline
+        let metadata_path = PathBuf::from(manifest_dir).join("src/query/metadata.rs");
+        let metadata_content = match std::fs::read_to_string(&metadata_path) {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("WARNING: Could not read metadata.rs for sync check: {}", e);
+                return;
+            }
+        };
+
+        let metadata_tree = match syn::parse_file(&metadata_content) {
+            Ok(tree) => tree,
+            Err(e) => {
+                eprintln!("WARNING: Could not parse metadata.rs with syn: {}", e);
+                return;
+            }
+        };
+
+        let mut creation_known_query_response = HashSet::new();
+        let mut creation_known_job = HashSet::new();
+        let mut meta_known_query_response = HashSet::new();
+        let mut meta_known_get_query_results = HashSet::new();
+
+        let reflection_pipeline = metadata_tree
+            .items
+            .iter()
+            .filter_map(|item| match item {
+                Item::Impl(item_impl) => Some(item_impl),
+                _ => None,
+            })
+            .filter_map(|item_impl| match &*item_impl.self_ty {
+                syn::Type::Path(p) if p.path.is_ident("QueryCreationMetadata") => {
+                    Some(("QueryCreationMetadata", &item_impl.items))
+                }
+                syn::Type::Path(p) if p.path.is_ident("QueryMetadata") => {
+                    Some(("QueryMetadata", &item_impl.items))
+                }
+                _ => None,
+            })
+            .flat_map(|(impl_name, items)| {
+                items.iter().filter_map(move |impl_item| match impl_item {
+                    syn::ImplItem::Fn(impl_fn) => Some((impl_name, impl_fn)),
+                    _ => None,
+                })
+            })
+            .flat_map(|(impl_name, impl_fn)| {
+                let method_name = impl_fn.sig.ident.to_string();
+                impl_fn
+                    .block
+                    .stmts
+                    .iter()
+                    .filter_map(move |stmt| match stmt {
+                        syn::Stmt::Expr(syn::Expr::Match(expr_match), _) => {
+                            Some((impl_name, method_name.clone(), expr_match))
+                        }
+                        _ => None,
+                    })
+            })
+            .flat_map(|(impl_name, method_name, expr_match)| {
+                expr_match
+                    .arms
+                    .iter()
+                    .map(move |arm| (impl_name, method_name.clone(), arm))
+            });
+
+        for (impl_name, method_name, arm) in reflection_pipeline {
+            // If the arm body returns None, this field does not exist in this variant
+            if let syn::Expr::Path(expr_path) = &*arm.body {
+                if expr_path.path.is_ident("None") {
+                    continue;
+                }
+            }
+
+            let syn::Pat::TupleStruct(pat_ts) = &arm.pat else {
+                continue;
+            };
+            let Some(last_seg) = pat_ts.path.segments.last() else {
+                continue;
+            };
+            let variant_name = last_seg.ident.to_string();
+
+            if impl_name == "QueryCreationMetadata" {
+                if variant_name == "JobsQuery" {
+                    creation_known_query_response.insert(method_name);
+                } else if variant_name == "JobsInsert" {
+                    creation_known_job.insert(method_name);
+                }
+            } else if impl_name == "QueryMetadata" {
+                if variant_name == "JobsQuery" {
+                    meta_known_query_response.insert(method_name);
+                } else if variant_name == "GetQueryResultsResponse" {
+                    meta_known_get_query_results.insert(method_name);
+                }
+            }
+        }
+
+        for field in query_response_fields.difference(&creation_known_query_response) {
+            eprintln!(
+                "WARNING: Upstream model struct 'QueryResponse' has field '{}' not exposed in QueryCreationMetadata",
+                field
+            );
+        }
+
+        for field in job_fields.difference(&creation_known_job) {
+            eprintln!(
+                "WARNING: Upstream model struct 'Job' has field '{}' not exposed in QueryCreationMetadata",
+                field
+            );
+        }
+
+        for field in query_response_fields.difference(&meta_known_query_response) {
+            eprintln!(
+                "WARNING: Upstream model struct 'QueryResponse' has field '{}' not exposed in QueryMetadata",
+                field
+            );
+        }
+
+        for field in get_query_results_fields.difference(&meta_known_get_query_results) {
+            eprintln!(
+                "WARNING: Upstream model struct 'GetQueryResultsResponse' has field '{}' not exposed in QueryMetadata",
+                field
+            );
+        }
+    }
+}

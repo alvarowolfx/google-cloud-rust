@@ -91,7 +91,7 @@ impl BigQuery {
             job_service: self.job_service.clone(),
             job_ref: internal_job_ref,
             completed: false,
-            creation_metadata: QueryCreationMetadata::JobsInsert(job),
+            metadata: QueryCreationMetadata::JobsInsert(job),
         })
     }
 }

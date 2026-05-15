@@ -36,9 +36,8 @@ pub struct Query {
     pub(crate) job_service: Arc<JobService>,
     pub(crate) job_ref: JobReference,
     pub(crate) completed: bool,
-    pub(crate) creation_metadata: QueryCreationMetadata,
+    pub(crate) metadata: QueryCreationMetadata,
 }
-
 
 impl Query {
     /// Periodically checks the status of the background job until it finishes.
@@ -83,8 +82,8 @@ impl Query {
         }
     }
 
-    pub fn creation_metadata(&self) -> &QueryCreationMetadata {
-        &self.creation_metadata
+    pub fn metadata(&self) -> &QueryCreationMetadata {
+        &self.metadata
     }
 
     /// Returns the query id of the query if it was created as a stateless query.
@@ -108,13 +107,12 @@ pub struct CompleteQuery {
     pub(crate) cached_rows: VecDeque<wkt::Struct>,
     pub(crate) schema: Arc<Schema>,
     pub(crate) page_token: Option<String>,
-    pub(crate) query_metadata: QueryMetadata,
+    pub(crate) metadata: QueryMetadata,
 }
-
 
 impl CompleteQuery {
     fn from_complete_query(q: &Query) -> Self {
-        let res = match q.creation_metadata.clone() {
+        let res = match q.metadata.clone() {
             QueryCreationMetadata::JobsQuery(res) => res,
             _ => unreachable!("running queries via jobs.insert are not gonna be complete"),
         };
@@ -140,7 +138,7 @@ impl CompleteQuery {
             cached_rows,
             page_token,
             schema,
-            query_metadata: QueryMetadata::GetQueryResultsResponse(res.clone()),
+            metadata: QueryMetadata::GetQueryResultsResponse(res.clone()),
         }
     }
 
@@ -162,7 +160,7 @@ impl CompleteQuery {
             cached_rows,
             page_token,
             schema,
-            query_metadata: QueryMetadata::JobsQuery(res.clone()),
+            metadata: QueryMetadata::JobsQuery(res.clone()),
         }
     }
 
@@ -171,8 +169,8 @@ impl CompleteQuery {
         ReadRequest::new(self)
     }
 
-    pub fn query_metadata(&self) -> QueryMetadata {
-        self.query_metadata.clone()
+    pub fn metadata(&self) -> QueryMetadata {
+        self.metadata.clone()
     }
 }
 

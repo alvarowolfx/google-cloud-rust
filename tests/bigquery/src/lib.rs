@@ -15,8 +15,10 @@
 use anyhow::Result;
 use futures::stream::StreamExt;
 use google_cloud_bigquery_v2::client::{DatasetService, JobService};
+use google_cloud_bigquery_v2::model::query_request::JobCreationMode;
 use google_cloud_bigquery_v2::model::{
     Dataset, DatasetReference, Job, JobConfiguration, JobConfigurationQuery, JobReference,
+    QueryRequest,
 };
 use google_cloud_gax::{error::rpc::Code, paginator::ItemPaginator};
 use google_cloud_test_utils::runtime_config::project_id;
@@ -227,11 +229,16 @@ pub async fn query_client() -> Result<()> {
         .await?;
 
     println!("STARTING HIGH-LEVEL SMOKE TEST QUERY");
-    let query = bq.query("SELECT 1 as one").run().await?;
+    let req = QueryRequest::new()
+        .set_query("SELECT 1 as one")
+        .set_job_creation_mode(JobCreationMode::JobCreationOptional);
+    let query = bq.query(req).run().await?;
+
+    assert!(query.query_id().is_some(), "{:?}", query.metadata());
 
     let complete_query = query.until_done().await?;
 
-    assert_eq!(complete_query.query_metadata().total_rows(), 1);
+    assert_eq!(complete_query.metadata().total_rows(), 1);
 
     let mut rows = complete_query.read().await?;
     let mut count = 0;
@@ -262,7 +269,7 @@ pub async fn query_client_multi_page() -> Result<()> {
     let query = bq.query(req).run().await?;
     let complete_query = query.until_done().await?;
 
-    assert_eq!(complete_query.query_metadata().total_rows(), 10000);
+    assert_eq!(complete_query.metadata().total_rows(), 10000);
 
     let mut rows = complete_query.read().with_max_results(1000).await?;
     let mut count = 0;
@@ -292,7 +299,7 @@ pub async fn query_client_job() -> Result<()> {
     let query = bq.query(req).run().await?;
     let complete_query = query.until_done().await?;
 
-    assert_eq!(complete_query.query_metadata().total_rows(), 1);
+    assert_eq!(complete_query.metadata().total_rows(), 1);
 
     let mut rows = complete_query.read().await?;
     let mut count = 0;

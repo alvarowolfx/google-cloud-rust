@@ -56,7 +56,7 @@ impl PostQueryExecutor {
             job_service: self.job_service.clone(),
             job_ref,
             completed,
-            creation_metadata: QueryCreationMetadata::JobsQuery(stored_res),
+            metadata: QueryCreationMetadata::JobsQuery(stored_res),
         })
     }
 }
@@ -110,7 +110,7 @@ impl InsertJobExecutor {
             job_service: self.job_service.clone(),
             job_ref: job_ref.into(),
             completed: false,
-            creation_metadata: QueryCreationMetadata::JobsInsert(stored_res),
+            metadata: QueryCreationMetadata::JobsInsert(stored_res),
         })
     }
 }
