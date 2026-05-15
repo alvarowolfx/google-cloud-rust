@@ -229,7 +229,7 @@ pub async fn query_client() -> Result<()> {
     println!("STARTING HIGH-LEVEL SMOKE TEST QUERY");
     let query = bq.query("SELECT 1 as one").run().await?;
 
-    let complete_query = query.wait().await?;
+    let complete_query = query.until_done().await?;
 
     assert_eq!(complete_query.query_metadata().total_rows(), 1);
 
@@ -260,7 +260,7 @@ pub async fn query_client_multi_page() -> Result<()> {
         .set_max_results(1000_u32);
 
     let query = bq.query(req).run().await?;
-    let complete_query = query.wait().await?;
+    let complete_query = query.until_done().await?;
 
     assert_eq!(complete_query.query_metadata().total_rows(), 10000);
 
@@ -290,7 +290,7 @@ pub async fn query_client_job() -> Result<()> {
         .set_use_legacy_sql(false);
 
     let query = bq.query(req).run().await?;
-    let complete_query = query.wait().await?;
+    let complete_query = query.until_done().await?;
 
     assert_eq!(complete_query.query_metadata().total_rows(), 1);
 

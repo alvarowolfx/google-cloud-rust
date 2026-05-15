@@ -40,6 +40,7 @@ pub struct Query {
 }
 
 #[derive(Debug, Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum QueryCreationMetadata {
     JobsQuery(google_cloud_bigquery_v2::model::QueryResponse),
     JobsInsert(google_cloud_bigquery_v2::model::Job),
@@ -48,7 +49,7 @@ pub enum QueryCreationMetadata {
 impl Query {
     /// Periodically checks the status of the background job until it finishes.
     /// Returns an error if a remote service or connection failure happens during polling.
-    pub async fn wait(&self) -> Result<CompleteQuery> {
+    pub async fn until_done(&self) -> Result<CompleteQuery> {
         if self.completed {
             return Ok(CompleteQuery::from_complete_query(self));
         }
@@ -81,7 +82,7 @@ impl Query {
                 return Err(google_cloud_gax::error::Error::service(rpc_status));
             }
 
-            let completed = res.job_complete.clone().unwrap_or(false);
+            let completed = res.job_complete.unwrap_or(false);
             if completed {
                 return Ok(CompleteQuery::from_get_query_results_response(self, res));
             }
@@ -117,6 +118,7 @@ pub struct CompleteQuery {
 }
 
 #[derive(Debug, Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum QueryMetadata {
     JobsQuery(google_cloud_bigquery_v2::model::QueryResponse),
     GetQueryResultsResponse(google_cloud_bigquery_v2::model::GetQueryResultsResponse),

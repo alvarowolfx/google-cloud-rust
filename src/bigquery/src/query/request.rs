@@ -18,6 +18,7 @@ use google_cloud_bigquery_v2::model::{
 
 /// A request to execute a query, which can be either a stateless `PostQueryRequest` or an advanced `Job`.
 #[derive(Debug, Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum QueryRequest {
     /// A stateless query request via the `jobs.query` endpoint.
     PostQueryRequest(PostQueryRequest),
