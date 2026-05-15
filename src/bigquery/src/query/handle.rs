@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::Result;
-use crate::query::{JobReference, Row, RowIterator, Schema};
+use crate::query::{JobReference, QueryCreationMetadata, QueryMetadata, Row, RowIterator, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{
     GetQueryResultsRequest, GetQueryResultsResponse, QueryResponse,
@@ -39,12 +39,6 @@ pub struct Query {
     pub(crate) creation_metadata: QueryCreationMetadata,
 }
 
-#[derive(Debug, Clone)]
-#[allow(clippy::large_enum_variant)]
-pub enum QueryCreationMetadata {
-    JobsQuery(google_cloud_bigquery_v2::model::QueryResponse),
-    JobsInsert(google_cloud_bigquery_v2::model::Job),
-}
 
 impl Query {
     /// Periodically checks the status of the background job until it finishes.
@@ -117,30 +111,6 @@ pub struct CompleteQuery {
     pub(crate) query_metadata: QueryMetadata,
 }
 
-#[derive(Debug, Clone)]
-#[allow(clippy::large_enum_variant)]
-pub enum QueryMetadata {
-    JobsQuery(google_cloud_bigquery_v2::model::QueryResponse),
-    GetQueryResultsResponse(google_cloud_bigquery_v2::model::GetQueryResultsResponse),
-}
-
-impl QueryMetadata {
-    /// Returns the total number of rows in the complete query result set.
-    pub fn total_rows(&self) -> u64 {
-        match self {
-            QueryMetadata::GetQueryResultsResponse(res) => res.total_rows.unwrap_or(0),
-            QueryMetadata::JobsQuery(res) => res.total_rows.unwrap_or(0),
-        }
-    }
-
-    /// Returns the total number of rows in the complete query result set.
-    pub fn num_dml_affected_rows(&self) -> i64 {
-        match self {
-            QueryMetadata::GetQueryResultsResponse(res) => res.num_dml_affected_rows.unwrap_or(0),
-            QueryMetadata::JobsQuery(res) => res.num_dml_affected_rows.unwrap_or(0),
-        }
-    }
-}
 
 impl CompleteQuery {
     fn from_complete_query(q: &Query) -> Self {

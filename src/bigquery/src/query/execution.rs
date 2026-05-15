@@ -13,8 +13,7 @@
 // limitations under the License.
 
 use crate::Result;
-use crate::query::handle::QueryCreationMetadata;
-use crate::query::{JobReference, Query};
+use crate::query::{JobReference, Query, QueryCreationMetadata};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{InsertJobRequest, Job, PostQueryRequest};
 use std::sync::Arc;

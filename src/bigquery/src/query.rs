@@ -18,14 +18,14 @@ pub(crate) mod execution;
 mod handle;
 mod iterator;
 mod job_reference;
+mod metadata;
 mod request;
 mod row;
 mod run_query;
 mod schema;
 
-pub(crate) use handle::{
-    CompleteQuery, Error as QueryError, Query, QueryCreationMetadata, QueryMetadata,
-};
+pub(crate) use handle::{CompleteQuery, Error as QueryError, Query};
+pub(crate) use metadata::{QueryCreationMetadata, QueryMetadata};
 pub(crate) use iterator::{Error as IteratorError, RowIterator};
 pub(crate) use job_reference::JobReference;
 pub(crate) use request::QueryRequest;
