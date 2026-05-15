@@ -48,7 +48,7 @@ impl Query {
         }
 
         loop {
-            let Some(job_ref) = self.job_ref.as_job_ref() else {
+            let Some(job_ref) = self.job_ref.to_job_ref() else {
                 return Err(google_cloud_gax::error::Error::io(
                     "can't poll stateless queries",
                 ));
@@ -96,7 +96,7 @@ impl Query {
 
     /// Returns the underlying job reference for this query.
     pub fn job_reference(&self) -> Option<google_cloud_bigquery_v2::model::JobReference> {
-        self.job_ref.as_job_ref()
+        self.job_ref.to_job_ref()
     }
 }
 

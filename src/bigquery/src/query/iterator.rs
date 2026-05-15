@@ -51,7 +51,7 @@ impl RowIterator {
             return None;
         };
 
-        let Some(job_ref) = self.job_ref.as_job_ref() else {
+        let Some(job_ref) = self.job_ref.to_job_ref() else {
             return Some(Err(google_cloud_gax::error::Error::io(
                 "Stateless queries can't have more pages",
             )));
