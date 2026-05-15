@@ -28,8 +28,11 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 pub mod anonymous;
 pub mod api_key_credentials;
+pub(crate) mod crypto_provider;
 pub mod external_account;
 pub(crate) mod external_account_sources;
+#[cfg(feature = "gdch")]
+pub mod gdch;
 #[cfg(feature = "idtoken")]
 pub mod idtoken;
 pub mod impersonated;
@@ -68,6 +71,7 @@ impl EntityTag {
 /// indicate that the caller's cached version (identified by a previously provided [EntityTag])
 /// is still valid.
 #[derive(Clone, PartialEq, Debug)]
+#[allow(clippy::exhaustive_enums)]
 pub enum CacheableResource<T> {
     /// Indicates that the resource has not been modified and the cached version is still valid.
     NotModified,
@@ -789,6 +793,9 @@ fn build_credentials(
                     universe_domain.clone(),
                     |b: external_account::Builder, s: Vec<String>| b.with_scopes(s)
                 ),
+                "gdch_service_account" => Err(BuilderError::not_supported(format!(
+                    "{cred_type}, use gdch::Builder directly."
+                ))),
                 _ => Err(BuilderError::unknown_type(cred_type)),
             }
         }
@@ -834,6 +841,9 @@ fn build_signer(
                 }
                 "external_account" => Err(BuilderError::not_supported(
                     "external_account signer is not supported",
+                )),
+                "gdch_service_account" => Err(BuilderError::not_supported(
+                    "gdch_service_account signer is not supported",
                 )),
                 _ => Err(BuilderError::unknown_type(cred_type)),
             }
@@ -1126,7 +1136,7 @@ pub(crate) mod tests {
             .expect("Failed to create RsaPrivateKey from primes")
     });
 
-    #[cfg(feature = "idtoken")]
+    #[cfg(any(feature = "idtoken", feature = "gdch"))]
     pub static ES256_PRIVATE_KEY: LazyLock<p256::SecretKey> = LazyLock::new(|| {
         let secret_key_bytes = [
             0x4c, 0x0c, 0x11, 0x6e, 0x6e, 0xb0, 0x07, 0xbd, 0x48, 0x0c, 0xc0, 0x48, 0xc0, 0x1f,
@@ -1134,6 +1144,14 @@ pub(crate) mod tests {
             0x26, 0x6c, 0x75, 0xdf,
         ];
         p256::SecretKey::from_bytes((&secret_key_bytes).into()).unwrap()
+    });
+
+    #[cfg(feature = "gdch")]
+    pub static ES256_PEM: LazyLock<String> = LazyLock::new(|| {
+        (*ES256_PRIVATE_KEY)
+            .to_sec1_pem(LineEnding::LF)
+            .expect("Failed to encode EC key to PEM")
+            .to_string()
     });
 
     pub static PKCS8_PK: LazyLock<String> = LazyLock::new(|| {

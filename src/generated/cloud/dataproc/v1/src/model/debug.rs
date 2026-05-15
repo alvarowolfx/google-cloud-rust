@@ -312,6 +312,22 @@ impl std::fmt::Debug for super::SparkSqlBatch {
     }
 }
 
+impl std::fmt::Debug for super::PySparkNotebookBatch {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug_struct = f.debug_struct("PySparkNotebookBatch");
+        debug_struct.field("notebook_file_uri", &self.notebook_file_uri);
+        debug_struct.field("params", &self.params);
+        debug_struct.field("python_file_uris", &self.python_file_uris);
+        debug_struct.field("jar_file_uris", &self.jar_file_uris);
+        debug_struct.field("file_uris", &self.file_uris);
+        debug_struct.field("archive_uris", &self.archive_uris);
+        if !self._unknown_fields.is_empty() {
+            debug_struct.field("_unknown_fields", &self._unknown_fields);
+        }
+        debug_struct.finish()
+    }
+}
+
 impl std::fmt::Debug for super::Cluster {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut debug_struct = f.debug_struct("Cluster");
@@ -1802,6 +1818,7 @@ impl std::fmt::Debug for super::ExecutionConfig {
         debug_struct.field("ttl", &self.ttl);
         debug_struct.field("staging_bucket", &self.staging_bucket);
         debug_struct.field("authentication_config", &self.authentication_config);
+        debug_struct.field("resource_manager_tags", &self.resource_manager_tags);
         debug_struct.field("network", &self.network);
         if !self._unknown_fields.is_empty() {
             debug_struct.field("_unknown_fields", &self._unknown_fields);
@@ -1861,6 +1878,7 @@ impl std::fmt::Debug for super::UsageMetrics {
         );
         debug_struct.field("milli_accelerator_seconds", &self.milli_accelerator_seconds);
         debug_struct.field("accelerator_type", &self.accelerator_type);
+        debug_struct.field("update_time", &self.update_time);
         if !self._unknown_fields.is_empty() {
             debug_struct.field("_unknown_fields", &self._unknown_fields);
         }

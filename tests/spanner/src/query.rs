@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::client::{get_database_id, get_emulator_host};
-use crate::test_proxy::{InterceptedSpanner, SpannerInterceptor};
+use crate::client::{get_database_id, get_emulator_host, update_database_ddl};
+use crate::test_proxy::{InterceptionResult, PassThroughProxy};
+use futures::future::BoxFuture;
 use google_cloud_spanner::client::{DatabaseClient, Kind, Spanner, Statement, TypeCode};
 use google_cloud_spanner::model::execute_sql_request::{QueryMode, QueryOptions};
 use google_cloud_spanner::model::result_set_stats::RowCount;
 use google_cloud_test_utils::resource_names::LowercaseAlphanumeric;
-use spanner_grpc_mock::google::spanner::v1 as spanner_v1;
-use spanner_grpc_mock::google::spanner::v1::spanner_client::SpannerClient;
 use std::sync::Arc;
 use tokio::sync::Notify;
 use tonic::transport::Channel;
@@ -160,7 +159,7 @@ pub async fn result_set_metadata(db_client: &DatabaseClient) -> anyhow::Result<(
     let mut rs = rot.execute_query(Statement::builder(sql).build()).await?;
 
     assert!(rs.next().await.transpose()?.is_some());
-    let metadata = rs.metadata()?;
+    let metadata = rs.metadata().await?;
     assert_eq!(
         metadata.column_names(),
         &["num".to_string(), "name".to_string()]
@@ -178,7 +177,7 @@ pub async fn result_set_metadata(db_client: &DatabaseClient) -> anyhow::Result<(
         .await?;
 
     assert!(rs_zero_rows.next().await.transpose()?.is_none());
-    let metadata_zero_rows = rs_zero_rows.metadata()?;
+    let metadata_zero_rows = rs_zero_rows.metadata().await?;
     assert_eq!(
         metadata_zero_rows.column_names(),
         &["num".to_string(), "name".to_string()]
@@ -191,7 +190,7 @@ pub async fn result_set_metadata(db_client: &DatabaseClient) -> anyhow::Result<(
         .await?;
 
     let row_dup = rs_dup.next().await.transpose()?.unwrap();
-    let metadata_dup = rs_dup.metadata()?;
+    let metadata_dup = rs_dup.metadata().await?;
     assert_eq!(
         metadata_dup.column_names(),
         &["dup".to_string(), "dup".to_string()]
@@ -252,6 +251,35 @@ async fn test_multi_use_read_only_transaction(
     assert_eq!(val2, "2");
     let next2 = rs2.next().await.transpose()?;
     assert!(next2.is_none(), "{next2:?}");
+
+    Ok(())
+}
+
+pub async fn multi_use_read_only_transaction_interleaved(
+    db_client: &DatabaseClient,
+) -> anyhow::Result<()> {
+    let tx = db_client
+        .read_only_transaction()
+        .with_explicit_begin_transaction(false)
+        .build()
+        .await?;
+
+    // This test verifies that if the first query that includes the BeginTransaction
+    // option does not call ResultSet#next(), then the transaction ID is still received.
+    // This means that the second query on this transaction is not blocked.
+    let mut rs1 = tx
+        .execute_query(Statement::builder("SELECT 1 AS col_int").build())
+        .await?;
+
+    let mut rs2 = tx
+        .execute_query(Statement::builder("SELECT 2 AS col_int").build())
+        .await?;
+
+    let row2 = rs2.next().await.transpose()?.expect("should yield a row");
+    assert_eq!(row2.raw_values()[0].as_string(), "2");
+
+    let row1 = rs1.next().await.transpose()?.expect("should yield a row");
+    assert_eq!(row1.raw_values()[0].as_string(), "1");
 
     Ok(())
 }
@@ -419,33 +447,6 @@ fn verify_row_2(row: &google_cloud_spanner::client::Row) {
     );
 }
 
-/// A test proxy that intercepts and delays `BeginTransaction` requests.
-///
-/// It notifies `begin_transaction_entered_latch` when a `BeginTransaction` request is received,
-/// and blocks the request execution until `latch` is notified. This allows tests to
-/// synchronize the order of execution of `BeginTransaction` with other operations.
-struct DelayedBeginProxy {
-    emulator_client: SpannerClient<Channel>,
-    latch: Arc<Notify>,
-    begin_transaction_entered_latch: Arc<Notify>,
-}
-
-#[tonic::async_trait]
-impl SpannerInterceptor for DelayedBeginProxy {
-    fn emulator_client(&self) -> SpannerClient<Channel> {
-        self.emulator_client.clone()
-    }
-
-    async fn begin_transaction(
-        &self,
-        request: tonic::Request<spanner_v1::BeginTransactionRequest>,
-    ) -> std::result::Result<tonic::Response<spanner_v1::Transaction>, tonic::Status> {
-        self.begin_transaction_entered_latch.notify_one();
-        self.latch.notified().await;
-        self.emulator_client().begin_transaction(request).await
-    }
-}
-
 // This test verifies that the client correctly falls back to `BeginTransaction` when the
 // first statement in a transaction fails. It also shows that the statement is retried and
 // could (theoretically) succeed during this retry. It achieves this by doing the following:
@@ -474,20 +475,30 @@ pub async fn inline_begin_fallback(_db_client: &DatabaseClient) -> anyhow::Resul
     let endpoint = Channel::from_shared(format!("http://{}", emulator_host))?
         .connect()
         .await?;
-    let raw_client = SpannerClient::new(endpoint);
+    let latch_clone = Arc::clone(&latch);
+    let begin_entered_clone = Arc::clone(&begin_transaction_entered_latch);
 
-    let proxy = DelayedBeginProxy {
-        emulator_client: raw_client,
-        latch: Arc::clone(&latch),
-        begin_transaction_entered_latch: Arc::clone(&begin_transaction_entered_latch),
+    // Define an interceptor that intercepts `BeginTransaction` requests,
+    // notifies the test that the request has been received, and blocks
+    // until the test allows it to proceed. All other requests are passed through.
+    let interceptor = move |req: http::Request<tonic::body::Body>| {
+        let l = latch_clone.clone();
+        let be = begin_entered_clone.clone();
+        Box::pin(async move {
+            if req.uri().path() == "/google.spanner.v1.Spanner/BeginTransaction" {
+                be.notify_one();
+                l.notified().await;
+            }
+            InterceptionResult::Continue(req)
+        }) as BoxFuture<'static, InterceptionResult>
     };
 
-    let (proxy_uri, _guard) =
-        crate::client::start_guarded_server("127.0.0.1:0", InterceptedSpanner(proxy)).await?;
+    let proxy = PassThroughProxy::new(endpoint, interceptor);
+    let proxy_server = proxy.start("127.0.0.1:0").await?;
 
-    // We build the Spanner DatabaseClient pointing directly to our proxy address over HTTP.
+    // We build the Spanner DatabaseClient pointing directly to our proxy address over gRPC.
     let proxy_db_client = Spanner::builder()
-        .with_endpoint(proxy_uri)
+        .with_endpoint(proxy_server.uri())
         .build()
         .await?
         .database_client(format!(
@@ -531,7 +542,7 @@ pub async fn inline_begin_fallback(_db_client: &DatabaseClient) -> anyhow::Resul
 
     // Create the table on the emulator while the BeginTransaction RPC is blocked.
     let statement = format!("CREATE TABLE {} (Id INT64) PRIMARY KEY (Id)", table_name);
-    crate::client::update_database_ddl(statement).await?;
+    update_database_ddl(statement).await?;
 
     // Unblock the BeginTransaction RPC.
     latch.notify_one();
@@ -577,7 +588,7 @@ pub async fn query_plan(db_client: &DatabaseClient) -> anyhow::Result<()> {
     let next = rs.next().await.transpose()?;
     assert!(next.is_none());
 
-    let metadata = rs.metadata()?;
+    let metadata = rs.metadata().await?;
     assert_eq!(metadata.column_names(), &["num".to_string()]);
 
     let stats = rs.stats();
@@ -626,7 +637,7 @@ pub async fn dml_plan(db_client: &DatabaseClient) -> anyhow::Result<()> {
             let next = rs.next().await.transpose()?;
             assert!(next.is_none());
 
-            let metadata = rs.metadata().expect("metadata should be available");
+            let metadata = rs.metadata().await.expect("metadata should be available");
             assert!(metadata.column_names().is_empty());
 
             // Verify undeclared parameters

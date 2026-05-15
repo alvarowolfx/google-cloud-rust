@@ -19,6 +19,7 @@ default-members = [
   "guide/samples",
   "src/auth",
   "src/bigquery",
+  "src/bigquery-write",
   "src/bigtable",
   "src/datastore",
   "src/firestore",
@@ -64,7 +65,8 @@ members = [
   "guide/samples",
   "src/auth",
   "src/bigquery",
-  "src/bigquery/grpc-mock",
+  "src/bigquery-write",
+  "src/bigquery-write/grpc-mock",
   "src/bigtable",
   "src/datastore",
   "src/firestore",
@@ -159,6 +161,7 @@ members = [
   "src/generated/cloud/filestore/v1",
   "src/generated/cloud/financialservices/v1",
   "src/generated/cloud/functions/v2",
+  "src/generated/cloud/geminidataanalytics/v1",
   "src/generated/cloud/gkebackup/v1",
   "src/generated/cloud/gkeconnect/gateway/v1",
   "src/generated/cloud/gkehub/configmanagement/v1",
@@ -373,7 +376,7 @@ crates_io_api         = { default-features = false, version = "0.12" }
 clap                  = { default-features = false, version = "4" }
 crc32c                = { default-features = false, version = "0.6.8" }
 futures               = { default-features = false, version = "0.3" }
-h2                    = { default-features = false, version = "0.4.13" }
+h2                    = { default-features = false, version = "0.4.14" }
 hex                   = { default-features = false, version = "0.4.3" }
 http                  = { default-features = false, version = "1.1", features = ["std"] }
 http-body             = { default-features = false, version = "1" }
@@ -388,10 +391,10 @@ opentelemetry-http    = { default-features = false, version = "0.31" }
 opentelemetry-otlp    = { default-features = false, version = "0.31" }
 parse-size            = { default-features = false, version = "1.1" }
 percent-encoding      = { default-features = false, version = "2.3" }
-pin-project           = { default-features = false, version = "1.1.11" }
+pin-project           = { default-features = false, version = "1.1.12" }
 rand                  = { default-features = false, version = "0.10" }
 p256                  = { default-features = false, version = "0.13" }
-rust_decimal          = { default-features = false, version = "1.41.0", features = ["std"] }
+rust_decimal          = { default-features = false, version = "1.42.0", features = ["std"] }
 rustls                = { default-features = false, version = "0.23.38" }
 rustls-pki-types      = { default-features = false, version = "1.14" }
 semver                = { default-features = false, version = "1.0.28" }
@@ -401,7 +404,7 @@ serde_with            = { default-features = false, version = "3", features = ["
 sha2                  = { default-features = false, version = "0.11.0" }
 thiserror             = { default-features = false, version = "2.0.12" }
 time                  = { default-features = false, version = "0.3.45" }
-tokio                 = { default-features = false, version = "1.52.1" }
+tokio                 = { default-features = false, version = "1.52.3" }
 tokio-metrics         = { default-features = false, version = "0.5.0" }
 tokio-util            = { default-features = false, version = "0.7.18" }
 toml_edit             = { default-features = false, version = "0.25" }
@@ -435,7 +438,7 @@ tracing-serde = { default-features = false, version = "0.2" }
 # Some of our direct dependencies fail to declare the minimum version
 # requirements correctly. Force a higher version so we can test our own minimum
 # version requirements in the minimal-versions build.
-aws-lc-rs = { default-features = false, version = "1.16.3" }
+aws-lc-rs = { default-features = false, version = "1.17.0" }
 
 # sharded-slab fails to declare the minimum dependency for `lazy_static`
 #     https://github.com/hawkw/sharded-slab/pull/81
@@ -469,7 +472,7 @@ tokio-stream      = { default-features = false, version = "0.1.16" }
 
 # Local packages used as dependencies.
 google-cloud-auth        = { default-features = false, version = "1.10.0", path = "src/auth" }
-google-cloud-gax         = { default-features = false, version = "1.10.0", path = "src/gax" }
+google-cloud-gax         = { default-features = false, version = "1.11.0", path = "src/gax" }
 gaxi                     = { default-features = false, version = "0.7.13", path = "src/gax-internal", package = "google-cloud-gax-internal" }
 wkt                      = { default-features = false, version = "1.4.0", path = "src/wkt", package = "google-cloud-wkt" }
 google-cloud-wkt         = { default-features = false, version = "1.4.0", path = "src/wkt", package = "google-cloud-wkt" }
@@ -537,9 +540,13 @@ storage-grpc-mock        = { path = "src/storage/grpc-mock" }
 unexpected_cfgs = { level = "deny", check-cfg = [
   'cfg(google_cloud_unstable_grpc_server_streaming)',
   'cfg(google_cloud_unstable_storage_bidi)',
-  'cfg(google_cloud_unstable_trusted_boundaries)',
+  'cfg(google_cloud_unstable_tracing)',
+  'cfg(google_cloud_unstable_trust_boundaries)',
   # Enables re-generation of protos. Only needed on major version updates to
   # Prost and/or Tonic.
   'cfg(google_cloud_generate_protos)',
   'cfg(tokio_unstable)',
 ] }
+
+[workspace.metadata.cargo-machete]
+ignored = ["h2", "lazy_static", "pin-project", "rustc_version"]

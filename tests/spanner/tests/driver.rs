@@ -14,6 +14,8 @@
 
 #[cfg(all(test, feature = "run-integration-tests"))]
 mod spanner {
+    use integration_tests_spanner::batch_write;
+    use integration_tests_spanner::client;
 
     #[tokio::test]
     async fn run_query_tests() -> anyhow::Result<()> {
@@ -30,6 +32,8 @@ mod spanner {
             &db_client,
         )
         .await?;
+        integration_tests_spanner::query::multi_use_read_only_transaction_interleaved(&db_client)
+            .await?;
         integration_tests_spanner::query::inline_begin_fallback(&db_client).await?;
         integration_tests_spanner::query::query_with_options(&db_client).await?;
         integration_tests_spanner::query::query_plan(&db_client).await?;
@@ -41,13 +45,25 @@ mod spanner {
 
     #[tokio::test]
     async fn run_write_tests() -> anyhow::Result<()> {
-        let db_client = match integration_tests_spanner::client::create_database_client().await {
+        let db_client = match client::create_database_client().await {
             Some(c) => c,
             None => return Ok(()),
         };
 
         integration_tests_spanner::write::write_only_transaction(&db_client).await?;
         integration_tests_spanner::write::write(&db_client).await?;
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn run_batch_write_tests() -> anyhow::Result<()> {
+        let db_client = match client::create_database_client().await {
+            Some(c) => c,
+            None => return Ok(()),
+        };
+
+        batch_write::batch_write(&db_client).await?;
 
         Ok(())
     }
@@ -116,6 +132,13 @@ mod spanner {
             .await?;
         integration_tests_spanner::batch_read_only_transaction::partitioned_read(&db_client)
             .await?;
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn run_concurrent_inline_begin_tests() -> anyhow::Result<()> {
+        integration_tests_spanner::concurrent_inline_begin::test_concurrent_inline_begin_with_snapshot_consistency().await?;
 
         Ok(())
     }

@@ -20,12 +20,13 @@ use crate::model::{
 };
 use crate::server_streaming::builder;
 use gaxi::options::{ClientConfig, Credentials};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub use crate::database_client::DatabaseClient;
 pub use crate::error::SpannerInternalError;
 pub use crate::from_value::{ConvertError, FromValue};
 pub use crate::key::{Key, KeyRange, KeySet, KeySetBuilder};
-pub use crate::mutation::{Mutation, ValueBinder, WriteBuilder};
+pub use crate::mutation::{Mutation, MutationGroup, ValueBinder, WriteBuilder};
 pub use crate::read::ConfiguredReadRequestBuilder;
 pub use crate::read::ReadRequest;
 pub use crate::read::ReadRequestBuilder;
@@ -55,8 +56,8 @@ pub use wkt::{DurationError, TimestampError};
 /// [Spanner]: https://docs.cloud.google.com/spanner/docs
 #[derive(Clone, Debug)]
 pub struct Spanner {
-    inner: GapicSpanner,
-    grpc_client: Option<gaxi::grpc::Client>,
+    pub(crate) channels: Vec<Channel>,
+    pub(crate) counter: std::sync::Arc<AtomicUsize>,
 }
 
 pub struct Factory;
@@ -66,20 +67,19 @@ impl google_cloud_gax::client_builder::internal::ClientFactory for Factory {
     type Credentials = Credentials;
 
     async fn build(self, config: ClientConfig) -> crate::ClientBuilderResult<Self::Client> {
-        let transport =
-            crate::generated::gapic_dataplane::transport::Spanner::new(config.clone()).await?;
-        let grpc_client = transport.inner.clone();
+        let num_channels = std::env::var("SPANNER_NUM_CHANNELS")
+            .ok()
+            .and_then(|s| s.parse::<usize>().ok())
+            .unwrap_or(4);
 
-        let inner = if gaxi::options::tracing_enabled(&config) {
-            GapicSpanner::from_stub(crate::generated::gapic_dataplane::tracing::Spanner::new(
-                transport,
-            ))
-        } else {
-            GapicSpanner::from_stub(transport)
-        };
+        let mut channels = Vec::with_capacity(num_channels);
+        for _ in 0..num_channels {
+            channels.push(Channel::create(&config).await?);
+        }
+
         Ok(Spanner {
-            inner,
-            grpc_client: Some(grpc_client),
+            channels,
+            counter: std::sync::Arc::new(AtomicUsize::new(0)),
         })
     }
 }
@@ -100,8 +100,10 @@ macro_rules! define_idempotent_rpc {
             &self,
             request: $request_type,
             options: crate::RequestOptions,
+            channel_hint: usize,
         ) -> crate::Result<$response_type> {
-            self.inner
+            self.get_channel(channel_hint)
+                .inner
                 .$method()
                 .with_request(request)
                 .with_options(with_default_idempotency(options))
@@ -175,9 +177,21 @@ impl Spanner {
         // This method is primarily for testing and doesn't fully initialize grpc_client.
         // For production use, prefer `Spanner::builder().build()`.
         Self {
-            inner: GapicSpanner::from_stub(stub),
-            grpc_client: None,
+            channels: vec![Channel {
+                inner: GapicSpanner::from_stub(stub),
+                grpc_client: None,
+            }],
+            counter: std::sync::Arc::new(AtomicUsize::new(0)),
         }
+    }
+
+    pub(crate) fn get_channel(&self, hint: usize) -> &Channel {
+        let idx = hint % self.channels.len();
+        &self.channels[idx]
+    }
+
+    pub(crate) fn next_channel_hint(&self) -> usize {
+        self.counter.fetch_add(1, Ordering::Relaxed)
     }
 
     define_idempotent_rpc!(create_session, CreateSessionRequest, Session);
@@ -202,8 +216,10 @@ impl Spanner {
         &self,
         request: crate::model::ExecuteSqlRequest,
         options: crate::RequestOptions,
+        channel_hint: usize,
     ) -> builder::ExecuteStreamingSql {
-        let grpc = self
+        let channel = self.get_channel(channel_hint);
+        let grpc = channel
             .grpc_client
             .as_ref()
             .expect("Streaming RPCs are not supported when using a stub client");
@@ -220,8 +236,10 @@ impl Spanner {
         &self,
         request: crate::model::ReadRequest,
         options: crate::RequestOptions,
+        channel_hint: usize,
     ) -> builder::StreamingRead {
-        let grpc = self
+        let channel = self.get_channel(channel_hint);
+        let grpc = channel
             .grpc_client
             .as_ref()
             .expect("Streaming RPCs are not supported when using a stub client");
@@ -234,8 +252,10 @@ impl Spanner {
         &self,
         request: crate::model::BatchWriteRequest,
         options: crate::RequestOptions,
+        channel_hint: usize,
     ) -> builder::BatchWrite {
-        let grpc = self
+        let channel = self.get_channel(channel_hint);
+        let grpc = channel
             .grpc_client
             .as_ref()
             .expect("Streaming RPCs are not supported when using a stub client");
@@ -245,11 +265,38 @@ impl Spanner {
     }
 }
 
+#[derive(Clone, Debug)]
+pub(crate) struct Channel {
+    pub(crate) inner: GapicSpanner,
+    pub(crate) grpc_client: Option<gaxi::grpc::Client>,
+}
+
+impl Channel {
+    pub(crate) async fn create(config: &ClientConfig) -> crate::ClientBuilderResult<Self> {
+        let transport =
+            crate::generated::gapic_dataplane::transport::Spanner::new(config.clone()).await?;
+        let grpc_client = transport.inner.clone();
+
+        let inner = if gaxi::options::tracing_enabled(config) {
+            GapicSpanner::from_stub(crate::generated::gapic_dataplane::tracing::Spanner::new(
+                transport,
+            ))
+        } else {
+            GapicSpanner::from_stub(transport)
+        };
+        Ok(Self {
+            inner,
+            grpc_client: Some(grpc_client),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::model::CreateSessionRequest;
     use crate::result_set::tests::adapt;
+    use gaxi::grpc::tonic::MetadataMap;
     use gaxi::grpc::tonic::{Code as GrpcCode, Response, Status};
     use google_cloud_auth::credentials::anonymous::Builder as Anonymous;
     use google_cloud_gax::backoff_policy::BackoffPolicy;
@@ -258,9 +305,15 @@ mod tests {
     use google_cloud_test_macros::tokio_test_no_panics;
     use spanner_grpc_mock::google::rpc as mock_rpc;
     use spanner_grpc_mock::google::spanner::v1 as mock_v1;
+    use spanner_grpc_mock::google::spanner::v1::CommitResponse;
+    use spanner_grpc_mock::google::spanner::v1::ResultSet;
+    use spanner_grpc_mock::google::spanner::v1::ResultSetStats;
     use spanner_grpc_mock::google::spanner::v1::Session;
+    use spanner_grpc_mock::google::spanner::v1::result_set_stats::RowCount;
     use spanner_grpc_mock::{MockSpanner, start};
     use static_assertions::{assert_impl_all, assert_not_impl_any};
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicU64, Ordering};
     use std::time::Duration;
 
     mockall::mock! {
@@ -275,6 +328,50 @@ mod tests {
     fn auto_traits() {
         assert_impl_all!(Spanner: std::fmt::Debug, Clone, Send, Sync);
         assert_not_impl_any!(Spanner: std::panic::RefUnwindSafe, std::panic::UnwindSafe);
+    }
+
+    #[tokio::test]
+    async fn channel_pool_default_size() {
+        let mock = MockSpanner::new();
+        let (address, _server) = start("0.0.0.0:0", mock)
+            .await
+            .expect("Failed to start mock server");
+
+        let client = Spanner::builder()
+            .with_endpoint(address)
+            .with_credentials(Anonymous::new().build())
+            .build()
+            .await
+            .expect("Failed to build client");
+
+        assert_eq!(client.channels.len(), 4);
+    }
+
+    #[tokio::test]
+    async fn channel_selection() {
+        let mock = MockSpanner::new();
+        let (address, _server) = start("0.0.0.0:0", mock)
+            .await
+            .expect("Failed to start mock server");
+
+        let client = Spanner::builder()
+            .with_endpoint(address)
+            .with_credentials(Anonymous::new().build())
+            .build()
+            .await
+            .expect("Failed to build client");
+
+        let hint0 = client.next_channel_hint();
+        let hint1 = client.next_channel_hint();
+        let hint2 = client.next_channel_hint();
+        let hint3 = client.next_channel_hint();
+        let hint4 = client.next_channel_hint();
+
+        assert_eq!(hint0 % 4, 0);
+        assert_eq!(hint1 % 4, 1);
+        assert_eq!(hint2 % 4, 2);
+        assert_eq!(hint3 % 4, 3);
+        assert_eq!(hint4 % 4, 0);
     }
 
     #[tokio::test]
@@ -309,7 +406,11 @@ mod tests {
             "projects/test-project/instances/test-instance/databases/test-db".to_string();
 
         let session = client
-            .create_session(req, crate::RequestOptions::default())
+            .create_session(
+                req,
+                crate::RequestOptions::default(),
+                client.next_channel_hint(),
+            )
             .await
             .expect("Failed to call create_session");
 
@@ -363,6 +464,7 @@ mod tests {
             "projects/test-project/instances/test-instance/databases/test-db".to_string();
 
         let session = client
+            .get_channel(client.next_channel_hint())
             .inner
             .create_session()
             .with_request(req)
@@ -412,7 +514,11 @@ mod tests {
         req.sql = "SELECT 1".to_string();
 
         let result_set = client
-            .execute_sql(req, crate::RequestOptions::default())
+            .execute_sql(
+                req,
+                crate::RequestOptions::default(),
+                client.next_channel_hint(),
+            )
             .await
             .expect("Failed to call execute_sql");
         assert!(result_set.metadata.is_some());
@@ -451,7 +557,11 @@ mod tests {
         req.session = "test_session".to_string();
 
         let response = client
-            .execute_batch_dml(req, crate::RequestOptions::default())
+            .execute_batch_dml(
+                req,
+                crate::RequestOptions::default(),
+                client.next_channel_hint(),
+            )
             .await
             .expect("Failed to call execute_batch_dml");
         assert!(response.status.is_some());
@@ -486,7 +596,11 @@ mod tests {
         req.table = "test_table".to_string();
 
         let result_set = client
-            .read(req, crate::RequestOptions::default())
+            .read(
+                req,
+                crate::RequestOptions::default(),
+                client.next_channel_hint(),
+            )
             .await
             .expect("Failed to call read");
         assert!(result_set.metadata.is_none());
@@ -520,7 +634,11 @@ mod tests {
         req.session = "test_session".to_string();
 
         let tx = client
-            .begin_transaction(req, crate::RequestOptions::default())
+            .begin_transaction(
+                req,
+                crate::RequestOptions::default(),
+                client.next_channel_hint(),
+            )
             .await
             .expect("Failed to call begin_transaction");
         assert_eq!(tx.id, vec![1, 2, 3]);
@@ -558,7 +676,11 @@ mod tests {
         req.session = "test_session".to_string();
 
         let response = client
-            .commit(req, crate::RequestOptions::default())
+            .commit(
+                req,
+                crate::RequestOptions::default(),
+                client.next_channel_hint(),
+            )
             .await
             .expect("Failed to call commit");
         assert!(response.commit_timestamp.is_some());
@@ -587,7 +709,11 @@ mod tests {
         req.session = "test_session".to_string();
 
         client
-            .rollback(req, crate::RequestOptions::default())
+            .rollback(
+                req,
+                crate::RequestOptions::default(),
+                client.next_channel_hint(),
+            )
             .await
             .expect("Failed to call rollback");
     }
@@ -629,7 +755,11 @@ mod tests {
         req.sql = "SELECT 1".to_string();
 
         let mut stream = client
-            .execute_streaming_sql(req, crate::RequestOptions::default())
+            .execute_streaming_sql(
+                req,
+                crate::RequestOptions::default(),
+                client.next_channel_hint(),
+            )
             .send()
             .await
             .expect("Failed to call execute_streaming_sql");
@@ -677,7 +807,11 @@ mod tests {
         req.columns = vec!["col1".to_string()];
 
         let mut stream = client
-            .streaming_read(req, crate::RequestOptions::default())
+            .streaming_read(
+                req,
+                crate::RequestOptions::default(),
+                client.next_channel_hint(),
+            )
             .send()
             .await
             .expect("Failed to call streaming_read");
@@ -715,7 +849,11 @@ mod tests {
         req.session = "test_session".to_string();
 
         let mut stream = client
-            .batch_write(req, crate::RequestOptions::default())
+            .batch_write(
+                req,
+                crate::RequestOptions::default(),
+                client.next_channel_hint(),
+            )
             .send()
             .await
             .expect("Failed to call batch_write");
@@ -751,7 +889,11 @@ mod tests {
         req.sql = "SELECT 1".to_string();
 
         let mut stream = client
-            .execute_streaming_sql(req, crate::RequestOptions::default())
+            .execute_streaming_sql(
+                req,
+                crate::RequestOptions::default(),
+                client.next_channel_hint(),
+            )
             .send()
             .await
             .expect("Failed to call execute_streaming_sql");
@@ -799,7 +941,11 @@ mod tests {
             "projects/test-project/instances/test-instance/databases/test-db".to_string();
 
         let session = client
-            .create_session(req, crate::RequestOptions::default())
+            .create_session(
+                req,
+                crate::RequestOptions::default(),
+                client.next_channel_hint(),
+            )
             .await
             .expect("Failed to call create_session");
 
@@ -840,7 +986,9 @@ mod tests {
         let mut options = crate::RequestOptions::default();
         options.set_idempotency(false);
 
-        let result = client.create_session(req, options).await;
+        let result = client
+            .create_session(req, options, client.next_channel_hint())
+            .await;
 
         // 5. Verify that it failed and did not retry
         assert!(result.is_err(), "Expected error, got {:?}", result);
@@ -1086,7 +1234,276 @@ mod tests {
             .await?;
 
         // 5. Verify success after retry
-        assert_eq!(result, 1);
+        assert_eq!(result.result, 1);
+
+        Ok(())
+    }
+
+    fn parse_timeout(metadata: &MetadataMap) -> u64 {
+        let timeout = metadata
+            .get("grpc-timeout")
+            .expect("grpc-timeout header should be present");
+        let timeout_str = timeout
+            .to_str()
+            .expect("grpc-timeout should be a valid string");
+        if timeout_str.ends_with('u') {
+            timeout_str
+                .trim_end_matches('u')
+                .parse()
+                .expect("valid u64")
+        } else if timeout_str.ends_with('m') {
+            timeout_str
+                .trim_end_matches('m')
+                .parse::<u64>()
+                .expect("valid u64")
+                * 1000
+        } else if timeout_str.ends_with('n') {
+            timeout_str
+                .trim_end_matches('n')
+                .parse::<u64>()
+                .expect("valid u64")
+                / 1000
+        } else {
+            panic!("Unknown timeout unit in {}", timeout_str);
+        }
+    }
+
+    #[tokio_test_no_panics]
+    async fn transaction_timeout_respected() -> anyhow::Result<()> {
+        use google_cloud_gax::retry_policy::{Aip194Strict, RetryPolicyExt};
+        use spanner_grpc_mock::google::spanner::v1::Transaction;
+
+        // 1. Setup Mock Server
+        let mut mock = MockSpanner::new();
+
+        mock.expect_create_session().returning(|_| {
+            Ok(Response::new(Session {
+                name: "projects/p/instances/i/databases/d/sessions/123".to_string(),
+                ..Default::default()
+            }))
+        });
+
+        mock.expect_begin_transaction().returning(|_| {
+            Ok(Response::new(Transaction {
+                id: vec![1, 2, 3],
+                ..Default::default()
+            }))
+        });
+
+        mock.expect_commit().once().returning(|_| {
+            Ok(Response::new(CommitResponse {
+                commit_timestamp: Some(prost_types::Timestamp {
+                    seconds: 12345,
+                    nanos: 0,
+                }),
+                ..Default::default()
+            }))
+        });
+
+        // Mock execute_sql to first fail and then succeed, checking timeout header on both
+        let mut seq = mockall::Sequence::new();
+
+        mock.expect_execute_sql()
+            .once()
+            .in_sequence(&mut seq)
+            .returning(|req| {
+                let timeout_val = parse_timeout(req.metadata());
+                assert!(
+                    timeout_val <= 100000,
+                    "Expected timeout to be <= 100ms, got {}",
+                    timeout_val
+                );
+                Err(Status::new(GrpcCode::ResourceExhausted, "quota exceeded"))
+            });
+
+        mock.expect_execute_sql()
+            .once()
+            .in_sequence(&mut seq)
+            .returning(|req| {
+                let timeout_val = parse_timeout(req.metadata());
+                assert!(
+                    timeout_val <= 100000,
+                    "Expected timeout to be <= 100ms, got {}",
+                    timeout_val
+                );
+
+                let res = ResultSet {
+                    stats: Some(ResultSetStats {
+                        row_count: Some(RowCount::RowCountExact(1)),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                };
+                Ok(Response::new(res))
+            });
+
+        // 2. Initialize Client
+        let (address, _server) = start("127.0.0.1:0", mock).await?;
+        let client = Spanner::builder()
+            .with_endpoint(address)
+            .with_credentials(Anonymous::new().build())
+            .build()
+            .await?;
+        let db = client
+            .database_client("projects/p/instances/i/databases/d")
+            .build()
+            .await?;
+
+        // 3. Setup Transaction Runner with 100ms timeout
+        let runner = db
+            .read_write_transaction()
+            .with_transaction_timeout(Duration::from_millis(100))
+            .build()
+            .await?;
+
+        // 4. Run transaction and expect success after retry
+        let result = runner
+            .run(async |tx| {
+                let mut mock_backoff = MockBackoffPolicy::new();
+                mock_backoff
+                    .expect_on_failure()
+                    .times(1)
+                    .returning(|_| Duration::from_nanos(1));
+
+                let retry_policy = Aip194Strict.continue_on_too_many_requests();
+
+                let stmt = Statement::builder("SELECT 1")
+                    .with_retry_policy(retry_policy)
+                    .with_backoff_policy(mock_backoff)
+                    .build();
+                tx.execute_update(stmt).await?;
+                Ok(())
+            })
+            .await;
+
+        result.expect("Transaction should have succeeded");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn transaction_timeout_ticks_down() -> anyhow::Result<()> {
+        use spanner_grpc_mock::google::spanner::v1::Transaction;
+
+        let mut mock = MockSpanner::new();
+
+        mock.expect_create_session().returning(|_| {
+            Ok(Response::new(Session {
+                name: "projects/p/instances/i/databases/d/sessions/123".to_string(),
+                ..Default::default()
+            }))
+        });
+
+        let mut seq = mockall::Sequence::new();
+
+        mock.expect_begin_transaction()
+            .once()
+            .in_sequence(&mut seq)
+            .returning(|_| {
+                Ok(Response::new(Transaction {
+                    id: vec![1],
+                    ..Default::default()
+                }))
+            });
+
+        let previous_timeout = Arc::new(AtomicU64::new(0));
+        let prev_clone1 = previous_timeout.clone();
+        mock.expect_execute_sql()
+            .once()
+            .in_sequence(&mut seq)
+            .returning(move |req| {
+                let timeout_val = parse_timeout(req.metadata());
+                assert!(
+                    timeout_val <= 500000,
+                    "Expected timeout to be <= 500ms, got {}",
+                    timeout_val
+                );
+                prev_clone1.store(timeout_val, Ordering::SeqCst);
+                Err(Status::new(GrpcCode::Aborted, "Aborted"))
+            });
+
+        // Second attempt: Checks that timeout is <= previous
+        mock.expect_begin_transaction()
+            .once()
+            .in_sequence(&mut seq)
+            .returning(|_| {
+                Ok(Response::new(Transaction {
+                    id: vec![2],
+                    ..Default::default()
+                }))
+            });
+
+        let prev_clone2 = previous_timeout.clone();
+        mock.expect_execute_sql()
+            .once()
+            .in_sequence(&mut seq)
+            .returning(move |req| {
+                let timeout_val = parse_timeout(req.metadata());
+                let prev = prev_clone2.load(Ordering::SeqCst);
+                assert!(
+                    timeout_val <= prev,
+                    "Timeout should tick down between attempts or be equal, got {} and {}",
+                    timeout_val,
+                    prev
+                );
+                prev_clone2.store(timeout_val, Ordering::SeqCst); // store for next check
+
+                let res = ResultSet {
+                    stats: Some(ResultSetStats {
+                        row_count: Some(RowCount::RowCountExact(1)),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                };
+                Ok(Response::new(res))
+            });
+
+        let prev_clone3 = previous_timeout.clone();
+        mock.expect_commit().once().returning(move |req| {
+            let timeout_val = parse_timeout(req.metadata());
+            let prev = prev_clone3.load(Ordering::SeqCst);
+            assert!(
+                timeout_val < prev,
+                "Timeout should be smaller for commit, got {} and {}",
+                timeout_val,
+                prev
+            );
+
+            Ok(Response::new(CommitResponse {
+                commit_timestamp: Some(prost_types::Timestamp {
+                    seconds: 12345,
+                    nanos: 0,
+                }),
+                ..Default::default()
+            }))
+        });
+
+        let (address, _server) = start("127.0.0.1:0", mock).await?;
+        let client = Spanner::builder()
+            .with_endpoint(address)
+            .with_credentials(Anonymous::new().build())
+            .build()
+            .await?;
+        let db = client
+            .database_client("projects/p/instances/i/databases/d")
+            .build()
+            .await?;
+
+        let runner = db
+            .read_write_transaction()
+            .with_transaction_timeout(Duration::from_millis(500))
+            .build()
+            .await?;
+
+        let result = runner
+            .run(async |tx| {
+                let stmt = Statement::builder("SELECT 1").build();
+                tx.execute_update(stmt).await?;
+                Ok(())
+            })
+            .await;
+
+        result.expect("Transaction should have succeeded");
 
         Ok(())
     }

@@ -24,5 +24,8 @@ set +v
 echo "==== cargo clippy ===="
 cargo clippy --all-features --all-targets --profile=test --workspace -- --deny warnings
 
+echo "==== cargo clippy strict (handwritten crates non-test mode) ===="
+cargo clippy-strict
+
 echo "==== DONE ===="
 /workspace/.bin/sccache --show-stats

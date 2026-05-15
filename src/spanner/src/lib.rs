@@ -18,12 +18,19 @@
 //! breaking changes in the upcoming releases. Testing is also incomplete, we do
 //! **not** recommend that you use this crate in production. We welcome feedback
 //! about the APIs, documentation, missing features, bugs, etc.
-//!
+
+// TODO(#5537) - fix missing docs and remove this.
+#![allow(missing_docs, reason = "docs not yet complete")]
+// TODO(#5566) - stabilize API and remove this.
+#![allow(clippy::exhaustive_enums, reason = "API not yet stable")]
 
 pub use batch_dml::BatchDml;
 pub use batch_dml::BatchDmlBuilder;
 pub use batch_read_only_transaction::{
     BatchReadOnlyTransaction, BatchReadOnlyTransactionBuilder, Partition,
+};
+pub use batch_write_transaction::{
+    BatchWriteResponseStream, BatchWriteTransaction, BatchWriteTransactionBuilder,
 };
 pub use error::BatchUpdateError;
 pub use google_cloud_gax::Result;
@@ -44,6 +51,7 @@ pub mod batch_read_only_transaction;
 pub mod model {
     pub use crate::generated::gapic_dataplane::model::*;
 }
+pub(crate) mod batch_write_transaction;
 pub(crate) mod database_client;
 pub(crate) mod from_value;
 pub(crate) mod key;

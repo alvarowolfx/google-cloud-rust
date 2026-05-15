@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// TODO(#5592): remove after query iterator is implemented.
+#![allow(dead_code, unused_imports)]
+
 /// Job Reference.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) enum JobReference {

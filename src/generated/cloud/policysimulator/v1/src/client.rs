@@ -62,7 +62,7 @@
 /// * [with_endpoint()]: by default this client uses the global default endpoint
 ///   (`https://policysimulator.googleapis.com`). Applications using regional
 ///   endpoints or running in restricted networks (e.g. a network configured
-//    with [Private Google Access with VPC Service Controls]) may want to
+///   with [Private Google Access with VPC Service Controls]) may want to
 ///   override this default.
 /// * [with_credentials()]: by default this client uses
 ///   [Application Default Credentials]. Applications using custom
@@ -257,8 +257,6 @@ impl OrgPolicyViolationsPreviewService {
     /// in an
     /// [OrgPolicyViolationsPreview][google.cloud.policysimulator.v1.OrgPolicyViolationsPreview].
     ///
-    /// [google.cloud.policysimulator.v1.OrgPolicyViolationsPreview]: crate::model::OrgPolicyViolationsPreview
-    ///
     /// # Example
     /// ```
     /// # use google_cloud_policysimulator_v1::client::OrgPolicyViolationsPreviewService;
@@ -386,7 +384,7 @@ impl OrgPolicyViolationsPreviewService {
 /// * [with_endpoint()]: by default this client uses the global default endpoint
 ///   (`https://policysimulator.googleapis.com`). Applications using regional
 ///   endpoints or running in restricted networks (e.g. a network configured
-//    with [Private Google Access with VPC Service Controls]) may want to
+///   with [Private Google Access with VPC Service Controls]) may want to
 ///   override this default.
 /// * [with_credentials()]: by default this client uses
 ///   [Application Default Credentials]. Applications using custom

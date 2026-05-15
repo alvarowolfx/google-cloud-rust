@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![allow(unused_imports, dead_code)]
+// TODO(#5592): remove after marking query structs public.
+#![allow(dead_code, unused_imports)]
 
 pub(crate) mod execution;
 mod handle;

@@ -123,6 +123,33 @@ For example:
 cargo clippy -p google-cloud-storage --profile test -- -D warnings
 ```
 
+We run a comprehensive strict check as part of our CI that enforces stricter
+lints on all handwritten crates. This check is defined as a Cargo alias called
+`clippy-strict` in [.cargo/config.toml](.cargo/config.toml).
+
+To run these checks locally on all targeted handwritten crates, use the cargo
+alias `clippy-strict`:
+
+```bash
+cargo clippy-strict
+```
+
+To run this strict check for a specific crate, run standard `cargo clippy` with
+the same flags from the alias:
+
+```bash
+cargo clippy --all-features --no-deps -p google-cloud-storage -- -D missing_docs -D clippy::exhaustive_enums
+```
+
+Please refer to [.cargo/config.toml](.cargo/config.toml) for the authoritative
+list of crates and exact set of lint flags currently subject to these checks.
+
+> [!IMPORTANT]
+> When editing or adding code within any of the handwritten crates, you MUST run
+> the strict clippy check (`cargo clippy-strict` for all crates or the specific
+> command above for the modified crate) to ensure no new warnings are
+> introduced.
+
 ### Code Formatter
 
 To format the code for the entire workspace, use the following command:

@@ -87,6 +87,12 @@ cargo fmt && cargo clippy --profile=test -- --deny warnings && cargo test
 git status # Shows any diffs created by `cargo fmt`
 ```
 
+> [!NOTE]
+> If you are modifying handwritten crates, note that our CI runs stricter lints
+> (such as missing documentation checks and exhaustive enums). You can run these
+> checks locally using the `cargo clippy-strict` alias. See
+> [.cargo/config.toml](../../.cargo/config.toml) for the exact definition.
+
 If you are seeing errors when running locally that are not present in the CI,
 you may need to update your local rust version.
 

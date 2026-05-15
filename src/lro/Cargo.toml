@@ -36,6 +36,9 @@ rust-version.workspace = true
 # [futures::stream::Stream]: https://docs.rs/futures/latest/futures/stream/trait.Stream.html
 features = ["unstable-stream"]
 
+[lints]
+workspace = true
+
 [dependencies]
 futures         = { workspace = true, optional = true }
 pin-project     = { workspace = true, optional = true }
@@ -47,6 +50,9 @@ google-cloud-longrunning = { workspace = true }
 google-cloud-rpc         = { workspace = true }
 google-cloud-wkt         = { workspace = true }
 
+[target.'cfg(google_cloud_unstable_tracing)'.dependencies]
+tracing = { workspace = true }
+
 [features]
 unstable-stream = ["dep:futures", "dep:pin-project"]
 # DO NOT USE: this allows us to detect semver changes in types used in the
@@ -54,6 +60,7 @@ unstable-stream = ["dep:futures", "dep:pin-project"]
 # by this feature are intended for general use. We do not plan to document these
 # features and offer no guarantees on their stability.
 _internal-semver = []
+
 
 [dev-dependencies]
 anyhow.workspace     = true
@@ -63,3 +70,6 @@ tokio                = { workspace = true, features = ["test-util"] }
 # Local dependencies
 google-cloud-auth.workspace = true
 google-cloud-lro            = { path = ".", features = ["unstable-stream"] }
+
+[package.metadata.cargo-machete]
+ignored = ["anyhow", "google-cloud-auth", "google-cloud-lro", "httptest", "serde_json"]

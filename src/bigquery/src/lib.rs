@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![warn(missing_docs)]
-
 //! Google Cloud Client Libraries for Rust - BigQuery
 //!
 //! **WARNING:** this crate is under active development. We expect multiple
@@ -30,9 +28,6 @@ pub use google_cloud_gax::Result;
 pub use google_cloud_gax::error::Error;
 
 pub(crate) use google_cloud_gax::client_builder::Result as ClientBuilderResult;
-pub(crate) use google_cloud_gax::options::RequestOptions;
-pub(crate) use google_cloud_gax::options::internal::RequestBuilder;
-pub(crate) use google_cloud_gax::response::Response;
 
 mod client_builder;
 
@@ -41,44 +36,12 @@ pub use builder as builders;
 
 /// High-level BigQuery client and execution entrypoints.
 pub mod client;
-mod proto_schema;
 pub(crate) mod query;
-// TODO(#4832) - remove handwritten code.
-mod status;
-
-/// Data models, handles, and iterators.
-pub mod model {
-    pub use crate::generated::gapic_storage::model::*;
-}
 
 pub mod builder {
     //! Request builders.
     pub mod bigquery {
         //! Request builders for [BigQuery][crate::client::BigQuery].
         pub use crate::client_builder::ClientBuilder;
-    }
-}
-
-#[allow(dead_code)]
-pub(crate) mod generated;
-
-#[allow(dead_code)]
-pub(crate) mod google {
-    pub mod api {
-        include!("generated/protos/storage/google.api.rs");
-    }
-    pub mod cloud {
-        pub mod bigquery {
-            pub mod storage {
-                pub mod v1 {
-                    #![allow(deprecated)]
-                    include!("generated/protos/storage/google.cloud.bigquery.storage.v1.rs");
-                    include!("generated/convert/storage/convert.rs");
-                }
-            }
-        }
-    }
-    pub mod rpc {
-        include!("generated/protos/storage/google.rpc.rs");
     }
 }

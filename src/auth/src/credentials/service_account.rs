@@ -84,7 +84,6 @@ use crate::{BuildResult, Result};
 use async_trait::async_trait;
 use http::{Extensions, HeaderMap};
 use jws::{CLOCK_SKEW_FUDGE, DEFAULT_TOKEN_TIMEOUT, JwsClaims, JwsHeader};
-use rustls::crypto::CryptoProvider;
 use rustls::sign::Signer;
 use rustls_pki_types::{PrivateKeyDer, pem::PemObject};
 use serde_json::Value;
@@ -101,6 +100,7 @@ use tokio::time::Instant;
 /// [JWT]: https://google.aip.dev/auth/4111
 /// [scopes]: https://developers.google.com/identity/protocols/oauth2/scopes
 #[derive(Clone, Debug, PartialEq)]
+#[allow(clippy::exhaustive_enums)]
 pub enum AccessSpecifier {
     /// Use [AccessSpecifier::Audience] for setting audience in the token.
     /// `aud` is a [JWT] claim specifying intended recipient of the token,
@@ -294,7 +294,7 @@ impl Builder {
         self
     }
 
-    #[cfg(all(test, google_cloud_unstable_trusted_boundaries))]
+    #[cfg(all(test, google_cloud_unstable_trust_boundaries))]
     fn maybe_iam_endpoint_override(mut self, iam_endpoint_override: Option<String>) -> Self {
         self.iam_endpoint_override = iam_endpoint_override;
         self
@@ -455,25 +455,11 @@ impl ServiceAccountKey {
     // Creates a signer using the private key stored in the service account file.
     pub(crate) fn signer(&self) -> Result<Box<dyn Signer>> {
         let private_key = self.private_key.clone();
-        let key_provider = CryptoProvider::get_default().map(|p| p.key_provider);
-        #[cfg(feature = "default-rustls-provider")]
-        let key_provider = key_provider
-            .unwrap_or_else(|| rustls::crypto::aws_lc_rs::default_provider().key_provider);
-        #[cfg(not(feature = "default-rustls-provider"))]
-        let key_provider = key_provider.expect(
-            r###"
-The default rustls::CryptoProvider should be configured by the application. The
-`google-cloud-auth` crate was compiled without the `default-rustls-provider`
-feature. Without this feature the crate expects the application to initialize
-the rustls crypto provider using `rustls::CryptoProvider::install_default()`.
-
-Note that the application must use the exact same version of `rustls` as the
-`google-cloud-auth` crate does. Otherwise `install_default()` has no effect."###,
-        );
+        let key_provider = crate::credentials::crypto_provider::get_key_provider();
 
         let key_der = PrivateKeyDer::from_pem_slice(private_key.as_bytes()).map_err(|e| {
             errors::non_retryable_from_str(format!(
-                "Failed to parse service account private key PEM: {}",
+                "failed to parse service account private key PEM: {}",
                 e
             ))
         })?;
@@ -494,7 +480,7 @@ Note that the application must use the exact same version of `rustls` as the
 
         pk.choose_scheme(&[rustls::SignatureScheme::RSA_PKCS1_SHA256])
             .ok_or_else(||{
-                errors::non_retryable_from_str("Unable to choose RSA_PKCS1_SHA256 signing scheme as it is not supported by current signer")
+                errors::non_retryable_from_str("unable to choose RSA_PKCS1_SHA256 signing scheme as it is not supported by current signer")
             })
     }
 }
@@ -986,7 +972,7 @@ mod tests {
         };
 
         let signer = tg.service_account_key.signer();
-        let expected_error_message = "Failed to parse service account private key PEM";
+        let expected_error_message = "failed to parse service account private key PEM";
         assert!(signer.is_err_and(|e| e.to_string().contains(expected_error_message)));
         Ok(())
     }
@@ -1007,7 +993,7 @@ mod tests {
         let result = key.signer();
         assert!(result.is_err(), "{result:?}");
         let error_msg = result.unwrap_err().to_string();
-        assert!(error_msg.contains("Failed to parse service account private key PEM"));
+        assert!(error_msg.contains("failed to parse service account private key PEM"));
         Ok(())
     }
 
@@ -1132,7 +1118,7 @@ mod tests {
 
     #[tokio::test]
     #[parallel]
-    #[cfg(google_cloud_unstable_trusted_boundaries)]
+    #[cfg(google_cloud_unstable_trust_boundaries)]
     async fn e2e_access_boundary() -> TestResult {
         use crate::credentials::tests::get_access_boundary_from_headers;
         use httptest::responders::json_encoded;
