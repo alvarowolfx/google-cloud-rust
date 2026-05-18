@@ -16,7 +16,7 @@ use crate::Result;
 use crate::query::{JobReference, QueryCreationMetadata, QueryMetadata, Row, RowIterator, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{
-    GetQueryResultsRequest, GetQueryResultsResponse, QueryResponse,
+    GetQueryResultsRequest, GetQueryResultsResponse, Job, QueryResponse,
 };
 use std::collections::VecDeque;
 use std::sync::Arc;
@@ -171,6 +171,28 @@ impl CompleteQuery {
 
     pub fn metadata(&self) -> QueryMetadata {
         self.metadata.clone()
+    }
+
+    pub async fn job_metadata(&self) -> Result<Job> {
+        let Some(job_ref) = self.job_ref.to_job_ref() else {
+            return Err(google_cloud_gax::error::Error::io(
+                "cannot fetch job metadata for stateless queries",
+            ));
+        };
+
+        let mut req = self
+            .job_service
+            .get_job()
+            .set_job_id(job_ref.job_id)
+            .set_project_id(job_ref.project_id);
+
+        if let Some(location) = job_ref.location {
+            req = req.set_location(location);
+        }
+
+        req.send()
+            .await
+            .map_err(|_| google_cloud_gax::error::Error::io("failing to get job metadata"))
     }
 }
 

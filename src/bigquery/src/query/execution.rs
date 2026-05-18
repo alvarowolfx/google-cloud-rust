@@ -37,26 +37,26 @@ impl PostQueryExecutor {
             .send()
             .await?;
 
-        let stored_res = res.clone();
-        if let Some(first_err) = res.errors.into_iter().next() {
+        let errors = res.errors.clone();
+        if let Some(first_err) = errors.into_iter().next() {
             let rpc_status = google_cloud_gax::error::rpc::Status::default()
                 .set_code(google_cloud_gax::error::rpc::Code::Unknown)
                 .set_message(first_err.message);
             return Err(google_cloud_gax::error::Error::service(rpc_status));
         }
 
-        let completed = res.job_complete.unwrap_or(false);
-        let job_ref = if let Some(job_ref) = res.job_reference {
-            job_ref.into()
+        let completed = res.job_complete.clone().unwrap_or(false);
+        let job_ref = if let Some(ref job_ref) = res.job_reference {
+            job_ref.clone().into()
         } else {
-            JobReference::from_query_id(res.query_id)
+            JobReference::from_query_id(res.query_id.clone())
         };
 
         Ok(Query {
             job_service: self.job_service.clone(),
             job_ref,
             completed,
-            metadata: QueryCreationMetadata::JobsQuery(stored_res),
+            metadata: QueryCreationMetadata::JobsQuery(res),
         })
     }
 }

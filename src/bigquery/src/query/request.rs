@@ -16,7 +16,7 @@ use google_cloud_bigquery_v2::model::{
     DataFormatOptions, Job, JobConfiguration, JobConfigurationQuery, PostQueryRequest,
 };
 
-/// A request to execute a query, which can be either a stateless `PostQueryRequest` or an advanced `Job`.
+/// A request to execute a query, which can be either using a fast query path with `PostQueryRequest` or an advanced `Job`.
 #[derive(Debug, Clone)]
 #[allow(clippy::large_enum_variant)]
 pub enum QueryRequest {
