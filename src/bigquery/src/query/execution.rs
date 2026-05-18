@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::Result;
-use crate::query::{JobReference, Query, QueryCreationMetadata};
+use crate::query::{JobReference, Query, QueryJob};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{InsertJobRequest, Job, PostQueryRequest};
 use std::sync::Arc;
@@ -56,7 +56,7 @@ impl PostQueryExecutor {
             job_service: self.job_service.clone(),
             job_ref,
             completed,
-            metadata: QueryCreationMetadata::JobsQuery(res),
+            initial_response: res,
         })
     }
 }
@@ -68,7 +68,7 @@ pub(crate) struct InsertJobExecutor {
 }
 
 impl InsertJobExecutor {
-    pub(crate) async fn execute(self) -> Result<Query> {
+    pub(crate) async fn execute(self) -> Result<QueryJob> {
         let is_query = self
             .job
             .configuration
@@ -105,12 +105,11 @@ impl InsertJobExecutor {
 
         let job_ref = res
             .job_reference
-            .expect("newly insert job should have job reference");
-        Ok(Query {
+            .expect("newly inserted job should have job reference");
+        Ok(QueryJob {
             job_service: self.job_service.clone(),
             job_ref: job_ref.into(),
-            completed: false,
-            metadata: QueryCreationMetadata::JobsInsert(stored_res),
+            initial_job: stored_res,
         })
     }
 }

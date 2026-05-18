@@ -16,20 +16,24 @@
 #![allow(dead_code, unused_imports)]
 
 pub(crate) mod execution;
-mod handle;
 mod iterator;
+mod job_handle;
 mod job_reference;
 mod metadata;
+mod query_handle;
+mod read_request;
 mod request;
 mod row;
 mod run_query;
 mod schema;
 
-pub(crate) use handle::{CompleteQuery, Error as QueryError, Query};
 pub(crate) use iterator::{Error as IteratorError, RowIterator};
+pub(crate) use job_handle::{CompleteQueryJob, QueryJob};
 pub(crate) use job_reference::JobReference;
-pub(crate) use metadata::{QueryCreationMetadata, QueryMetadata};
-pub(crate) use request::QueryRequest;
+pub(crate) use metadata::QueryMetadata;
+pub(crate) use query_handle::{CompleteQuery, Query};
+pub(crate) use read_request::ReadRequest;
+pub(crate) use request::{IntoJob, IntoPostQueryRequest};
 pub(crate) use row::Row;
-pub(crate) use run_query::RunQuery;
+pub(crate) use run_query::{RunQuery, RunQueryJob};
 pub(crate) use schema::Schema;

@@ -15,7 +15,7 @@
 use crate::ClientBuilderResult as BuilderResult;
 use crate::Result;
 use crate::client_builder::ClientBuilder;
-use crate::query::{JobReference, Query, QueryCreationMetadata, QueryRequest, RunQuery};
+use crate::query::{IntoJob, IntoPostQueryRequest, JobReference, QueryJob, RunQuery, RunQueryJob};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_gax::client_builder::Error as ClientBuilderError;
 use std::sync::Arc;
@@ -56,24 +56,31 @@ impl BigQuery {
         })
     }
 
-    /// Prepares a query execution by returning a `RunQuery` to configure additional options.
-    pub fn query<T>(&self, req: T) -> RunQuery
-    where
-        T: Into<QueryRequest>,
-    {
+    /// Prepares a fast-path query execution by returning a `RunQuery` builder.
+    pub fn query<T: IntoPostQueryRequest>(&self, req: T) -> RunQuery {
         RunQuery {
             job_service: self.job_service.clone(),
             client_project_id: self.project_id.clone(),
-            request: req.into(),
+            request: req.into_post_query_request(),
             billing_project_id: None,
         }
     }
 
-    /// Re-attach hook to bind an existing out-of-process job reference.
+    /// Prepares a background query job execution by returning a `RunQueryJob` builder.
+    pub fn query_job<T: IntoJob>(&self, req: T) -> RunQueryJob {
+        RunQueryJob {
+            job_service: self.job_service.clone(),
+            client_project_id: self.project_id.clone(),
+            job: req.into_job(),
+            billing_project_id: None,
+        }
+    }
+
+    /// Re-attach hook to bind an existing out-of-process job reference as a `QueryJob`.
     pub async fn attach_job(
         &self,
         job_ref: google_cloud_bigquery_v2::model::JobReference,
-    ) -> Result<Query> {
+    ) -> Result<QueryJob> {
         let internal_job_ref: JobReference = job_ref.clone().into();
         let mut req = self
             .job_service
@@ -87,11 +94,10 @@ impl BigQuery {
 
         let job = req.send().await?;
 
-        Ok(Query {
+        Ok(QueryJob {
             job_service: self.job_service.clone(),
             job_ref: internal_job_ref,
-            completed: false,
-            metadata: QueryCreationMetadata::JobsInsert(job),
+            initial_job: job,
         })
     }
 }

@@ -18,7 +18,6 @@ use google_cloud_bigquery_v2::client::{DatasetService, JobService};
 use google_cloud_bigquery_v2::model::query_request::JobCreationMode;
 use google_cloud_bigquery_v2::model::{
     Dataset, DatasetReference, Job, JobConfiguration, JobConfigurationQuery, JobReference,
-    QueryRequest,
 };
 use google_cloud_gax::{error::rpc::Code, paginator::ItemPaginator};
 use google_cloud_test_utils::runtime_config::project_id;
@@ -229,7 +228,7 @@ pub async fn query_client() -> Result<()> {
         .await?;
 
     println!("STARTING HIGH-LEVEL SMOKE TEST QUERY");
-    let req = QueryRequest::new()
+    let req = google_cloud_bigquery_v2::model::QueryRequest::new()
         .set_query("SELECT 1 as one")
         .set_job_creation_mode(JobCreationMode::JobCreationOptional);
     let query = bq.query(req).run().await?;
@@ -238,7 +237,7 @@ pub async fn query_client() -> Result<()> {
 
     let complete_query = query.until_done().await?;
 
-    assert_eq!(complete_query.metadata().total_rows(), 1);
+    assert_eq!(complete_query.metadata().total_rows(), Some(1));
 
     let mut rows = complete_query.read().await?;
     let mut count = 0;
@@ -267,9 +266,10 @@ pub async fn query_client_multi_page() -> Result<()> {
         .set_max_results(1000_u32);
 
     let query = bq.query(req).run().await?;
+
     let complete_query = query.until_done().await?;
 
-    assert_eq!(complete_query.metadata().total_rows(), 10000);
+    assert_eq!(complete_query.metadata().total_rows(), Some(10000));
 
     let mut rows = complete_query.read().with_max_results(1000).await?;
     let mut count = 0;
@@ -296,10 +296,10 @@ pub async fn query_client_job() -> Result<()> {
         .set_query("SELECT 2 as two")
         .set_use_legacy_sql(false);
 
-    let query = bq.query(req).run().await?;
+    let query = bq.query_job(req).run().await?;
     let complete_query = query.until_done().await?;
 
-    assert_eq!(complete_query.metadata().total_rows(), 1);
+    assert!(complete_query.metadata().total_bytes_processed().is_some());
 
     let mut rows = complete_query.read().await?;
     let mut count = 0;
