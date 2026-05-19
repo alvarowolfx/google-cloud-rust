@@ -13,12 +13,11 @@
 // limitations under the License.
 
 use crate::Result;
-use crate::query::job_reference::JobReference;
 use crate::query::metadata::QueryMetadata;
 use crate::query::{QueryJob, ReadRequest, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{
-    GetQueryResultsRequest, GetQueryResultsResponse, Job, QueryResponse,
+    GetQueryResultsRequest, GetQueryResultsResponse, Job, JobReference, QueryResponse,
 };
 use std::collections::VecDeque;
 use std::sync::Arc;
@@ -27,7 +26,7 @@ use std::sync::Arc;
 #[derive(Debug, Clone)]
 pub struct Query {
     pub(crate) job_service: Arc<JobService>,
-    pub(crate) job_ref: JobReference,
+    pub(crate) job_ref: Option<JobReference>,
     pub(crate) completed: bool,
     pub(crate) initial_response: QueryResponse,
 }
@@ -43,7 +42,7 @@ impl Query {
             ));
         }
 
-        let res = poll_query_results(&self.job_service, &self.job_ref).await?;
+        let res = poll_query_results(&self.job_service, self.job_ref.as_ref()).await?;
         Ok(CompleteQuery::from_get_query_results_response(self, res))
     }
 
@@ -58,7 +57,7 @@ impl Query {
 
     /// Returns the underlying job reference for this query.
     pub fn job_reference(&self) -> Option<google_cloud_bigquery_v2::model::JobReference> {
-        self.job_ref.to_job_ref()
+        self.job_ref.clone()
     }
 
     /// Returns the initial raw `QueryResponse` received from the service.
@@ -71,7 +70,7 @@ impl Query {
 #[derive(Debug, Clone)]
 pub struct CompleteQuery {
     pub(crate) job_service: Arc<JobService>,
-    pub(crate) job_ref: JobReference,
+    pub(crate) job_ref: Option<JobReference>,
     pub(crate) cached_rows: VecDeque<wkt::Struct>,
     pub(crate) schema: Arc<Schema>,
     pub(crate) page_token: Option<String>,
@@ -157,19 +156,17 @@ impl CompleteQuery {
 
     /// Performs a network call to fetch the full `Job` resource from the backend.
     pub async fn job_metadata(&self) -> Result<Job> {
-        let Some(job_ref) = self.job_ref.to_job_ref() else {
-            return Err(google_cloud_gax::error::Error::io(
-                "cannot fetch job metadata for stateless queries",
-            ));
-        };
+        let job_ref = self.job_ref.as_ref().ok_or_else(|| {
+            google_cloud_gax::error::Error::io("cannot fetch job metadata for stateless queries")
+        })?;
 
         let mut req = self
             .job_service
             .get_job()
-            .set_job_id(job_ref.job_id)
-            .set_project_id(job_ref.project_id);
+            .set_job_id(job_ref.job_id.clone())
+            .set_project_id(job_ref.project_id.clone());
 
-        if let Some(location) = job_ref.location {
+        if let Some(location) = job_ref.location.clone() {
             req = req.set_location(location);
         }
 
@@ -182,19 +179,16 @@ impl CompleteQuery {
 /// Helper function to poll getQueryResults until a job finishes.
 pub(crate) async fn poll_query_results(
     job_service: &JobService,
-    job_ref: &JobReference,
+    job_ref: Option<&JobReference>,
 ) -> Result<GetQueryResultsResponse> {
     loop {
-        let Some(raw_job_ref) = job_ref.to_job_ref() else {
-            return Err(google_cloud_gax::error::Error::io(
-                "can't poll stateless queries",
-            ));
-        };
+        let job_ref = job_ref
+            .ok_or_else(|| google_cloud_gax::error::Error::io("can't poll stateless queries"))?;
 
         let mut req = GetQueryResultsRequest::new()
-            .set_project_id(raw_job_ref.project_id.clone())
-            .set_job_id(raw_job_ref.job_id.clone());
-        if let Some(location) = raw_job_ref.location.clone() {
+            .set_project_id(job_ref.project_id.clone())
+            .set_job_id(job_ref.job_id.clone());
+        if let Some(location) = job_ref.location.clone() {
             req = req.set_location(location);
         }
 

@@ -15,7 +15,7 @@
 use crate::ClientBuilderResult as BuilderResult;
 use crate::Result;
 use crate::client_builder::ClientBuilder;
-use crate::query::{IntoJob, IntoPostQueryRequest, JobReference, QueryJob, RunQuery, RunQueryJob};
+use crate::query::{IntoJob, IntoPostQueryRequest, QueryJob, RunQuery, RunQueryJob};
 use google_cloud_bigquery_v2::client::JobService;
 use std::sync::Arc;
 
@@ -68,14 +68,13 @@ impl BigQuery {
         &self,
         job_ref: google_cloud_bigquery_v2::model::JobReference,
     ) -> Result<QueryJob> {
-        let internal_job_ref: JobReference = job_ref.clone().into();
         let mut req = self
             .job_service
             .get_job()
-            .set_job_id(job_ref.job_id)
-            .set_project_id(job_ref.project_id);
+            .set_job_id(job_ref.job_id.clone())
+            .set_project_id(job_ref.project_id.clone());
 
-        if let Some(location) = job_ref.location {
+        if let Some(location) = job_ref.location.clone() {
             req = req.set_location(location);
         }
 
@@ -83,7 +82,7 @@ impl BigQuery {
 
         Ok(QueryJob {
             job_service: self.job_service.clone(),
-            job_ref: internal_job_ref,
+            job_ref: Some(job_ref),
             initial_job: job,
         })
     }

@@ -12,13 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::Result;
-use crate::query::job_reference::JobReference;
-use crate::query::{Row, Schema};
-use google_cloud_bigquery_v2::client::JobService;
-use google_cloud_bigquery_v2::model::GetQueryResultsRequest;
-use std::collections::VecDeque;
-use std::sync::Arc;
+use crate::query::{QueryMetadata, Row};
 
 /// Represents errors that can occur when reading query results.
 #[derive(thiserror::Error, Debug)]
@@ -29,73 +23,25 @@ pub enum Error {
     MissingSchema,
 }
 
-/// A paginated stream over the rows of a query result.
-pub struct RowIterator {
-    pub(crate) job_service: Arc<JobService>,
-    pub(crate) job_ref: JobReference,
-    pub(crate) page_token: Option<String>,
-    pub(crate) max_results: Option<u32>,
-    pub(crate) schema: Arc<Schema>,
-    pub(crate) rows: VecDeque<Row>,
+/// A single page of rows returned by a query.
+#[derive(Clone, Debug)]
+pub struct ResultsPage {
+    /// The rows contained in this page.
+    pub rows: Vec<Row>,
+    /// The token to request the next page, or `None` if this is the last page.
+    pub page_token: Option<String>,
+    /// The metadata associated with this page of results.
+    pub metadata: QueryMetadata,
 }
 
-impl RowIterator {
-    /// Returns the next row in the result set.
-    /// Automatically fetches the next page from the network if the buffer is empty.
-    pub async fn next(&mut self) -> Option<Result<Row>> {
-        if let Some(row) = self.rows.pop_front() {
-            return Some(Ok(row));
-        }
+impl google_cloud_gax::paginator::internal::PageableResponse for ResultsPage {
+    type PageItem = Row;
 
-        let Some(page_token) = &self.page_token else {
-            return None;
-        };
+    fn items(self) -> Vec<Self::PageItem> {
+        self.rows
+    }
 
-        let Some(job_ref) = self.job_ref.to_job_ref() else {
-            return Some(Err(google_cloud_gax::error::Error::io(
-                "Stateless queries can't have more pages",
-            )));
-        };
-
-        let mut req = GetQueryResultsRequest::new()
-            .set_project_id(job_ref.project_id.clone())
-            .set_or_clear_max_results(self.max_results)
-            .set_job_id(job_ref.job_id.clone())
-            .set_page_token(page_token);
-        if let Some(location) = job_ref.location.clone() {
-            req = req.set_location(location);
-        }
-
-        let res = match self
-            .job_service
-            .get_query_results()
-            .with_request(req)
-            .send()
-            .await
-        {
-            Ok(r) => r,
-            Err(e) => return Some(Err(e)),
-        };
-
-        if let Some(first_err) = res.errors.into_iter().next() {
-            let rpc_status = google_cloud_gax::error::rpc::Status::default()
-                .set_code(google_cloud_gax::error::rpc::Code::Unknown)
-                .set_message(first_err.message);
-            return Some(Err(google_cloud_gax::error::Error::service(rpc_status)));
-        }
-
-        self.page_token = if res.page_token.is_empty() {
-            None
-        } else {
-            Some(res.page_token)
-        };
-
-        self.rows = res
-            .rows
-            .into_iter()
-            .map(|st| Row::new(st, self.schema.clone()))
-            .collect();
-
-        self.rows.pop_front().map(Ok)
+    fn next_page_token(&self) -> String {
+        self.page_token.clone().unwrap_or_default()
     }
 }

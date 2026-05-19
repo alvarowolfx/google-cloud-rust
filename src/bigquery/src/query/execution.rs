@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::Result;
-use crate::query::{JobReference, Query, QueryJob};
+use crate::query::{Query, QueryJob};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{InsertJobRequest, Job, PostQueryRequest};
 use std::sync::Arc;
@@ -40,12 +40,8 @@ impl PostQueryExecutor {
             return Err(google_cloud_gax::error::Error::service(rpc_status));
         }
 
-        let completed = res.job_complete.clone().unwrap_or(false);
-        let job_ref = if let Some(ref job_ref) = res.job_reference {
-            job_ref.clone().into()
-        } else {
-            JobReference::from_query_id(res.query_id.clone())
-        };
+        let completed = res.job_complete.unwrap_or(false);
+        let job_ref = res.job_reference.clone();
 
         Ok(Query {
             job_service: self.job_service.clone(),

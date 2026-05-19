@@ -22,6 +22,7 @@ use google_cloud_bigquery_v2::model::{GetQueryResultsResponse, JobReference, Que
 /// Standard users can call getters directly on this enum, while advanced
 /// users can pattern match to access raw payload fields.
 #[derive(Debug, Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum QueryMetadata {
     /// Raw response from a `jobs.query` call.
     JobsQuery(QueryResponse),

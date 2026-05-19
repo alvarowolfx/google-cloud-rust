@@ -13,11 +13,10 @@
 // limitations under the License.
 
 use crate::Result;
-use crate::query::job_reference::JobReference;
 use crate::query::query_handle::poll_query_results;
 use crate::query::{CompleteQuery, ReadRequest, Schema};
 use google_cloud_bigquery_v2::client::JobService;
-use google_cloud_bigquery_v2::model::{GetQueryResultsResponse, Job};
+use google_cloud_bigquery_v2::model::{GetQueryResultsResponse, Job, JobReference};
 use std::collections::VecDeque;
 use std::sync::Arc;
 
@@ -25,7 +24,7 @@ use std::sync::Arc;
 #[derive(Debug, Clone)]
 pub struct QueryJob {
     pub(crate) job_service: Arc<JobService>,
-    pub(crate) job_ref: JobReference,
+    pub(crate) job_ref: Option<JobReference>,
     pub(crate) initial_job: Job,
 }
 
@@ -33,13 +32,13 @@ impl QueryJob {
     /// Periodically checks the status of the background job until it finishes.
     /// Returns an error if a remote service or connection failure happens during polling.
     pub async fn until_done(&self) -> Result<CompleteQuery> {
-        let res = poll_query_results(&self.job_service, &self.job_ref).await?;
+        let res = poll_query_results(&self.job_service, self.job_ref.as_ref()).await?;
         Ok(CompleteQuery::from_query_job_and_results(self, res))
     }
 
     /// Returns the underlying job reference for this query job.
     pub fn job_reference(&self) -> Option<google_cloud_bigquery_v2::model::JobReference> {
-        self.job_ref.to_job_ref()
+        self.job_ref.clone()
     }
 
     /// Returns the initial raw `Job` received from the service.
