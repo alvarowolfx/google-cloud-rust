@@ -14,7 +14,7 @@
 
 use crate::Result;
 use crate::query::job_reference::JobReference;
-use crate::query::{CompleteQuery, CompleteQueryJob, Row, RowIterator, Schema};
+use crate::query::{CompleteQuery, Row, RowIterator, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use std::collections::VecDeque;
 use std::sync::Arc;
@@ -30,6 +30,17 @@ pub struct ReadRequest {
 }
 
 impl ReadRequest {
+    pub(crate) fn new(q: CompleteQuery) -> Self {
+        Self {
+            job_service: q.job_service,
+            job_ref: q.job_ref,
+            cached_rows: q.cached_rows,
+            schema: q.schema,
+            page_token: q.page_token,
+            max_results: None,
+        }
+    }
+
     /// Resumes reading from a specific page of results.
     pub fn with_page_token(mut self, page_token: impl Into<String>) -> Self {
         self.page_token = Some(page_token.into());
@@ -58,32 +69,6 @@ impl ReadRequest {
             schema,
             rows,
         })
-    }
-}
-
-impl From<CompleteQuery> for ReadRequest {
-    fn from(q: CompleteQuery) -> Self {
-        Self {
-            job_service: q.job_service,
-            job_ref: q.job_ref,
-            cached_rows: q.cached_rows,
-            schema: q.schema,
-            page_token: q.page_token,
-            max_results: None,
-        }
-    }
-}
-
-impl From<CompleteQueryJob> for ReadRequest {
-    fn from(q: CompleteQueryJob) -> Self {
-        Self {
-            job_service: q.job_service,
-            job_ref: q.job_ref,
-            cached_rows: q.cached_rows,
-            schema: q.schema,
-            page_token: q.page_token,
-            max_results: None,
-        }
     }
 }
 

@@ -15,7 +15,7 @@
 use crate::Result;
 use crate::query::job_reference::JobReference;
 use crate::query::metadata::QueryMetadata;
-use crate::query::{ReadRequest, Schema};
+use crate::query::{QueryJob, ReadRequest, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{
     GetQueryResultsRequest, GetQueryResultsResponse, Job, QueryResponse,
@@ -123,9 +123,31 @@ impl CompleteQuery {
         }
     }
 
+    pub(crate) fn from_query_job_and_results(q: &QueryJob, res: GetQueryResultsResponse) -> Self {
+        let schema = res
+            .schema
+            .clone()
+            .expect("complete query job should have schema");
+        let schema = Arc::new(schema);
+        let page_token = if res.page_token.is_empty() {
+            None
+        } else {
+            Some(res.page_token.clone())
+        };
+        let cached_rows = VecDeque::from(res.rows.clone());
+        Self {
+            job_service: q.job_service.clone(),
+            job_ref: q.job_ref.clone(),
+            cached_rows,
+            page_token,
+            schema,
+            metadata: QueryMetadata::GetQueryResultsResponse(res),
+        }
+    }
+
     /// Transitions the completed query into a paginated row stream.
     pub fn read(self) -> ReadRequest {
-        self.into()
+        ReadRequest::new(self)
     }
 
     /// Returns the cached metadata for this query.

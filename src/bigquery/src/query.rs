@@ -28,7 +28,7 @@ mod run_query;
 mod schema;
 
 pub(crate) use iterator::{Error as IteratorError, RowIterator};
-pub(crate) use job_handle::{CompleteQueryJob, QueryJob};
+pub(crate) use job_handle::QueryJob;
 pub(crate) use job_reference::JobReference;
 pub(crate) use metadata::QueryMetadata;
 pub(crate) use query_handle::{CompleteQuery, Query};

@@ -223,7 +223,6 @@ pub async fn job_service() -> Result<()> {
 pub async fn query_client() -> Result<()> {
     let project_id = project_id()?;
     let bq = google_cloud_bigquery::client::BigQuery::builder()
-        .with_project_id(&project_id)
         .build()
         .await?;
 
@@ -231,7 +230,7 @@ pub async fn query_client() -> Result<()> {
     let req = google_cloud_bigquery_v2::model::QueryRequest::new()
         .set_query("SELECT 1 as one")
         .set_job_creation_mode(JobCreationMode::JobCreationOptional);
-    let query = bq.query(req).run().await?;
+    let query = bq.query(req).with_project_id(project_id).run().await?;
 
     assert!(query.query_id().is_some(), "{:?}", query.metadata());
 
@@ -255,7 +254,6 @@ pub async fn query_client() -> Result<()> {
 pub async fn query_client_multi_page() -> Result<()> {
     let project_id = project_id()?;
     let bq = google_cloud_bigquery::client::BigQuery::builder()
-        .with_project_id(&project_id)
         .build()
         .await?;
 
@@ -265,7 +263,7 @@ pub async fn query_client_multi_page() -> Result<()> {
         .set_use_legacy_sql(false)
         .set_max_results(1000_u32);
 
-    let query = bq.query(req).run().await?;
+    let query = bq.query(req).with_project_id(project_id).run().await?;
 
     let complete_query = query.until_done().await?;
 
@@ -287,7 +285,6 @@ pub async fn query_client_multi_page() -> Result<()> {
 pub async fn query_client_job() -> Result<()> {
     let project_id = project_id()?;
     let bq = google_cloud_bigquery::client::BigQuery::builder()
-        .with_project_id(&project_id)
         .build()
         .await?;
 
@@ -296,10 +293,11 @@ pub async fn query_client_job() -> Result<()> {
         .set_query("SELECT 2 as two")
         .set_use_legacy_sql(false);
 
-    let query = bq.query_job(req).run().await?;
+    let query = bq.query_job(req).with_project_id(&project_id).run().await?;
+
     let complete_query = query.until_done().await?;
 
-    assert!(complete_query.metadata().total_bytes_processed().is_some());
+    assert_eq!(complete_query.metadata().total_rows(), Some(1));
 
     let mut rows = complete_query.read().await?;
     let mut count = 0;

@@ -17,14 +17,12 @@ use crate::Result;
 use crate::client_builder::ClientBuilder;
 use crate::query::{IntoJob, IntoPostQueryRequest, JobReference, QueryJob, RunQuery, RunQueryJob};
 use google_cloud_bigquery_v2::client::JobService;
-use google_cloud_gax::client_builder::Error as ClientBuilderError;
 use std::sync::Arc;
 
 /// A high-level BigQuery client for executing queries and managing jobs.
 #[derive(Clone, Debug)]
 pub struct BigQuery {
     pub(crate) job_service: Arc<JobService>,
-    pub(crate) project_id: String,
 }
 
 impl BigQuery {
@@ -45,24 +43,14 @@ impl BigQuery {
             Arc::new(job_service)
         };
 
-        let project_id = builder
-            .project_id
-            .or_else(|| std::env::var("GOOGLE_CLOUD_PROJECT").ok())
-            .ok_or_else(|| ClientBuilderError::cred("missing project id"))?;
-
-        Ok(BigQuery {
-            job_service,
-            project_id,
-        })
+        Ok(BigQuery { job_service })
     }
 
     /// Prepares a fast-path query execution by returning a `RunQuery` builder.
     pub fn query<T: IntoPostQueryRequest>(&self, req: T) -> RunQuery {
         RunQuery {
             job_service: self.job_service.clone(),
-            client_project_id: self.project_id.clone(),
             request: req.into_post_query_request(),
-            billing_project_id: None,
         }
     }
 
@@ -70,9 +58,8 @@ impl BigQuery {
     pub fn query_job<T: IntoJob>(&self, req: T) -> RunQueryJob {
         RunQueryJob {
             job_service: self.job_service.clone(),
-            client_project_id: self.project_id.clone(),
             job: req.into_job(),
-            billing_project_id: None,
+            project_id: None,
         }
     }
 

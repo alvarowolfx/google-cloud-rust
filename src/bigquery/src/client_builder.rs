@@ -22,7 +22,6 @@ use std::sync::Arc;
 /// A builder for creating and configuring a BigQuery client instance.
 pub struct ClientBuilder {
     pub(crate) config: ClientConfig,
-    pub(crate) project_id: Option<String>,
     pub(crate) job_service: Option<Arc<JobService>>,
 }
 
@@ -37,15 +36,8 @@ impl ClientBuilder {
     pub fn new() -> Self {
         Self {
             config: ClientConfig::default(),
-            project_id: None,
             job_service: None,
         }
-    }
-
-    /// Sets the project ID for the client.
-    pub fn with_project_id<V: Into<String>>(mut self, project_id: V) -> Self {
-        self.project_id = Some(project_id.into());
-        self
     }
 
     /// Sets custom credentials for the client.

@@ -20,16 +20,11 @@ use std::sync::Arc;
 
 pub(crate) struct PostQueryExecutor {
     pub(crate) job_service: Arc<JobService>,
-    pub(crate) billing_project: String,
     pub(crate) request: PostQueryRequest,
 }
 
 impl PostQueryExecutor {
-    pub(crate) async fn execute(mut self) -> Result<Query> {
-        if self.request.project_id.is_empty() {
-            self.request.project_id = self.billing_project.clone();
-        }
-
+    pub(crate) async fn execute(self) -> Result<Query> {
         let res = self
             .job_service
             .query()
@@ -63,8 +58,8 @@ impl PostQueryExecutor {
 
 pub(crate) struct InsertJobExecutor {
     pub(crate) job_service: Arc<JobService>,
-    pub(crate) billing_project: String,
     pub(crate) job: Job,
+    pub(crate) project_id: String,
 }
 
 impl InsertJobExecutor {
@@ -83,7 +78,7 @@ impl InsertJobExecutor {
         }
 
         let insert_req = InsertJobRequest::new()
-            .set_project_id(self.billing_project.clone())
+            .set_project_id(self.project_id.clone())
             .set_job(self.job);
 
         let res = self
