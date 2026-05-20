@@ -46,3 +46,5 @@ impl RunQuery {
         }
     }
 }
+
+include!("../generated/run_query_builder.rs");

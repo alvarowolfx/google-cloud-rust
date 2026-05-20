@@ -49,7 +49,7 @@ gaxi                       = { workspace = true, features = ["_internal-common",
 
 [dev-dependencies]
 anyhow.workspace = true
-syn = { workspace = true, features = ["full", "parsing"] }
+syn              = { workspace = true, features = ["full", "parsing"] }
 
 [lints]
 workspace = true

@@ -444,6 +444,11 @@ libraries:
     copyright_year: "2026"
     output: src/bigquery
     skip_release: true
+    rust:
+      modules:
+        - output: src/bigquery/src/generated
+          api_path: google/cloud/bigquery/v2
+          template: bigquery-query-builder
   - name: google-cloud-bigquery-analyticshub-v1
     version: 1.10.0
     copyright_year: "2025"
