@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::Result;
-use crate::query::{Query, QueryJob};
+use crate::query::Query;
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{InsertJobRequest, Job, PostQueryRequest};
 use std::sync::Arc;
@@ -47,7 +47,9 @@ impl PostQueryExecutor {
             job_service: self.job_service.clone(),
             job_ref,
             completed,
-            initial_response: res,
+            initial_response: Some(res),
+            initial_job: None,
+            is_job_path: false,
         })
     }
 }
@@ -59,7 +61,7 @@ pub(crate) struct InsertJobExecutor {
 }
 
 impl InsertJobExecutor {
-    pub(crate) async fn execute(self) -> Result<QueryJob> {
+    pub(crate) async fn execute(self) -> Result<Query> {
         let is_query = self
             .job
             .configuration
@@ -84,7 +86,6 @@ impl InsertJobExecutor {
             .send()
             .await?;
 
-        let stored_res = res.clone();
         if let Some(ref status) = res.status {
             if let Some(ref err) = status.error_result {
                 let rpc_status = google_cloud_gax::error::rpc::Status::default()
@@ -96,11 +97,15 @@ impl InsertJobExecutor {
 
         let job_ref = res
             .job_reference
+            .clone()
             .expect("newly inserted job should have job reference");
-        Ok(QueryJob {
+        Ok(Query {
             job_service: self.job_service.clone(),
-            job_ref: job_ref.into(),
-            initial_job: stored_res,
+            job_ref: Some(job_ref),
+            completed: false,
+            initial_response: None,
+            initial_job: Some(res),
+            is_job_path: true,
         })
     }
 }

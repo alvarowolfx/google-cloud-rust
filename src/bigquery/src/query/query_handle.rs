@@ -14,7 +14,7 @@
 
 use crate::Result;
 use crate::query::metadata::QueryMetadata;
-use crate::query::{QueryJob, RowIterator, Schema};
+use crate::query::{RowIterator, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{
     GetQueryResultsRequest, GetQueryResultsResponse, Job, JobReference, QueryResponse,
@@ -22,13 +22,15 @@ use google_cloud_bigquery_v2::model::{
 use std::collections::VecDeque;
 use std::sync::Arc;
 
-/// A handle representing a running or finished fast-path query request (`jobs.query`).
+/// A handle representing a running query job or stateless query execution.
 #[derive(Debug, Clone)]
 pub struct Query {
     pub(crate) job_service: Arc<JobService>,
     pub(crate) job_ref: Option<JobReference>,
     pub(crate) completed: bool,
-    pub(crate) initial_response: QueryResponse,
+    pub(crate) initial_response: Option<QueryResponse>,
+    pub(crate) initial_job: Option<Job>,
+    pub(crate) is_job_path: bool,
 }
 
 impl Query {
@@ -36,10 +38,9 @@ impl Query {
     /// Returns an error if a remote service or connection failure happens during polling.
     pub async fn until_done(&self) -> Result<CompleteQuery> {
         if self.completed {
-            return Ok(CompleteQuery::from_query_response(
-                self,
-                &self.initial_response,
-            ));
+            if let Some(ref initial_response) = self.initial_response {
+                return Ok(CompleteQuery::from_query_response(self, initial_response));
+            }
         }
 
         let res = poll_query_results(&self.job_service, self.job_ref.as_ref()).await?;
@@ -48,11 +49,13 @@ impl Query {
 
     /// Returns the stateless query ID of the query, if available.
     pub fn query_id(&self) -> Option<String> {
-        if self.initial_response.query_id.is_empty() {
-            None
-        } else {
-            Some(self.initial_response.query_id.clone())
-        }
+        self.initial_response.as_ref().and_then(|res| {
+            if res.query_id.is_empty() {
+                None
+            } else {
+                Some(res.query_id.clone())
+            }
+        })
     }
 
     /// Returns the underlying job reference for this query.
@@ -60,13 +63,18 @@ impl Query {
         self.job_ref.clone()
     }
 
-    /// Returns the initial raw `QueryResponse` received from the service.
-    pub fn metadata(&self) -> &QueryResponse {
-        &self.initial_response
+    /// Returns the initial raw `QueryResponse` received from the service, if available.
+    pub fn metadata(&self) -> Option<&QueryResponse> {
+        self.initial_response.as_ref()
+    }
+
+    /// Returns the initial raw `Job` received from the service, if available.
+    pub fn job_metadata(&self) -> Option<&Job> {
+        self.initial_job.as_ref()
     }
 }
 
-/// A handle representing a successfully completed fast-path query ready for reading.
+/// A handle representing a successfully completed query ready for reading.
 #[derive(Debug, Clone)]
 pub struct CompleteQuery {
     pub(crate) job_service: Arc<JobService>,
@@ -119,28 +127,6 @@ impl CompleteQuery {
             page_token,
             schema,
             metadata: QueryMetadata::JobsQuery(res.clone()),
-        }
-    }
-
-    pub(crate) fn from_query_job_and_results(q: &QueryJob, res: GetQueryResultsResponse) -> Self {
-        let schema = res
-            .schema
-            .clone()
-            .expect("complete query job should have schema");
-        let schema = Arc::new(schema);
-        let page_token = if res.page_token.is_empty() {
-            None
-        } else {
-            Some(res.page_token.clone())
-        };
-        let cached_rows = VecDeque::from(res.rows.clone());
-        Self {
-            job_service: q.job_service.clone(),
-            job_ref: q.job_ref.clone(),
-            cached_rows,
-            page_token,
-            schema,
-            metadata: QueryMetadata::GetQueryResultsResponse(res),
         }
     }
 

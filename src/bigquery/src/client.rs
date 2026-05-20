@@ -15,7 +15,7 @@
 use crate::ClientBuilderResult as BuilderResult;
 use crate::Result;
 use crate::client_builder::ClientBuilder;
-use crate::query::{IntoJob, IntoPostQueryRequest, QueryJob, RunQuery, RunQueryJob};
+use crate::query::{Query, RunQuery};
 use google_cloud_bigquery_v2::client::JobService;
 use std::sync::Arc;
 
@@ -50,28 +50,18 @@ impl BigQuery {
         Ok(BigQuery { job_service })
     }
 
-    /// Prepares a fast-path query execution by returning a `RunQuery` builder.
-    pub fn query<T: IntoPostQueryRequest>(&self, req: T) -> RunQuery {
-        RunQuery {
-            job_service: self.job_service.clone(),
-            request: req.into_post_query_request(),
-        }
+    /// Prepares a SQL query execution by returning a unified `RunQuery` request builder.
+    /// This builder internally routes to either `jobs.query` (fast path) or `jobs.insert` (job path)
+    /// depending on the fields configured.
+    pub fn query<S: Into<String>>(&self, sql: S) -> RunQuery {
+        RunQuery::new(self.job_service.clone(), sql.into())
     }
 
-    /// Prepares a background query job execution by returning a `RunQueryJob` builder.
-    pub fn query_job<T: IntoJob>(&self, req: T) -> RunQueryJob {
-        RunQueryJob {
-            job_service: self.job_service.clone(),
-            job: req.into_job(),
-            project_id: None,
-        }
-    }
-
-    /// Re-attach hook to bind an existing out-of-process job reference as a `QueryJob`.
+    /// Re-attach hook to bind an existing out-of-process job reference as a `Query` handle.
     pub async fn attach_job(
         &self,
         job_ref: google_cloud_bigquery_v2::model::JobReference,
-    ) -> Result<QueryJob> {
+    ) -> Result<Query> {
         let mut req = self
             .job_service
             .get_job()
@@ -84,10 +74,13 @@ impl BigQuery {
 
         let job = req.send().await?;
 
-        Ok(QueryJob {
+        Ok(Query {
             job_service: self.job_service.clone(),
             job_ref: Some(job_ref),
-            initial_job: job,
+            completed: false,
+            initial_response: None,
+            initial_job: Some(job),
+            is_job_path: true,
         })
     }
 }

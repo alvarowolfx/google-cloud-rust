@@ -228,10 +228,12 @@ pub async fn query_client() -> Result<()> {
         .await?;
 
     println!("STARTING HIGH-LEVEL SMOKE TEST QUERY");
-    let req = google_cloud_bigquery_v2::model::QueryRequest::new()
-        .set_query("SELECT 1 as one")
-        .set_job_creation_mode(JobCreationMode::JobCreationOptional);
-    let query = bq.query(req).with_project_id(project_id).run().await?;
+    let query = bq
+        .query("SELECT 1 as one")
+        .set_job_creation_mode(JobCreationMode::JobCreationOptional)
+        .with_project_id(project_id)
+        .run()
+        .await?;
 
     assert!(query.query_id().is_some(), "{:?}", query.metadata());
 
@@ -259,12 +261,13 @@ pub async fn query_client_multi_page() -> Result<()> {
         .await?;
 
     println!("STARTING HIGH-LEVEL MULTI-PAGE QUERY");
-    let req = google_cloud_bigquery_v2::model::QueryRequest::new()
-        .set_query("SELECT * FROM UNNEST(GENERATE_ARRAY(1, 10000)) AS val")
+    let query = bq
+        .query("SELECT * FROM UNNEST(GENERATE_ARRAY(1, 10000)) AS val")
         .set_use_legacy_sql(false)
-        .set_max_results(1000_u32);
-
-    let query = bq.query(req).with_project_id(project_id).run().await?;
+        .set_max_results(1000_u32)
+        .with_project_id(project_id)
+        .run()
+        .await?;
 
     let complete_query = query.until_done().await?;
 
@@ -290,11 +293,13 @@ pub async fn query_client_job() -> Result<()> {
         .await?;
 
     println!("STARTING HIGH-LEVEL QUERY FROM JOB");
-    let req = google_cloud_bigquery_v2::model::JobConfigurationQuery::new()
-        .set_query("SELECT 2 as two")
-        .set_use_legacy_sql(false);
-
-    let query = bq.query_job(req).with_project_id(&project_id).run().await?;
+    let query = bq
+        .query("SELECT 2 as two")
+        .set_use_legacy_sql(false)
+        .set_priority("INTERACTIVE")
+        .with_project_id(&project_id)
+        .run()
+        .await?;
 
     let complete_query = query.until_done().await?;
 
