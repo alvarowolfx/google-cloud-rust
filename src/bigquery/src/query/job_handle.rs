@@ -14,7 +14,7 @@
 
 use crate::Result;
 use crate::query::query_handle::poll_query_results;
-use crate::query::{CompleteQuery, ReadRequest, Schema};
+use crate::query::{CompleteQuery, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{GetQueryResultsResponse, Job, JobReference};
 use std::collections::VecDeque;

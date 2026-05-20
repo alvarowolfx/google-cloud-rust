@@ -12,36 +12,135 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::query::{QueryMetadata, Row};
+use crate::query::{CompleteQuery, Row, Schema};
+use google_cloud_bigquery_v2::client::JobService;
+use google_cloud_bigquery_v2::model::{GetQueryResultsRequest, JobReference};
+use std::collections::VecDeque;
+use std::sync::Arc;
 
-/// Represents errors that can occur when reading query results.
-#[derive(thiserror::Error, Debug)]
-#[non_exhaustive]
-pub enum Error {
-    /// Only complete Query Jobs with schema can be read.
-    #[error("Only complete Query Jobs with schema can be read.")]
-    MissingSchema,
+/// An iterator over rows returned by a query.
+pub struct RowIterator {
+    job_service: Arc<JobService>,
+    job_ref: Option<JobReference>,
+    schema: Arc<Schema>,
+    page_token: Option<String>,
+    max_results: Option<u32>,
+    rows: VecDeque<Row>,
+    is_done: bool,
 }
 
-/// A single page of rows returned by a query.
-#[derive(Clone, Debug)]
-pub struct ResultsPage {
-    /// The rows contained in this page.
-    pub rows: Vec<Row>,
-    /// The token to request the next page, or `None` if this is the last page.
-    pub page_token: Option<String>,
-    /// The metadata associated with this page of results.
-    pub metadata: QueryMetadata,
-}
+impl RowIterator {
+    pub(crate) fn new(q: CompleteQuery) -> Self {
+        let rows: VecDeque<Row> = q
+            .cached_rows
+            .into_iter()
+            .map(|st| Row::new(st, q.schema.clone()))
+            .collect();
 
-impl google_cloud_gax::paginator::internal::PageableResponse for ResultsPage {
-    type PageItem = Row;
+        let is_done = rows.is_empty() && q.page_token.is_none();
 
-    fn items(self) -> Vec<Self::PageItem> {
-        self.rows
+        Self {
+            job_service: q.job_service,
+            job_ref: q.job_ref,
+            schema: q.schema,
+            page_token: q.page_token,
+            max_results: None,
+            rows,
+            is_done,
+        }
     }
 
-    fn next_page_token(&self) -> String {
-        self.page_token.clone().unwrap_or_default()
+    /// Resumes reading from a specific page of results.
+    pub fn with_page_token(mut self, page_token: impl Into<String>) -> Self {
+        self.page_token = Some(page_token.into());
+        self.rows.clear(); // Clear cached rows since they don't correspond to the custom page token.
+        self.is_done = self.page_token.is_none();
+        self
+    }
+
+    /// Sets the maximum number of results to fetch per network page request.
+    pub fn with_max_results(mut self, max_results: u32) -> Self {
+        self.max_results = Some(max_results);
+        self
+    }
+
+    /// Fetches the next row from the result set.
+    pub async fn next(&mut self) -> Option<Result<Row, google_cloud_gax::error::Error>> {
+        if let Some(row) = self.rows.pop_front() {
+            return Some(Ok(row));
+        }
+
+        if self.is_done {
+            return None;
+        }
+
+        if let Some(token) = self.page_token.take() {
+            match self.fetch_page(token).await {
+                Ok((fetched_rows, next_token)) => {
+                    self.page_token = next_token;
+                    self.rows.extend(fetched_rows);
+                    if self.rows.is_empty() && self.page_token.is_none() {
+                        self.is_done = true;
+                        return None;
+                    }
+                    self.rows.pop_front().map(Ok)
+                }
+                Err(e) => {
+                    self.is_done = true;
+                    Some(Err(e))
+                }
+            }
+        } else {
+            self.is_done = true;
+            None
+        }
+    }
+
+    async fn fetch_page(
+        &self,
+        token: String,
+    ) -> Result<(Vec<Row>, Option<String>), google_cloud_gax::error::Error> {
+        let Some(job_ref) = &self.job_ref else {
+            return Err(google_cloud_gax::error::Error::io(
+                "Stateless queries can't have more pages",
+            ));
+        };
+
+        let mut req = GetQueryResultsRequest::new()
+            .set_project_id(job_ref.project_id.clone())
+            .set_or_clear_max_results(self.max_results)
+            .set_job_id(job_ref.job_id.clone())
+            .set_page_token(token);
+        if let Some(location) = job_ref.location.clone() {
+            req = req.set_location(location);
+        }
+
+        let res = self
+            .job_service
+            .get_query_results()
+            .with_request(req)
+            .send()
+            .await?;
+
+        if let Some(first_err) = res.errors.first() {
+            let rpc_status = google_cloud_gax::error::rpc::Status::default()
+                .set_code(google_cloud_gax::error::rpc::Code::Unknown)
+                .set_message(first_err.message.clone());
+            return Err(google_cloud_gax::error::Error::service(rpc_status));
+        }
+
+        let page_token = if res.page_token.is_empty() {
+            None
+        } else {
+            Some(res.page_token)
+        };
+
+        let rows = res
+            .rows
+            .into_iter()
+            .map(|st| Row::new(st, self.schema.clone()))
+            .collect();
+
+        Ok((rows, page_token))
     }
 }

@@ -19,10 +19,8 @@ use google_cloud_bigquery_v2::model::query_request::JobCreationMode;
 use google_cloud_bigquery_v2::model::{
     Dataset, DatasetReference, Job, JobConfiguration, JobConfigurationQuery, JobReference,
 };
-use google_cloud_gax::{
-    error::rpc::Code,
-    paginator::{ItemPaginator, Paginator},
-};
+use google_cloud_gax::error::rpc::Code;
+use google_cloud_gax::paginator::ItemPaginator;
 use google_cloud_test_utils::runtime_config::project_id;
 use rand::{RngExt, distr::Alphanumeric};
 
@@ -241,7 +239,7 @@ pub async fn query_client() -> Result<()> {
 
     assert_eq!(complete_query.metadata().total_rows(), Some(1));
 
-    let mut rows = complete_query.read().by_row();
+    let mut rows = complete_query.read();
     let mut count = 0;
     while let Some(row) = rows.next().await {
         let _row = row?;
@@ -272,22 +270,12 @@ pub async fn query_client_multi_page() -> Result<()> {
 
     assert_eq!(complete_query.metadata().total_rows(), Some(10000));
 
-    let mut pages = complete_query.read().with_max_results(1000).by_page();
+    let mut rows = complete_query.read().with_max_results(1000);
     let mut count = 0;
-    let mut page_count = 0;
-    while let Some(page) = pages.next().await {
-        let page = page?;
-        page_count += 1;
-        let token = &page.page_token;
-        count += page.rows.len();
-
-        if page_count < 10 {
-            assert!(token.is_some(), "{page:?}");
-        } else {
-            assert!(token.is_none(), "{page:?}");
-        }
+    while let Some(row) = rows.next().await {
+        let _row = row?;
+        count += 1;
     }
-    assert_eq!(page_count, 10);
 
     println!("READ {count} ROWS SUCCESSFULLY ACROSS MULTIPLE PAGES");
     assert_eq!(count, 10000);
@@ -312,7 +300,7 @@ pub async fn query_client_job() -> Result<()> {
 
     assert_eq!(complete_query.metadata().total_rows(), Some(1));
 
-    let mut rows = complete_query.read().by_row();
+    let mut rows = complete_query.read();
     let mut count = 0;
     while let Some(row) = rows.next().await {
         let _row = row?;

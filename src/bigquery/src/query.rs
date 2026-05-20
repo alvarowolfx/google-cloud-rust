@@ -20,17 +20,17 @@ mod iterator;
 mod job_handle;
 mod metadata;
 mod query_handle;
-mod read_request;
+
 mod request;
 mod row;
 mod run_query;
 mod schema;
 
-pub(crate) use iterator::{Error as IteratorError, ResultsPage};
+pub(crate) use iterator::RowIterator;
 pub(crate) use job_handle::QueryJob;
 pub(crate) use metadata::QueryMetadata;
 pub(crate) use query_handle::{CompleteQuery, Query};
-pub(crate) use read_request::ReadRequest;
+
 pub(crate) use request::{IntoJob, IntoPostQueryRequest};
 pub(crate) use row::Row;
 pub(crate) use run_query::{RunQuery, RunQueryJob};

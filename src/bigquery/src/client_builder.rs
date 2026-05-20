@@ -15,14 +15,12 @@
 use crate::client::BigQuery;
 use gaxi::options::ClientConfig;
 use google_cloud_auth::credentials::Credentials;
-use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_gax::client_builder::Result;
-use std::sync::Arc;
 
 /// A builder for creating and configuring a BigQuery client instance.
 pub struct ClientBuilder {
     pub(crate) config: ClientConfig,
-    pub(crate) job_service: Option<Arc<JobService>>,
+    pub(crate) storage_endpoint: Option<String>,
 }
 
 impl Default for ClientBuilder {
@@ -36,8 +34,20 @@ impl ClientBuilder {
     pub fn new() -> Self {
         Self {
             config: ClientConfig::default(),
-            job_service: None,
+            storage_endpoint: None,
         }
+    }
+
+    /// Sets the BigQuery v2 endpoint.
+    pub fn with_endpoint<V: Into<String>>(mut self, v: V) -> Self {
+        self.config.endpoint = Some(v.into());
+        self
+    }
+
+    /// Sets the BigQuery storage API endpoint.
+    pub fn with_storage_endpoint<V: Into<String>>(mut self, v: V) -> Self {
+        self.storage_endpoint = Some(v.into());
+        self
     }
 
     /// Sets custom credentials for the client.
@@ -46,9 +56,18 @@ impl ClientBuilder {
         self
     }
 
-    /// Sets a custom underlying `JobService` for the client.
-    pub fn with_job_service(mut self, job_service: Arc<JobService>) -> Self {
-        self.job_service = Some(job_service);
+    /// Configure the universe domain.
+    ///
+    /// The universe domain is the default service domain for a given cloud universe.
+    /// The default value is "googleapis.com".
+    pub fn with_universe_domain<V: Into<String>>(mut self, v: V) -> Self {
+        self.config.universe_domain = Some(v.into());
+        self
+    }
+
+    /// Enables observability signals for the client.
+    pub fn with_tracing(mut self) -> Self {
+        self.config.tracing = true;
         self
     }
 

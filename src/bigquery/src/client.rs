@@ -32,16 +32,20 @@ impl BigQuery {
     }
 
     pub(crate) async fn new(builder: ClientBuilder) -> BuilderResult<Self> {
-        let job_service = if let Some(service) = builder.job_service {
-            service
-        } else {
-            let mut job_service_builder = JobService::builder();
-            if let Some(creds) = builder.config.cred {
-                job_service_builder = job_service_builder.with_credentials(creds);
-            }
-            let job_service = job_service_builder.build().await?;
-            Arc::new(job_service)
-        };
+        let mut job_service_builder = JobService::builder();
+        if let Some(creds) = builder.config.cred {
+            job_service_builder = job_service_builder.with_credentials(creds);
+        }
+        if let Some(endpoint) = builder.config.endpoint {
+            job_service_builder = job_service_builder.with_endpoint(endpoint);
+        }
+        if let Some(universe_domain) = builder.config.universe_domain {
+            job_service_builder = job_service_builder.with_universe_domain(universe_domain);
+        }
+        if builder.config.tracing {
+            job_service_builder = job_service_builder.with_tracing();
+        }
+        let job_service = Arc::new(job_service_builder.build().await?);
 
         Ok(BigQuery { job_service })
     }

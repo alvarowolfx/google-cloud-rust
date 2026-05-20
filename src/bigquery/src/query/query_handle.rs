@@ -14,7 +14,7 @@
 
 use crate::Result;
 use crate::query::metadata::QueryMetadata;
-use crate::query::{QueryJob, ReadRequest, Schema};
+use crate::query::{QueryJob, RowIterator, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{
     GetQueryResultsRequest, GetQueryResultsResponse, Job, JobReference, QueryResponse,
@@ -144,9 +144,9 @@ impl CompleteQuery {
         }
     }
 
-    /// Transitions the completed query into a paginated row stream.
-    pub fn read(self) -> ReadRequest {
-        ReadRequest::new(self)
+    /// Returns a row iterator for the query result.
+    pub fn read(self) -> RowIterator {
+        RowIterator::new(self)
     }
 
     /// Returns the cached metadata for this query.
