@@ -235,7 +235,7 @@ pub async fn query_client() -> Result<()> {
         .run()
         .await?;
 
-    assert!(query.query_id().is_some(), "{:?}", query.metadata());
+    assert!(query.query_id().is_some());
 
     let complete_query = query.until_done().await?;
 

@@ -62,16 +62,6 @@ impl Query {
     pub fn job_reference(&self) -> Option<google_cloud_bigquery_v2::model::JobReference> {
         self.job_ref.clone()
     }
-
-    /// Returns the initial raw `QueryResponse` received from the service, if available.
-    pub fn metadata(&self) -> Option<&QueryResponse> {
-        self.initial_response.as_ref()
-    }
-
-    /// Returns the initial raw `Job` received from the service, if available.
-    pub fn job_metadata(&self) -> Option<&Job> {
-        self.initial_job.as_ref()
-    }
 }
 
 /// A handle representing a successfully completed query ready for reading.

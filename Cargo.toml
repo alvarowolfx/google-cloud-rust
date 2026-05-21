@@ -345,7 +345,6 @@ members = [
   "tests/storage",
   "tools/check-copyright",
   "tools/minimal-version-helper",
-  "tools/generate-bigquery-builder",
 ]
 
 [workspace.package]

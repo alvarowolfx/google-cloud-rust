@@ -1043,16 +1043,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "generate-bigquery-builder"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "proc-macro2",
- "quote",
- "syn 2.0.117",
-]
-
-[[package]]
 name = "generic-array"
 version = "0.14.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
