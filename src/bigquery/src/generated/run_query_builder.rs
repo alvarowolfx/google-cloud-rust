@@ -244,21 +244,6 @@ impl RunQuery {
         self
     }
 
-    /// Sets the value of [format_options][google_cloud_bigquery_v2::model::QueryRequest::format_options].
-    pub fn set_format_options<T: std::convert::Into<google_cloud_bigquery_v2::model::DataFormatOptions>>(mut self, v: T) -> Self {
-        self.query_request = self.query_request.set_format_options(v);
-        self
-    }
-
-    /// Sets or clears the value of [format_options][google_cloud_bigquery_v2::model::QueryRequest::format_options].
-    pub fn set_or_clear_format_options<T>(mut self, v: std::option::Option<T>) -> Self
-    where
-        T: std::convert::Into<google_cloud_bigquery_v2::model::DataFormatOptions>,
-    {
-        self.query_request = self.query_request.set_or_clear_format_options(v);
-        self
-    }
-
     /// Sets the value of [job_creation_mode][google_cloud_bigquery_v2::model::QueryRequest::job_creation_mode].
     pub fn set_job_creation_mode<T: std::convert::Into<google_cloud_bigquery_v2::model::query_request::JobCreationMode>>(mut self, v: T) -> Self {
         self.query_request = self.query_request.set_job_creation_mode(v);
@@ -469,27 +454,6 @@ impl RunQuery {
     {
         let mut q = self.job_config.query.take().unwrap_or_default();
         q = q.set_or_clear_script_options(v);
-        self.job_config.query = Some(q);
-        self.force_job_path = true;
-        self
-    }
-
-    /// Sets the value of [system_variables][google_cloud_bigquery_v2::model::JobConfigurationQuery::system_variables].
-    pub fn set_system_variables<T: std::convert::Into<google_cloud_bigquery_v2::model::SystemVariables>>(mut self, v: T) -> Self {
-        let mut q = self.job_config.query.take().unwrap_or_default();
-        q = q.set_system_variables(v);
-        self.job_config.query = Some(q);
-        self.force_job_path = true;
-        self
-    }
-
-    /// Sets or clears the value of [system_variables][google_cloud_bigquery_v2::model::JobConfigurationQuery::system_variables].
-    pub fn set_or_clear_system_variables<T>(mut self, v: std::option::Option<T>) -> Self
-    where
-        T: std::convert::Into<google_cloud_bigquery_v2::model::SystemVariables>,
-    {
-        let mut q = self.job_config.query.take().unwrap_or_default();
-        q = q.set_or_clear_system_variables(v);
         self.job_config.query = Some(q);
         self.force_job_path = true;
         self
