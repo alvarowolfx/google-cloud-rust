@@ -318,6 +318,173 @@ pub async fn query_client_job() -> Result<()> {
     Ok(())
 }
 
+
+pub async fn query_client_row_parsing() -> Result<()> {
+    let project_id = project_id()?;
+    let bq = google_cloud_bigquery::client::BigQuery::builder()
+        .build()
+        .await?;
+
+    println!("STARTING ROW PARSING INTEGRATION TEST");
+    let sql = "SELECT \
+                 'John Doe' AS name, \
+                 30 AS age, \
+                 1.85 AS height, \
+                 true AS active, \
+                 TIMESTAMP '2026-05-28 15:30:00 UTC' AS created_at, \
+                 DATE '2026-05-28' AS birth_date, \
+                 TIME '15:30:00' AS daily_alarm, \
+                 DATETIME '2026-05-28 15:30:00' AS event_time, \
+                 CAST(NULL AS STRING) AS nullable_name, \
+                 CAST(NULL AS INT64) AS nullable_age";
+
+    let query = bq
+        .query(sql)
+        .set_use_legacy_sql(false)
+        .with_project_id(project_id)
+        .run()
+        .await?;
+
+    let complete_query = query.until_done().await?;
+    let mut rows = complete_query.read();
+
+    if let Some(row) = rows.next().await {
+        let row = row?;
+        
+        // 1. Verify getting by index
+        let name_idx: String = row.get(0);
+        let age_idx: i64 = row.get(1);
+        let height_idx: f64 = row.get(2);
+        let active_idx: bool = row.get(3);
+
+        assert_eq!(name_idx, "John Doe");
+        assert_eq!(age_idx, 30);
+        assert_eq!(height_idx, 1.85);
+        assert_eq!(active_idx, true);
+
+        // 2. Verify getting by name
+        let name: String = row.get("name");
+        let age: i64 = row.get("age");
+        let height: f64 = row.get("height");
+        let active: bool = row.get("active");
+
+        assert_eq!(name, "John Doe");
+        assert_eq!(age, 30);
+        assert_eq!(height, 1.85);
+        assert_eq!(active, true);
+
+        // 3. Verify date and time conversions
+        let created_at: wkt::Timestamp = row.get("created_at");
+        assert_eq!(created_at.seconds(), 1779982200); // 2026-05-28 15:30:00 UTC
+        assert_eq!(created_at.nanos(), 0);
+
+        let birth_date: google_cloud_type::model::Date = row.get("birth_date");
+        assert_eq!(birth_date.year, 2026);
+        assert_eq!(birth_date.month, 5);
+        assert_eq!(birth_date.day, 28);
+
+        let daily_alarm: google_cloud_type::model::TimeOfDay = row.get("daily_alarm");
+        assert_eq!(daily_alarm.hours, 15);
+        assert_eq!(daily_alarm.minutes, 30);
+        assert_eq!(daily_alarm.seconds, 0);
+
+        let event_time: google_cloud_type::model::DateTime = row.get("event_time");
+        assert_eq!(event_time.year, 2026);
+        assert_eq!(event_time.month, 5);
+        assert_eq!(event_time.day, 28);
+        assert_eq!(event_time.hours, 15);
+        assert_eq!(event_time.minutes, 30);
+        assert_eq!(event_time.seconds, 0);
+
+        // 4. Verify nullable columns (Option<T>)
+        let nullable_name: Option<String> = row.get("nullable_name");
+        let nullable_age: Option<i64> = row.get("nullable_age");
+        assert_eq!(nullable_name, None);
+        assert_eq!(nullable_age, None);
+
+        let populated_name: Option<String> = row.get("name");
+        assert_eq!(populated_name, Some("John Doe".to_string()));
+    } else {
+        panic!("expected at least one row");
+    }
+
+    println!("ROW PARSING INTEGRATION TEST COMPLETED SUCCESSFULLY");
+    Ok(())
+}
+
+#[derive(serde::Deserialize, Debug, PartialEq)]
+struct UserRecord {
+    name: String,
+    age: i64,
+}
+
+#[derive(serde::Deserialize, Debug, PartialEq)]
+struct UserProfile {
+    name: String,
+    age: i64,
+    #[serde(deserialize_with = "google_cloud_bigquery::deserialize")]
+    birth_date: google_cloud_type::model::Date,
+}
+
+pub async fn query_client_nested_types() -> Result<()> {
+    let project_id = project_id()?;
+    let bq = google_cloud_bigquery::client::BigQuery::builder()
+        .build()
+        .await?;
+
+    println!("STARTING NESTED TYPES INTEGRATION TEST");
+    let sql = "SELECT \
+                 STRUCT('Alice' AS name, 25 AS age) AS user, \
+                 ARRAY[1, 2, 3] AS numbers, \
+                 ARRAY[STRUCT('Bob' AS name, 28 AS age), STRUCT('Charlie' AS name, 31 AS age)] AS users, \
+                 STRUCT('Dave' AS name, 40 AS age, DATE '1986-05-28' AS birth_date) AS profile";
+
+    let query = bq
+        .query(sql)
+        .set_use_legacy_sql(false)
+        .with_project_id(project_id)
+        .run()
+        .await?;
+
+    let complete_query = query.until_done().await?;
+    let mut rows = complete_query.read();
+
+    if let Some(row) = rows.next().await {
+        let row = row?;
+
+        // 1. Verify nested struct parsed into user-defined struct
+        let user: UserRecord = serde_json::from_value(row.get::<wkt::Value, _>("user"))?;
+        assert_eq!(user.name, "Alice");
+        assert_eq!(user.age, 25);
+
+        // 2. Verify repeated basic type (ARRAY)
+        let numbers: Vec<i64> = row.get("numbers");
+        assert_eq!(numbers, vec![1, 2, 3]);
+
+        // 3. Verify repeated struct parsed into user-defined structs
+        let users: Vec<UserRecord> = serde_json::from_value(row.get::<wkt::Value, _>("users"))?;
+        assert_eq!(users.len(), 2);
+        assert_eq!(users[0].name, "Bob");
+        assert_eq!(users[0].age, 28);
+        assert_eq!(users[1].name, "Charlie");
+        assert_eq!(users[1].age, 31);
+
+        // 4. Verify user-defined struct with BQ-specific date field using the deserialize helper
+        let profile: UserProfile = serde_json::from_value(row.get::<wkt::Value, _>("profile"))?;
+        assert_eq!(profile.name, "Dave");
+        assert_eq!(profile.age, 40);
+        assert_eq!(profile.birth_date.year, 1986);
+        assert_eq!(profile.birth_date.month, 5);
+        assert_eq!(profile.birth_date.day, 28);
+    } else {
+        panic!("expected at least one row");
+    }
+
+    println!("NESTED TYPES INTEGRATION TEST COMPLETED SUCCESSFULLY");
+    Ok(())
+}
+
+
 async fn cleanup_stale_jobs(client: &JobService, project_id: &str) -> Result<()> {
     use std::time::{Duration, SystemTime, UNIX_EPOCH};
     let stale_deadline = SystemTime::now().duration_since(UNIX_EPOCH)?;

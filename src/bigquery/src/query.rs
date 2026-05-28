@@ -16,6 +16,7 @@
 #![allow(dead_code, unused_imports)]
 
 pub(crate) mod execution;
+pub(crate) mod from_sql;
 mod iterator;
 mod metadata;
 mod query_handle;
@@ -27,6 +28,7 @@ pub(crate) use iterator::RowIterator;
 pub(crate) use metadata::QueryMetadata;
 pub(crate) use query_handle::{CompleteQuery, Query};
 
+pub use from_sql::{ConversionError, FromSql, deserialize};
 pub(crate) use row::Row;
 pub(crate) use run_query::RunQuery;
 pub(crate) use schema::Schema;

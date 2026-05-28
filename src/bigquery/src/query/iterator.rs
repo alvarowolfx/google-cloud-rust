@@ -25,18 +25,13 @@ pub struct RowIterator {
     schema: Arc<Schema>,
     page_token: Option<String>,
     max_results: Option<u32>,
-    rows: VecDeque<Row>,
+    rows: VecDeque<wkt::Struct>,
     is_done: bool,
 }
 
 impl RowIterator {
     pub(crate) fn new(q: CompleteQuery) -> Self {
-        let rows: VecDeque<Row> = q
-            .cached_rows
-            .into_iter()
-            .map(|st| Row::new(st, q.schema.clone()))
-            .collect();
-
+        let rows = q.cached_rows;
         let is_done = rows.is_empty() && q.page_token.is_none();
 
         Self {
@@ -66,8 +61,9 @@ impl RowIterator {
 
     /// Fetches the next row from the result set.
     pub async fn next(&mut self) -> Option<Result<Row, google_cloud_gax::error::Error>> {
-        if let Some(row) = self.rows.pop_front() {
-            return Some(Ok(row));
+        if let Some(raw_row) = self.rows.pop_front() {
+            let row = crate::query::row::convert_row(raw_row, &self.schema);
+            return Some(row);
         }
 
         if self.is_done {
@@ -83,7 +79,10 @@ impl RowIterator {
                         self.is_done = true;
                         return None;
                     }
-                    self.rows.pop_front().map(Ok)
+                    
+                    // Convert and return the first fetched row
+                    self.rows.pop_front()
+                        .map(|r| crate::query::row::convert_row(r, &self.schema))
                 }
                 Err(e) => {
                     self.is_done = true;
@@ -99,7 +98,7 @@ impl RowIterator {
     async fn fetch_page(
         &self,
         token: String,
-    ) -> Result<(Vec<Row>, Option<String>), google_cloud_gax::error::Error> {
+    ) -> Result<(Vec<wkt::Struct>, Option<String>), google_cloud_gax::error::Error> {
         let Some(job_ref) = &self.job_ref else {
             return Err(google_cloud_gax::error::Error::io(
                 "Stateless queries can't have more pages",
@@ -110,7 +109,11 @@ impl RowIterator {
             .set_project_id(job_ref.project_id.clone())
             .set_or_clear_max_results(self.max_results)
             .set_job_id(job_ref.job_id.clone())
-            .set_page_token(token);
+            .set_page_token(token)
+            .set_format_options(
+                google_cloud_bigquery_v2::model::DataFormatOptions::new()
+                    .set_use_int64_timestamp(true)
+            );
         if let Some(location) = job_ref.location.clone() {
             req = req.set_location(location);
         }
@@ -135,12 +138,6 @@ impl RowIterator {
             Some(res.page_token)
         };
 
-        let rows = res
-            .rows
-            .into_iter()
-            .map(|st| Row::new(st, self.schema.clone()))
-            .collect();
-
-        Ok((rows, page_token))
+        Ok((res.rows, page_token))
     }
 }

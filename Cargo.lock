@@ -1837,6 +1837,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "async-trait",
+ "base64",
  "bytes",
  "futures",
  "google-cloud-auth",
@@ -1844,6 +1845,7 @@ dependencies = [
  "google-cloud-gax",
  "google-cloud-gax-internal",
  "google-cloud-rpc",
+ "google-cloud-type",
  "google-cloud-wkt",
  "http",
  "lazy_static",
@@ -5940,7 +5942,11 @@ dependencies = [
  "google-cloud-bigquery-v2",
  "google-cloud-gax",
  "google-cloud-test-utils",
+ "google-cloud-type",
+ "google-cloud-wkt",
  "rand 0.10.1",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 
