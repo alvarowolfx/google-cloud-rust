@@ -94,7 +94,7 @@ impl CompleteQuery {
             cached_rows,
             page_token,
             schema,
-            metadata: QueryMetadata::GetQueryResultsResponse(res),
+            metadata: QueryMetadata::from(res),
         }
     }
 
@@ -116,7 +116,7 @@ impl CompleteQuery {
             cached_rows,
             page_token,
             schema,
-            metadata: QueryMetadata::JobsQuery(res.clone()),
+            metadata: QueryMetadata::from(res.clone()),
         }
     }
 

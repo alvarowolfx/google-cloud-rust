@@ -239,7 +239,7 @@ pub async fn query_client() -> Result<()> {
 
     let complete_query = query.until_done().await?;
 
-    assert_eq!(complete_query.metadata().total_rows(), Some(1));
+    assert_eq!(complete_query.metadata().total_rows, Some(1));
 
     let mut rows = complete_query.read();
     let mut count = 0;
@@ -271,7 +271,7 @@ pub async fn query_client_multi_page() -> Result<()> {
 
     let complete_query = query.until_done().await?;
 
-    assert_eq!(complete_query.metadata().total_rows(), Some(10000));
+    assert_eq!(complete_query.metadata().total_rows, Some(10000));
 
     let mut rows = complete_query.read().with_max_results(1000);
     let mut count = 0;
@@ -303,7 +303,7 @@ pub async fn query_client_job() -> Result<()> {
 
     let complete_query = query.until_done().await?;
 
-    assert_eq!(complete_query.metadata().total_rows(), Some(1));
+    assert_eq!(complete_query.metadata().total_rows, Some(1));
 
     let mut rows = complete_query.read();
     let mut count = 0;
@@ -360,7 +360,7 @@ pub async fn query_client_row_parsing() -> Result<()> {
         assert_eq!(name_idx, "John Doe");
         assert_eq!(age_idx, 30);
         assert_eq!(height_idx, 1.85);
-        assert_eq!(active_idx, true);
+        assert!(active_idx);
 
         // 2. Verify getting by name
         let name: String = row.get("name");
@@ -371,7 +371,7 @@ pub async fn query_client_row_parsing() -> Result<()> {
         assert_eq!(name, "John Doe");
         assert_eq!(age, 30);
         assert_eq!(height, 1.85);
-        assert_eq!(active, true);
+        assert!(active);
 
         // 3. Verify date and time conversions
         let created_at: wkt::Timestamp = row.get("created_at");

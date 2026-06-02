@@ -26,7 +26,9 @@ pub enum ConversionError {
     /// The value kind is not what we expected.
     #[error("type mismatch, expected {expected}, got {got:?}")]
     TypeMismatch {
+        /// The expected type name.
         expected: &'static str,
+        /// The actual value received.
         got: wkt::Value,
     },
 
@@ -41,6 +43,7 @@ pub enum ConversionError {
 
 /// Converts BigQuery [wkt::Value] to Rust types.
 pub trait FromSql: Sized {
+    /// Converts a BigQuery `wkt::Value` into the implementing type.
     fn from_sql(value: wkt::Value) -> Result<Self, ConversionError>;
 }
 
@@ -264,6 +267,7 @@ fn parse_time(s: &str) -> Result<(i32, i32, i32, i32), BoxedError> {
     Ok((hours, minutes, seconds, nanos))
 }
 
+#[allow(clippy::type_complexity)]
 fn parse_datetime(s: &str) -> Result<(i32, i32, i32, i32, i32, i32, i32), BoxedError> {
     let normalized = s.replace(' ', "T");
     let (date_str, time_str) = normalized
@@ -278,7 +282,7 @@ impl FromSql for google_cloud_type::model::Date {
     fn from_sql(value: wkt::Value) -> Result<Self, ConversionError> {
         match value {
             wkt::Value::String(s) => {
-                let (year, month, day) = parse_date(&s).map_err(|e| ConversionError::Convert(e))?;
+                let (year, month, day) = parse_date(&s).map_err(ConversionError::Convert)?;
                 Ok(google_cloud_type::model::Date::new()
                     .set_year(year)
                     .set_month(month)
@@ -298,7 +302,7 @@ impl FromSql for google_cloud_type::model::TimeOfDay {
         match value {
             wkt::Value::String(s) => {
                 let (hours, minutes, seconds, nanos) =
-                    parse_time(&s).map_err(|e| ConversionError::Convert(e))?;
+                    parse_time(&s).map_err(ConversionError::Convert)?;
                 Ok(google_cloud_type::model::TimeOfDay::new()
                     .set_hours(hours)
                     .set_minutes(minutes)
@@ -319,7 +323,7 @@ impl FromSql for google_cloud_type::model::DateTime {
         match value {
             wkt::Value::String(s) => {
                 let (year, month, day, hours, minutes, seconds, nanos) =
-                    parse_datetime(&s).map_err(|e| ConversionError::Convert(e))?;
+                    parse_datetime(&s).map_err(ConversionError::Convert)?;
                 Ok(google_cloud_type::model::DateTime::new()
                     .set_year(year)
                     .set_month(month)
@@ -477,7 +481,7 @@ impl FromSql for Interval {
                 let time_neg = time_str.starts_with('-');
                 let time_content = if time_neg { &time_str[1..] } else { time_str };
                 let (mut hours, mut minutes, mut seconds, mut nanos) =
-                    parse_time(time_content).map_err(|e| ConversionError::Convert(e))?;
+                    parse_time(time_content).map_err(ConversionError::Convert)?;
                 if time_neg {
                     hours = -hours;
                     minutes = -minutes;
