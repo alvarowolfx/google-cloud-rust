@@ -318,7 +318,6 @@ pub async fn query_client_job() -> Result<()> {
     Ok(())
 }
 
-
 pub async fn query_client_row_parsing() -> Result<()> {
     let project_id = project_id()?;
     let bq = google_cloud_bigquery::client::BigQuery::builder()
@@ -336,7 +335,8 @@ pub async fn query_client_row_parsing() -> Result<()> {
                  TIME '15:30:00' AS daily_alarm, \
                  DATETIME '2026-05-28 15:30:00' AS event_time, \
                  CAST(NULL AS STRING) AS nullable_name, \
-                 CAST(NULL AS INT64) AS nullable_age";
+                 CAST(NULL AS INT64) AS nullable_age, \
+                 INTERVAL '1 2:30:45.123456' DAY TO SECOND AS interval_val";
 
     let query = bq
         .query(sql)
@@ -350,7 +350,7 @@ pub async fn query_client_row_parsing() -> Result<()> {
 
     if let Some(row) = rows.next().await {
         let row = row?;
-        
+
         // 1. Verify getting by index
         let name_idx: String = row.get(0);
         let age_idx: i64 = row.get(1);
@@ -404,6 +404,15 @@ pub async fn query_client_row_parsing() -> Result<()> {
 
         let populated_name: Option<String> = row.get("name");
         assert_eq!(populated_name, Some("John Doe".to_string()));
+
+        let interval_val: google_cloud_bigquery::Interval = row.get("interval_val");
+        assert_eq!(interval_val.years, 0);
+        assert_eq!(interval_val.months, 0);
+        assert_eq!(interval_val.days, 1);
+        assert_eq!(interval_val.hours, 2);
+        assert_eq!(interval_val.minutes, 30);
+        assert_eq!(interval_val.seconds, 45);
+        assert_eq!(interval_val.nanos, 123456000);
     } else {
         panic!("expected at least one row");
     }
@@ -484,7 +493,6 @@ pub async fn query_client_nested_types() -> Result<()> {
     Ok(())
 }
 
-
 async fn cleanup_stale_jobs(client: &JobService, project_id: &str) -> Result<()> {
     use std::time::{Duration, SystemTime, UNIX_EPOCH};
     let stale_deadline = SystemTime::now().duration_since(UNIX_EPOCH)?;
@@ -546,5 +554,107 @@ async fn cleanup_stale_jobs(client: &JobService, project_id: &str) -> Result<()>
     println!("found {} stale test jobs", pending_deletion.len());
 
     futures::future::join_all(pending_deletion).await;
+    Ok(())
+}
+
+pub async fn query_client_range_values() -> Result<()> {
+    let project_id = project_id()?;
+    let bq = google_cloud_bigquery::client::BigQuery::builder()
+        .build()
+        .await?;
+
+    println!("STARTING RANGE VALUES INTEGRATION TEST");
+    let sql = "SELECT \
+                 RANGE(DATE '2026-05-28', DATE '2026-05-29') AS date_range, \
+                 RANGE(TIMESTAMP '2026-05-28 15:30:00 UTC', NULL) AS timestamp_range";
+
+    let query = bq
+        .query(sql)
+        .set_use_legacy_sql(false)
+        .with_project_id(project_id)
+        .run()
+        .await?;
+
+    let complete_query = query.until_done().await?;
+    let mut rows = complete_query.read();
+
+    if let Some(row) = rows.next().await {
+        let row = row?;
+
+        // 1. Verify RANGE<DATE>
+        let date_range: google_cloud_bigquery::Range<google_cloud_type::model::Date> =
+            row.get("date_range");
+        let start_date = date_range.start.unwrap();
+        assert_eq!(start_date.year, 2026);
+        assert_eq!(start_date.month, 5);
+        assert_eq!(start_date.day, 28);
+
+        let end_date = date_range.end.unwrap();
+        assert_eq!(end_date.year, 2026);
+        assert_eq!(end_date.month, 5);
+        assert_eq!(end_date.day, 29);
+
+        // 2. Verify unbounded-end RANGE<TIMESTAMP>
+        let timestamp_range: google_cloud_bigquery::Range<wkt::Timestamp> =
+            row.get("timestamp_range");
+        let start_ts = timestamp_range.start.unwrap();
+        assert_eq!(start_ts.seconds(), 1779982200); // 2026-05-28 15:30:00 UTC
+        assert_eq!(start_ts.nanos(), 0);
+
+        assert_eq!(timestamp_range.end, None); // Unbounded end
+    } else {
+        panic!("expected at least one row");
+    }
+
+    println!("RANGE VALUES INTEGRATION TEST COMPLETED SUCCESSFULLY");
+    Ok(())
+}
+
+pub async fn query_client_numeric_limits() -> Result<()> {
+    let project_id = project_id()?;
+    let bq = google_cloud_bigquery::client::BigQuery::builder()
+        .build()
+        .await?;
+
+    println!("STARTING NUMERIC/BIGNUMERIC LIMITS INTEGRATION TEST");
+    let sql = "SELECT \
+                 CAST('99999999999999999999999999999.999999999' AS NUMERIC) AS max_numeric, \
+                 CAST('-99999999999999999999999999999.999999999' AS NUMERIC) AS min_numeric, \
+                 CAST('578960446186580977117854925043439539266.34992332820282019728792003956564819967' AS BIGNUMERIC) AS max_bignumeric, \
+                 CAST('-578960446186580977117854925043439539266.34992332820282019728792003956564819968' AS BIGNUMERIC) AS min_bignumeric";
+
+    let query = bq
+        .query(sql)
+        .set_use_legacy_sql(false)
+        .with_project_id(project_id)
+        .run()
+        .await?;
+
+    let complete_query = query.until_done().await?;
+    let mut rows = complete_query.read();
+
+    if let Some(row) = rows.next().await {
+        let row = row?;
+
+        let max_num: google_cloud_type::model::Decimal = row.get("max_numeric");
+        let min_num: google_cloud_type::model::Decimal = row.get("min_numeric");
+        let max_bignum: google_cloud_type::model::Decimal = row.get("max_bignumeric");
+        let min_bignum: google_cloud_type::model::Decimal = row.get("min_bignumeric");
+
+        assert_eq!(max_num.value, "99999999999999999999999999999.999999999");
+        assert_eq!(min_num.value, "-99999999999999999999999999999.999999999");
+        assert_eq!(
+            max_bignum.value,
+            "578960446186580977117854925043439539266.34992332820282019728792003956564819967"
+        );
+        assert_eq!(
+            min_bignum.value,
+            "-578960446186580977117854925043439539266.34992332820282019728792003956564819968"
+        );
+    } else {
+        panic!("expected at least one row");
+    }
+
+    println!("NUMERIC/BIGNUMERIC LIMITS INTEGRATION TEST COMPLETED SUCCESSFULLY");
     Ok(())
 }

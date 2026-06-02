@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::query::from_sql::FromSql;
 use crate::query::Schema;
+use crate::query::from_sql::FromSql;
 use std::sync::Arc;
 
 /// A row in a query result.
@@ -95,8 +95,6 @@ impl Row {
         &self.values
     }
 
-
-
     /// Retrieves a value from the row by column name or zero-based index.
     pub fn try_get<T: FromSql, I: ColumnIndex>(&self, index: I) -> crate::Result<T> {
         let idx = index
@@ -125,11 +123,15 @@ impl Row {
 
 fn get_cells_from_struct(mut obj: wkt::Struct) -> crate::Result<Vec<wkt::Value>> {
     let f_val = obj.remove("f").ok_or_else(|| {
-        crate::Error::deser(RowError::InvalidRowFormat("missing nested cell array 'f'".into()))
+        crate::Error::deser(RowError::InvalidRowFormat(
+            "missing nested cell array 'f'".into(),
+        ))
     })?;
     match f_val {
         wkt::Value::Array(arr) => Ok(arr),
-        _ => Err(crate::Error::deser(RowError::InvalidRowFormat("nested cell array 'f' is not an array".into()))),
+        _ => Err(crate::Error::deser(RowError::InvalidRowFormat(
+            "nested cell array 'f' is not an array".into(),
+        ))),
     }
 }
 
@@ -140,7 +142,9 @@ fn extract_value_from_cell(cell: wkt::Value) -> crate::Result<wkt::Value> {
             Ok(v_val)
         }
         wkt::Value::Null => Ok(wkt::Value::Null),
-        _ => Err(crate::Error::deser(RowError::InvalidRowFormat("cell value is not an object".into()))),
+        _ => Err(crate::Error::deser(RowError::InvalidRowFormat(
+            "cell value is not an object".into(),
+        ))),
     }
 }
 
@@ -151,38 +155,39 @@ fn normalize_value(
 ) -> crate::Result<wkt::Value> {
     match val {
         wkt::Value::Null => Ok(wkt::Value::Null),
-        wkt::Value::String(s) => {
-            match field_type {
-                "INTEGER" | "INT64" => {
-                    let num = s.parse::<i64>().map_err(|e| {
-                        crate::Error::deser(RowError::TypeConversion {
-                            column: "unknown".to_string(),
-                            source: Box::new(e),
-                        })
-                    })?;
-                    Ok(wkt::Value::Number(serde_json::Number::from(num)))
-                }
-                "FLOAT" | "FLOAT64" => {
-                    let num = s.parse::<f64>().map_err(|e| {
-                        crate::Error::deser(RowError::TypeConversion {
-                            column: "unknown".to_string(),
-                            source: Box::new(e),
-                        })
-                    })?;
-                    Ok(wkt::Value::Number(serde_json::Number::from_f64(num).unwrap_or_else(|| serde_json::Number::from(0))))
-                }
-                "BOOLEAN" | "BOOL" => {
-                    let b = s.parse::<bool>().map_err(|e| {
-                        crate::Error::deser(RowError::TypeConversion {
-                            column: "unknown".to_string(),
-                            source: Box::new(e),
-                        })
-                    })?;
-                    Ok(wkt::Value::Bool(b))
-                }
-                _ => Ok(wkt::Value::String(s)),
+        wkt::Value::String(s) => match field_type {
+            "INTEGER" | "INT64" => {
+                let num = s.parse::<i64>().map_err(|e| {
+                    crate::Error::deser(RowError::TypeConversion {
+                        column: "unknown".to_string(),
+                        source: Box::new(e),
+                    })
+                })?;
+                Ok(wkt::Value::Number(serde_json::Number::from(num)))
             }
-        }
+            "FLOAT" | "FLOAT64" => {
+                let num = s.parse::<f64>().map_err(|e| {
+                    crate::Error::deser(RowError::TypeConversion {
+                        column: "unknown".to_string(),
+                        source: Box::new(e),
+                    })
+                })?;
+                Ok(wkt::Value::Number(
+                    serde_json::Number::from_f64(num)
+                        .unwrap_or_else(|| serde_json::Number::from(0)),
+                ))
+            }
+            "BOOLEAN" | "BOOL" => {
+                let b = s.parse::<bool>().map_err(|e| {
+                    crate::Error::deser(RowError::TypeConversion {
+                        column: "unknown".to_string(),
+                        source: Box::new(e),
+                    })
+                })?;
+                Ok(wkt::Value::Bool(b))
+            }
+            _ => Ok(wkt::Value::String(s)),
+        },
         wkt::Value::Object(obj) => {
             let cells = get_cells_from_struct(obj)?;
             let mut nested_obj = wkt::Struct::new();
@@ -209,10 +214,7 @@ fn normalize_value(
     }
 }
 
-pub(crate) fn convert_row(
-    raw_row: wkt::Struct,
-    schema: &Arc<Schema>,
-) -> crate::Result<Row> {
+pub(crate) fn convert_row(raw_row: wkt::Struct, schema: &Arc<Schema>) -> crate::Result<Row> {
     let cells = get_cells_from_struct(raw_row)?;
 
     if cells.len() != schema.fields.len() {

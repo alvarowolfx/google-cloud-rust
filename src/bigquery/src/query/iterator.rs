@@ -79,9 +79,10 @@ impl RowIterator {
                         self.is_done = true;
                         return None;
                     }
-                    
+
                     // Convert and return the first fetched row
-                    self.rows.pop_front()
+                    self.rows
+                        .pop_front()
                         .map(|r| crate::query::row::convert_row(r, &self.schema))
                 }
                 Err(e) => {
@@ -112,7 +113,7 @@ impl RowIterator {
             .set_page_token(token)
             .set_format_options(
                 google_cloud_bigquery_v2::model::DataFormatOptions::new()
-                    .set_use_int64_timestamp(true)
+                    .set_use_int64_timestamp(true),
             );
         if let Some(location) = job_ref.location.clone() {
             req = req.set_location(location);

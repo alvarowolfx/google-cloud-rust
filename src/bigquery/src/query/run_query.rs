@@ -43,7 +43,7 @@ impl RunQuery {
                 .set_use_legacy_sql(wkt::BoolValue::from(false))
                 .set_format_options(
                     google_cloud_bigquery_v2::model::DataFormatOptions::new()
-                        .set_use_int64_timestamp(true)
+                        .set_use_int64_timestamp(true),
                 ),
             job_config: JobConfiguration::new().set_query(
                 JobConfigurationQuery::new()
