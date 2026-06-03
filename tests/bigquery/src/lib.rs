@@ -232,6 +232,7 @@ pub async fn query_client() -> Result<()> {
         .query("SELECT 1 as one")
         .set_job_creation_mode(JobCreationMode::JobCreationOptional)
         .with_project_id(project_id)
+        .set_labels(vec![(INSTANCE_LABEL, "true")])
         .run()
         .await?;
 
@@ -266,6 +267,7 @@ pub async fn query_client_multi_page() -> Result<()> {
         .set_use_legacy_sql(false)
         .set_max_results(1000_u32)
         .with_project_id(project_id)
+        .set_labels(vec![(INSTANCE_LABEL, "true")])
         .run()
         .await?;
 
@@ -298,6 +300,7 @@ pub async fn query_client_job() -> Result<()> {
         .set_use_legacy_sql(false)
         .set_priority("INTERACTIVE")
         .with_project_id(&project_id)
+        .set_labels(vec![(INSTANCE_LABEL, "true")])
         .run()
         .await?;
 
@@ -342,6 +345,7 @@ pub async fn query_client_row_parsing() -> Result<()> {
         .query(sql)
         .set_use_legacy_sql(false)
         .with_project_id(project_id)
+        .set_labels(vec![(INSTANCE_LABEL, "true")])
         .run()
         .await?;
 
@@ -452,6 +456,7 @@ pub async fn query_client_nested_types() -> Result<()> {
         .query(sql)
         .set_use_legacy_sql(false)
         .with_project_id(project_id)
+        .set_labels(vec![(INSTANCE_LABEL, "true")])
         .run()
         .await?;
 
