@@ -59,7 +59,9 @@ impl BatchWriteTransaction {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{Mutation, Spanner, MutationGroup};
+    /// # use google_cloud_spanner::mutation::Mutation;
+    /// # use google_cloud_spanner::client::Spanner;
+    /// # use google_cloud_spanner::mutation::MutationGroup;
     /// # use google_cloud_gax::error::rpc::Code;
     /// # async fn sample() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = Spanner::builder().build().await?;
@@ -146,10 +148,12 @@ impl BatchWriteResponseStream {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::client::{Mutation, Spanner};
+    use crate::client::Spanner;
+    use crate::mutation::Mutation;
     use crate::result_set::tests::adapt;
     use anyhow::Result;
     use gaxi::grpc::tonic::Response;
+    use google_cloud_test_macros::tokio_test_no_panics;
     use spanner_grpc_mock::MockSpanner;
     use spanner_grpc_mock::google::spanner::v1 as mock_v1;
 
@@ -176,7 +180,7 @@ mod tests {
         (db_client, server)
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn execute_streaming() -> Result<()> {
         let mut mock = MockSpanner::new();
         mock.expect_create_session().returning(|_| {
@@ -228,7 +232,7 @@ mod tests {
     }
 
     #[cfg(feature = "unstable-stream")]
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn execute_streaming_into_stream() -> Result<()> {
         use futures::StreamExt;
 

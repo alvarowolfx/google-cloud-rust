@@ -9,6 +9,8 @@ significant way. We do anticipate a number of new crate dependencies
 will be required. If you need these RPCs please open an issue in our
 GitHub repository.
 
+Assured Workloads lets you secure your workloads and accelerate your path to running compliant workloads on Google Cloud.
+
 The client library types and functions are stable and not expected to change.
 Please note that Google Cloud services do change from time to time. The client
 libraries are designed to preserve backwards compatibility when the service
@@ -31,8 +33,8 @@ The main types to work with this crate are the clients:
 
 ## More Information
 
-- Read the [crate's documentation](https://docs.rs/google-cloud-assuredworkloads-v1/1.10.0)
+- Read the [crate's documentation](https://docs.rs/google-cloud-assuredworkloads-v1/1.11.0)
 
 [aws-lc-rs]: https://crates.io/crates/aws-lc-rs
 [ring]: https://crates.io/crates/ring
-[AssuredWorkloadsService]: https://docs.rs/google-cloud-assuredworkloads-v1/1.10.0/google_cloud_assuredworkloads_v1/client/struct.AssuredWorkloadsService.html
+[AssuredWorkloadsService]: https://docs.rs/google-cloud-assuredworkloads-v1/1.11.0/google_cloud_assuredworkloads_v1/client/struct.AssuredWorkloadsService.html

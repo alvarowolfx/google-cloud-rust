@@ -15,6 +15,9 @@
 use google_cloud_gax::error::rpc::Status;
 use std::error::Error;
 
+pub use crate::from_value::ConvertError;
+pub use wkt::{DurationError, TimestampError};
+
 /// An unexpected error that occurs when the client receives data from Spanner
 /// that it cannot properly parse or handle. This typically indicates a bug in
 /// the client library or the Spanner service itself, though other causes are possible.
@@ -28,6 +31,9 @@ use std::error::Error;
 #[derive(thiserror::Error, Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum SpannerInternalError {
+    /// Indicates that Spanner returned data in an unexpected or unparsable format.
+    ///
+    /// This represents an unexpected state and is an indication of an internal bug.
     #[error("unexpected data received from Spanner: {0}")]
     UnexpectedData(String),
 }

@@ -16,7 +16,8 @@ use crate::database_client::DatabaseClient;
 use crate::model::PartitionOptions;
 use crate::precommit::PrecommitTokenTracker;
 use crate::read_only_transaction::{
-    MultiUseReadOnlyTransaction, MultiUseReadOnlyTransactionBuilder, ReadContextTransactionSelector,
+    BeginTransactionOption, MultiUseReadOnlyTransaction, MultiUseReadOnlyTransactionBuilder,
+    ReadContextTransactionSelector,
 };
 use crate::result_set::{ResultSet, ResultSetParams, StreamOperation};
 use crate::statement::Statement;
@@ -32,11 +33,11 @@ use std::time::Duration;
 /// # Example
 /// ```
 /// # use google_cloud_spanner::client::Spanner;
-/// # use google_cloud_spanner::client::TimestampBound;
+/// # use google_cloud_spanner::transaction::TimestampBound;
 /// # async fn build_tx(spanner: Spanner) -> Result<(), google_cloud_spanner::Error> {
 /// let db_client = spanner.database_client("projects/p/instances/i/databases/d").build().await?;
 /// let read_only_transaction = db_client.batch_read_only_transaction()
-///     .with_timestamp_bound(TimestampBound::strong())
+///     .set_timestamp_bound(TimestampBound::strong())
 ///     .build()
 ///     .await?;
 /// # Ok(())
@@ -50,7 +51,7 @@ impl BatchReadOnlyTransactionBuilder {
     pub(crate) fn new(client: DatabaseClient) -> Self {
         Self {
             inner: MultiUseReadOnlyTransactionBuilder::new(client)
-                .with_explicit_begin_transaction(true),
+                .with_begin_transaction_option(BeginTransactionOption::ExplicitBegin),
         }
     }
 
@@ -59,16 +60,16 @@ impl BatchReadOnlyTransactionBuilder {
     /// # Example
     /// ```
     /// # use google_cloud_spanner::client::Spanner;
-    /// # use google_cloud_spanner::client::TimestampBound;
+    /// # use google_cloud_spanner::transaction::TimestampBound;
     /// # async fn set_bound(spanner: Spanner) -> Result<(), google_cloud_spanner::Error> {
     /// let db_client = spanner.database_client("projects/p/instances/i/databases/d").build().await?;
-    /// let builder = db_client.batch_read_only_transaction().with_timestamp_bound(TimestampBound::strong());
+    /// let builder = db_client.batch_read_only_transaction().set_timestamp_bound(TimestampBound::strong());
     /// # Ok(())
     /// # }
     /// ```
-    pub fn with_timestamp_bound(self, bound: TimestampBound) -> Self {
+    pub fn set_timestamp_bound(self, bound: TimestampBound) -> Self {
         Self {
-            inner: self.inner.with_timestamp_bound(bound),
+            inner: self.inner.set_timestamp_bound(bound),
         }
     }
 
@@ -96,7 +97,7 @@ impl BatchReadOnlyTransactionBuilder {
 /// # Example
 /// ```
 /// # use google_cloud_spanner::client::Spanner;
-/// # use google_cloud_spanner::client::Statement;
+/// # use google_cloud_spanner::statement::Statement;
 /// # use google_cloud_spanner::model::PartitionOptions;
 ///
 /// # async fn run(spanner: Spanner) -> Result<(), google_cloud_spanner::Error> {
@@ -129,7 +130,7 @@ impl BatchReadOnlyTransaction {
     /// # Example
     /// ```
     /// # use google_cloud_spanner::client::Spanner;
-    /// # use google_cloud_spanner::client::Statement;
+    /// # use google_cloud_spanner::statement::Statement;
     /// # use google_cloud_spanner::model::PartitionOptions;
     /// # async fn run(spanner: Spanner) -> Result<(), google_cloud_spanner::Error> {
     /// let db = spanner.database_client("projects/p/instances/i/databases/d").build().await?;
@@ -191,8 +192,9 @@ impl BatchReadOnlyTransaction {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{KeySet, Spanner};
-    /// # use google_cloud_spanner::client::ReadRequest;
+    /// # use google_cloud_spanner::client::Spanner;
+    /// # use google_cloud_spanner::key::KeySet;
+    /// # use google_cloud_spanner::read::ReadRequest;
     /// # use google_cloud_spanner::model::PartitionOptions;
     /// # async fn run(spanner: Spanner) -> Result<(), google_cloud_spanner::Error> {
     /// let db = spanner.database_client("projects/p/instances/i/databases/d").build().await?;
@@ -266,7 +268,8 @@ impl Partition {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{Spanner, Statement};
+    /// # use google_cloud_spanner::client::Spanner;
+    /// # use google_cloud_spanner::statement::Statement;
     /// # use google_cloud_spanner::model::PartitionOptions;
     /// # async fn run_query(spanner: Spanner) -> Result<(), google_cloud_spanner::Error> {
     /// # let db_client = spanner.database_client("projects/p/instances/i/databases/d").build().await?;
@@ -274,13 +277,13 @@ impl Partition {
     /// # let partitions = transaction.partition_query(Statement::builder("SELECT * FROM Users").build(), PartitionOptions::default()).await?;
     /// // On a worker receiving a partition, execute it with Data Boost:
     /// let mut result_set = partitions[0].clone()
-    ///     .with_data_boost(true)
+    ///     .set_data_boost(true)
     ///     .execute(&db_client)
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub fn with_data_boost(mut self, enabled: bool) -> Self {
+    pub fn set_data_boost(mut self, enabled: bool) -> Self {
         match &mut self.inner {
             PartitionedOperation::Query(req) => req.data_boost_enabled = enabled,
             PartitionedOperation::Read(req) => req.data_boost_enabled = enabled,
@@ -317,7 +320,8 @@ impl Partition {
     ///
     /// # Example: executing a query partition
     /// ```
-    /// # use google_cloud_spanner::client::{Spanner, Statement};
+    /// # use google_cloud_spanner::client::Spanner;
+    /// # use google_cloud_spanner::statement::Statement;
     /// # use google_cloud_spanner::model::PartitionOptions;
     /// # async fn run_query(spanner: Spanner) -> Result<(), google_cloud_spanner::Error> {
     /// let db_client = spanner.database_client("projects/p/instances/i/databases/d").build().await?;
@@ -339,7 +343,9 @@ impl Partition {
     /// ```
     /// # Example: executing a read partition
     /// ```
-    /// # use google_cloud_spanner::client::{Spanner, ReadRequest, KeySet};
+    /// # use google_cloud_spanner::client::Spanner;
+    /// # use google_cloud_spanner::key::KeySet;
+    /// # use google_cloud_spanner::read::ReadRequest;
     /// # use google_cloud_spanner::model::PartitionOptions;
     /// # async fn run_read(spanner: Spanner) -> Result<(), google_cloud_spanner::Error> {
     /// let db_client = spanner.database_client("projects/p/instances/i/databases/d").build().await?;
@@ -383,7 +389,7 @@ impl Partition {
             .send()
             .await?;
 
-        Ok(ResultSet::new(ResultSetParams {
+        ResultSet::create(ResultSetParams {
             stream,
             transaction_selector: Some(ReadContextTransactionSelector::Fixed(
                 req.transaction
@@ -394,10 +400,12 @@ impl Partition {
             precommit_token_tracker: PrecommitTokenTracker::new_noop(),
             client: client.clone(),
             session_name: req.session.clone(),
+            transaction_tag: None,
             operation: StreamOperation::Query(req.clone()),
             channel_hint,
             gax_options,
-        }))
+        })
+        .await
     }
 
     async fn execute_read(
@@ -412,7 +420,7 @@ impl Partition {
             .send()
             .await?;
 
-        Ok(ResultSet::new(ResultSetParams {
+        ResultSet::create(ResultSetParams {
             stream,
             transaction_selector: Some(ReadContextTransactionSelector::Fixed(
                 req.transaction
@@ -423,10 +431,12 @@ impl Partition {
             precommit_token_tracker: PrecommitTokenTracker::new_noop(),
             client: client.clone(),
             session_name: req.session.clone(),
+            transaction_tag: None,
             operation: StreamOperation::Read(req.clone()),
             channel_hint,
             gax_options,
-        }))
+        })
+        .await
     }
 }
 
@@ -439,16 +449,19 @@ pub(crate) enum PartitionedOperation {
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
-    use crate::client::Statement;
-    use crate::client::{KeySet, ReadRequest as SpannerReadRequest, TimestampBound};
+    use crate::key::KeySet;
     use crate::model::transaction_selector::Selector;
     use crate::model::{ExecuteSqlRequest, ReadRequest as GrpcReadRequest, TransactionSelector};
+    use crate::read::ReadRequest as SpannerReadRequest;
     use crate::read_only_transaction::tests::{create_session_mock, setup_db_client};
+    use crate::statement::Statement;
+    use crate::transaction::TimestampBound;
     use gaxi::grpc::tonic::Response;
     use google_cloud_test_macros::tokio_test_no_panics;
     use prost_types::Timestamp;
     use spanner_grpc_mock::google::spanner::v1::{
-        Partition as MockPartition, PartitionResponse, Transaction,
+        PartialResultSet, Partition as MockPartition, PartitionResponse, ResultSetMetadata,
+        StructType, Transaction,
     };
     use static_assertions::assert_impl_all;
     use std::fmt::Debug;
@@ -484,6 +497,22 @@ pub(crate) mod tests {
         Ok(())
     }
 
+    fn setup_select1() -> PartialResultSet {
+        PartialResultSet {
+            metadata: Some(ResultSetMetadata {
+                row_type: Some(StructType {
+                    fields: vec![Default::default()],
+                }),
+                ..Default::default()
+            }),
+            values: vec![prost_types::Value {
+                kind: Some(prost_types::value::Kind::StringValue("1".to_string())),
+            }],
+            last: true,
+            ..Default::default()
+        }
+    }
+
     #[tokio_test_no_panics]
     async fn partition_execute_respects_options() -> anyhow::Result<()> {
         use gaxi::grpc::tonic::Response;
@@ -496,8 +525,9 @@ pub(crate) mod tests {
             assert!(timeout.is_some(), "Missing grpc-timeout header");
             assert_eq!(timeout.unwrap(), "5000000u"); // 5 seconds in micros
 
-            let (_, rx) = tokio::sync::mpsc::channel(1);
-            Ok(Response::from(rx))
+            Ok(Response::from(crate::result_set::tests::adapt([Ok(
+                setup_select1(),
+            )])))
         });
 
         let (db_client, _server) = setup_db_client(mock).await;
@@ -588,7 +618,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn execute_query() -> anyhow::Result<()> {
         let mut mock = create_session_mock();
 
@@ -603,8 +633,9 @@ pub(crate) mod tests {
             assert!(req.transaction.is_some());
             assert_eq!(req.sql, "SELECT * FROM Users");
 
-            let (_, rx) = tokio::sync::mpsc::channel(1);
-            Ok(Response::from(rx))
+            Ok(Response::from(crate::result_set::tests::adapt([Ok(
+                setup_select1(),
+            )])))
         });
 
         let (db_client, _server) = setup_db_client(mock).await;
@@ -630,7 +661,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn execute_read() -> anyhow::Result<()> {
         let mut mock = create_session_mock();
 
@@ -645,8 +676,9 @@ pub(crate) mod tests {
             assert!(req.transaction.is_some());
             assert_eq!(req.table, "Users");
 
-            let (_, rx) = tokio::sync::mpsc::channel(1);
-            Ok(Response::from(rx))
+            Ok(Response::from(crate::result_set::tests::adapt([Ok(
+                setup_select1(),
+            )])))
         });
 
         let (db_client, _server) = setup_db_client(mock).await;
@@ -673,7 +705,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn partition_query() -> anyhow::Result<()> {
         let mut mock = create_session_mock();
 
@@ -717,7 +749,7 @@ pub(crate) mod tests {
 
         let tx = db_client
             .batch_read_only_transaction()
-            .with_timestamp_bound(TimestampBound::strong())
+            .set_timestamp_bound(TimestampBound::strong())
             .build()
             .await?;
 
@@ -744,7 +776,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn partition_read() -> anyhow::Result<()> {
         let mut mock = create_session_mock();
 
@@ -802,15 +834,16 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn execute_query_with_data_boost() -> anyhow::Result<()> {
         let mut mock = create_session_mock();
 
         mock.expect_execute_streaming_sql().once().returning(|req| {
             let req = req.into_inner();
             assert!(req.data_boost_enabled, "data_boost_enabled should be true");
-            let (_, rx) = tokio::sync::mpsc::channel(1);
-            Ok(Response::from(rx))
+            Ok(Response::from(crate::result_set::tests::adapt([Ok(
+                setup_select1(),
+            )])))
         });
 
         let (db_client, _server) = setup_db_client(mock).await;
@@ -829,20 +862,21 @@ pub(crate) mod tests {
             gax_options: GaxRequestOptions::default(),
         };
 
-        let _result_set = partition.with_data_boost(true).execute(&db_client).await?;
+        let _result_set = partition.set_data_boost(true).execute(&db_client).await?;
 
         Ok(())
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn execute_read_with_data_boost() -> anyhow::Result<()> {
         let mut mock = create_session_mock();
 
         mock.expect_streaming_read().once().returning(|req| {
             let req = req.into_inner();
             assert!(req.data_boost_enabled, "data_boost_enabled should be true");
-            let (_, rx) = tokio::sync::mpsc::channel(1);
-            Ok(Response::from(rx))
+            Ok(Response::from(crate::result_set::tests::adapt([Ok(
+                setup_select1(),
+            )])))
         });
 
         let (db_client, _server) = setup_db_client(mock).await;
@@ -862,7 +896,7 @@ pub(crate) mod tests {
             gax_options: GaxRequestOptions::default(),
         };
 
-        let _result_set = partition.with_data_boost(true).execute(&db_client).await?;
+        let _result_set = partition.set_data_boost(true).execute(&db_client).await?;
 
         Ok(())
     }

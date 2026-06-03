@@ -39,7 +39,7 @@ use google_cloud_storage::retry_policy::RetryableErrors;
 use humantime::parse_duration;
 use instrumented_future::Instrumented;
 use instrumented_retry::DebugRetry;
-use opentelemetry_sdk::trace::{SdkTracerProvider, TraceError};
+use opentelemetry_sdk::trace::SdkTracerProvider;
 use rand::{
     RngExt,
     distr::{Alphanumeric, Uniform},
@@ -134,10 +134,10 @@ async fn main() -> anyhow::Result<()> {
     }
     tracing::info!("DONE");
 
-    if let Some(tracer_provider) = tracer_provider {
-        if let Err(e) = tracer_provider.shutdown() {
-            eprintln!("error shutting down trace provider: {e}");
-        }
+    if let Some(tracer_provider) = tracer_provider
+        && let Err(e) = tracer_provider.shutdown()
+    {
+        eprintln!("error shutting down trace provider: {e}");
     }
 
     Ok(())
@@ -638,7 +638,7 @@ fn counters() -> impl Iterator<Item = (&'static str, u64)> {
 async fn enable_tracing(
     _args: &Args,
     _credentials: &Credentials,
-) -> Result<Option<SdkTracerProvider>, TraceError> {
+) -> anyhow::Result<Option<SdkTracerProvider>> {
     use tracing_subscriber::fmt::format::{self, FmtSpan};
     use tracing_subscriber::prelude::*;
 

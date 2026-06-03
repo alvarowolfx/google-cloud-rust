@@ -14,25 +14,27 @@
 
 //! Google Cloud Client Libraries for Rust - Spanner
 //!
-//! **WARNING:** this crate is under active development. We expect multiple
-//! breaking changes in the upcoming releases. Testing is also incomplete, we do
-//! **not** recommend that you use this crate in production. We welcome feedback
-//! about the APIs, documentation, missing features, bugs, etc.
+//! **WARNING:** this is a preview release of the crate. We believe the APIs to be stable. We also
+//! are seeking feedback about the APIs and may need to make breaking changes if we discover that
+//! some parts are hard to use.
+//!
+//! We welcome feedback about the APIs, documentation, missing features, bugs, etc.
 
-// TODO(#5537) - fix missing docs and remove this.
-#![allow(missing_docs, reason = "docs not yet complete")]
-// TODO(#5566) - stabilize API and remove this.
-#![allow(clippy::exhaustive_enums, reason = "API not yet stable")]
+// Public domain modules.
 
-pub use batch_dml::BatchDml;
-pub use batch_dml::BatchDmlBuilder;
-pub use batch_read_only_transaction::{
-    BatchReadOnlyTransaction, BatchReadOnlyTransactionBuilder, Partition,
-};
-pub use batch_write_transaction::{
-    BatchWriteResponseStream, BatchWriteTransaction, BatchWriteTransactionBuilder,
-};
-pub use error::BatchUpdateError;
+/// Key and key range definition types.
+pub mod key;
+/// Write mutations and transaction commit binders.
+pub mod mutation;
+/// Configurable read requests and builders.
+pub mod read;
+/// Spanner execution result streams and rows.
+pub mod result;
+/// SQL statement builders and parameter bindings.
+pub mod statement;
+/// Type and value representations and conversion traits.
+pub mod value;
+
 pub use google_cloud_gax::Result;
 pub use google_cloud_gax::error::Error;
 pub use rust_decimal::Decimal;
@@ -42,23 +44,39 @@ pub(crate) use google_cloud_gax::options::RequestOptions;
 pub(crate) use google_cloud_gax::options::internal::RequestBuilder;
 pub(crate) use google_cloud_gax::response::Response;
 
-pub mod batch_dml;
+/// Spanner client implementations.
 pub mod client;
-pub mod builder {
-    pub use crate::database_client::DatabaseClientBuilder;
-}
-pub mod batch_read_only_transaction;
+
+/// Consolidates all client and request builders.
+pub mod builder;
+
+/// Crate error types.
+pub mod error;
+
+/// Transaction-scoped interfaces and transaction runners.
+pub mod transaction;
+
+/// Batch execution and query partitioning support.
+pub mod batch;
+
+/// The messages and enums that are part of this client library.
 pub mod model {
     pub use crate::generated::gapic_dataplane::model::*;
 }
+
+/// Mocking and stub definitions.
+pub mod stub {
+    pub use crate::generated::gapic_dataplane::stub::*;
+}
+
+// Internal modules
+pub(crate) mod batch_dml;
+pub(crate) mod batch_read_only_transaction;
 pub(crate) mod batch_write_transaction;
 pub(crate) mod database_client;
 pub(crate) mod from_value;
-pub(crate) mod key;
-pub(crate) mod mutation;
 pub(crate) mod partitioned_dml_transaction;
 pub(crate) mod precommit;
-pub(crate) mod read;
 pub(crate) mod read_only_transaction;
 pub(crate) mod read_write_transaction;
 pub(crate) mod result_set;
@@ -66,16 +84,13 @@ pub(crate) mod result_set_metadata;
 pub(crate) mod row;
 pub(crate) mod server_streaming;
 pub(crate) mod session_maintainer;
-pub(crate) mod statement;
 pub(crate) mod timestamp_bound;
 pub(crate) mod to_value;
 pub(crate) mod transaction_retry_policy;
 pub(crate) mod transaction_runner;
 pub(crate) mod types;
-pub(crate) mod value;
 pub(crate) mod write_only_transaction;
 
-pub(crate) mod error;
 mod status;
 
 #[allow(dead_code)]

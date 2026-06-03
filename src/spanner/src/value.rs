@@ -18,16 +18,31 @@ pub(crate) const SPANNER_TIMESTAMP_FORMAT: &[time::format_description::FormatIte
 pub(crate) const SPANNER_DATE_FORMAT: &[time::format_description::FormatItem<'static>] =
     time::macros::format_description!("[year]-[month]-[day]");
 
+pub use crate::from_value::FromValue;
+pub use crate::to_value::ToValue;
+pub use crate::types::{Type, TypeCode};
+
 use prost_types::Value as ProtoValue;
 
 /// Kind indicates the type of the value.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+///
+/// This enum maps 1-to-1 with the frozen specification of JSON/Protobuf types
+/// in `google.protobuf.Value`, and is guaranteed not to grow.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[allow(clippy::exhaustive_enums, reason = "Value kinds are frozen JSON types")]
 pub enum Kind {
+    /// Represents a null value of any data type.
     Null,
+    /// Represents a floating point value.
     Number,
+    /// Represents a UTF-8 string value or encoded representations of other data types,
+    /// such as base64-encoded bytes, decimals, dates, timestamps, and integers.
     String,
+    /// Represents a boolean value.
     Bool,
+    /// Represents a structured object containing a collection of key-value pairs.
     Struct,
+    /// Represents an ordered list of values.
     List,
 }
 
@@ -228,6 +243,7 @@ impl List {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::hash::Hash;
 
     #[test]
     fn test_value_kind_and_accessors() {
@@ -296,5 +312,15 @@ mod tests {
         static_assertions::assert_impl_all!(Value: Send, Sync, Clone, std::fmt::Debug);
         static_assertions::assert_impl_all!(Struct: Send, Sync, Clone, std::fmt::Debug);
         static_assertions::assert_impl_all!(List: Send, Sync, Clone, std::fmt::Debug);
+        static_assertions::assert_impl_all!(
+            Kind: Send,
+            Sync,
+            Clone,
+            Copy,
+            std::fmt::Debug,
+            PartialEq,
+            Eq,
+            Hash
+        );
     }
 }

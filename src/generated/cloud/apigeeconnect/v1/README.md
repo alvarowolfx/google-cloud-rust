@@ -9,6 +9,8 @@ significant way. We do anticipate a number of new crate dependencies
 will be required. If you need these RPCs please open an issue in our
 GitHub repository.
 
+Apigee Connect allows the Apigee hybrid management plane to connect securely to the MART service in the runtime plane without requiring you to expose the MART endpoint on the internet.
+
 The client library types and functions are stable and not expected to change.
 Please note that Google Cloud services do change from time to time. The client
 libraries are designed to preserve backwards compatibility when the service
@@ -31,8 +33,8 @@ The main types to work with this crate are the clients:
 
 ## More Information
 
-- Read the [crate's documentation](https://docs.rs/google-cloud-apigeeconnect-v1/1.9.0)
+- Read the [crate's documentation](https://docs.rs/google-cloud-apigeeconnect-v1/1.10.0)
 
 [aws-lc-rs]: https://crates.io/crates/aws-lc-rs
 [ring]: https://crates.io/crates/ring
-[ConnectionService]: https://docs.rs/google-cloud-apigeeconnect-v1/1.9.0/google_cloud_apigeeconnect_v1/client/struct.ConnectionService.html
+[ConnectionService]: https://docs.rs/google-cloud-apigeeconnect-v1/1.10.0/google_cloud_apigeeconnect_v1/client/struct.ConnectionService.html

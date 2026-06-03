@@ -420,6 +420,76 @@ where
     }
 
     #[tracing::instrument(level = tracing::Level::DEBUG, ret)]
+    async fn get_intelligence_finding(
+        &self,
+        req: crate::model::GetIntelligenceFindingRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::IntelligenceFinding>> {
+        let (_span, pending) = gaxi::client_request_signals!(
+            metric: self.duration.clone(),
+            info: *info::INSTRUMENTATION_CLIENT_INFO,
+            method: "client::StorageControl::get_intelligence_finding",
+            self.inner.get_intelligence_finding(req, options));
+        pending.await
+    }
+
+    #[tracing::instrument(level = tracing::Level::DEBUG, ret)]
+    async fn list_intelligence_findings(
+        &self,
+        req: crate::model::ListIntelligenceFindingsRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::ListIntelligenceFindingsResponse>> {
+        let (_span, pending) = gaxi::client_request_signals!(
+            metric: self.duration.clone(),
+            info: *info::INSTRUMENTATION_CLIENT_INFO,
+            method: "client::StorageControl::list_intelligence_findings",
+            self.inner.list_intelligence_findings(req, options));
+        pending.await
+    }
+
+    #[tracing::instrument(level = tracing::Level::DEBUG, ret)]
+    async fn summarize_intelligence_findings(
+        &self,
+        req: crate::model::SummarizeIntelligenceFindingsRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::SummarizeIntelligenceFindingsResponse>> {
+        let (_span, pending) = gaxi::client_request_signals!(
+            metric: self.duration.clone(),
+            info: *info::INSTRUMENTATION_CLIENT_INFO,
+            method: "client::StorageControl::summarize_intelligence_findings",
+            self.inner.summarize_intelligence_findings(req, options));
+        pending.await
+    }
+
+    #[tracing::instrument(level = tracing::Level::DEBUG, ret)]
+    async fn get_intelligence_finding_revision(
+        &self,
+        req: crate::model::GetIntelligenceFindingRevisionRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::IntelligenceFindingRevision>> {
+        let (_span, pending) = gaxi::client_request_signals!(
+            metric: self.duration.clone(),
+            info: *info::INSTRUMENTATION_CLIENT_INFO,
+            method: "client::StorageControl::get_intelligence_finding_revision",
+            self.inner.get_intelligence_finding_revision(req, options));
+        pending.await
+    }
+
+    #[tracing::instrument(level = tracing::Level::DEBUG, ret)]
+    async fn list_intelligence_finding_revisions(
+        &self,
+        req: crate::model::ListIntelligenceFindingRevisionsRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::ListIntelligenceFindingRevisionsResponse>> {
+        let (_span, pending) = gaxi::client_request_signals!(
+            metric: self.duration.clone(),
+            info: *info::INSTRUMENTATION_CLIENT_INFO,
+            method: "client::StorageControl::list_intelligence_finding_revisions",
+            self.inner.list_intelligence_finding_revisions(req, options));
+        pending.await
+    }
+
+    #[tracing::instrument(level = tracing::Level::DEBUG, ret)]
     async fn get_operation(
         &self,
         req: google_cloud_longrunning::model::GetOperationRequest,
@@ -430,7 +500,57 @@ where
             info: *info::INSTRUMENTATION_CLIENT_INFO,
             method: "client::StorageControl::get_operation",
             self.inner.get_operation(req, options));
-        pending.await
+        #[cfg(google_cloud_unstable_tracing)]
+        {
+            if let Ok(attempt) = google_cloud_lro::POLL_ATTEMPT_COUNT.try_with(|c| *c) {
+                _span.record("gcp.longrunning.poll_attempt_count", attempt);
+                _span.record("gcp.longrunning.done", false);
+            }
+        }
+        let result = pending.await;
+        #[cfg(google_cloud_unstable_tracing)]
+        {
+            if google_cloud_lro::POLL_ATTEMPT_COUNT
+                .try_with(|c| *c)
+                .is_ok()
+            {
+                match &result {
+                    Ok(response) => {
+                        let op = response.body();
+                        _span.record("gcp.longrunning.done", op.done);
+                        if op.done {
+                            let code = match &op.result {
+                                Some(
+                                    google_cloud_longrunning::model::operation::Result::Error(
+                                        status,
+                                    ),
+                                ) => status.code,
+                                _ => 0,
+                            };
+                            _span.record("gcp.longrunning.status_code", code);
+                            if let Some(
+                                google_cloud_longrunning::model::operation::Result::Error(status),
+                            ) = &op.result
+                            {
+                                _span.record("otel.status_code", "ERROR");
+                                _span.record("otel.status_description", &status.message);
+                                _span.record("rpc.response.status_code", status.code);
+                                _span.record(
+                                    "error.type",
+                                    google_cloud_gax::error::rpc::Code::from(status.code)
+                                        .to_string(),
+                                );
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        _span.record("otel.status_code", "ERROR");
+                        _span.record("otel.status_description", e.to_string());
+                    }
+                }
+            }
+        }
+        result
     }
 
     fn get_polling_error_policy(

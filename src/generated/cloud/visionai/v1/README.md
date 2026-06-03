@@ -9,6 +9,8 @@ significant way. We do anticipate a number of new crate dependencies
 will be required. If you need these RPCs please open an issue in our
 GitHub repository.
 
+Vertex AI Vision is an AI-powered platform to ingest, analyze and store video data.
+
 The client library types and functions are stable and not expected to change.
 Please note that Google Cloud services do change from time to time. The client
 libraries are designed to preserve backwards compatibility when the service
@@ -36,13 +38,13 @@ The main types to work with this crate are the clients:
 
 ## More Information
 
-- Read the [crate's documentation](https://docs.rs/google-cloud-visionai-v1/1.1.0)
+- Read the [crate's documentation](https://docs.rs/google-cloud-visionai-v1/1.2.0)
 
 [aws-lc-rs]: https://crates.io/crates/aws-lc-rs
 [ring]: https://crates.io/crates/ring
-[HealthCheckService]: https://docs.rs/google-cloud-visionai-v1/1.1.0/google_cloud_visionai_v1/client/struct.HealthCheckService.html
-[LiveVideoAnalytics]: https://docs.rs/google-cloud-visionai-v1/1.1.0/google_cloud_visionai_v1/client/struct.LiveVideoAnalytics.html
-[AppPlatform]: https://docs.rs/google-cloud-visionai-v1/1.1.0/google_cloud_visionai_v1/client/struct.AppPlatform.html
-[StreamingService]: https://docs.rs/google-cloud-visionai-v1/1.1.0/google_cloud_visionai_v1/client/struct.StreamingService.html
-[StreamsService]: https://docs.rs/google-cloud-visionai-v1/1.1.0/google_cloud_visionai_v1/client/struct.StreamsService.html
-[Warehouse]: https://docs.rs/google-cloud-visionai-v1/1.1.0/google_cloud_visionai_v1/client/struct.Warehouse.html
+[HealthCheckService]: https://docs.rs/google-cloud-visionai-v1/1.2.0/google_cloud_visionai_v1/client/struct.HealthCheckService.html
+[LiveVideoAnalytics]: https://docs.rs/google-cloud-visionai-v1/1.2.0/google_cloud_visionai_v1/client/struct.LiveVideoAnalytics.html
+[AppPlatform]: https://docs.rs/google-cloud-visionai-v1/1.2.0/google_cloud_visionai_v1/client/struct.AppPlatform.html
+[StreamingService]: https://docs.rs/google-cloud-visionai-v1/1.2.0/google_cloud_visionai_v1/client/struct.StreamingService.html
+[StreamsService]: https://docs.rs/google-cloud-visionai-v1/1.2.0/google_cloud_visionai_v1/client/struct.StreamsService.html
+[Warehouse]: https://docs.rs/google-cloud-visionai-v1/1.2.0/google_cloud_visionai_v1/client/struct.Warehouse.html

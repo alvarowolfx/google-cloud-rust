@@ -27,12 +27,19 @@ use crate::value::Value;
 #[macro_export]
 macro_rules! key {
     ($($val:expr),* $(,)?) => {
-        $crate::client::Key::new(vec![
-            $($crate::client::ToValue::to_value(&$val)),*
+        $crate::key::Key::new(vec![
+            $($crate::value::ToValue::to_value(&$val)),*
         ])
     };
 }
 
+/// A primary key or index key in Spanner.
+///
+/// A `Key` consists of an ordered collection of one or more Spanner [`Value`]s.
+/// The elements must match the correct column order as defined by the table or
+/// index schema.
+///
+/// For a simpler way to construct a `Key` instance, use the [`key!`] macro.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Key {
     pub(crate) values: Vec<Value>,
@@ -69,7 +76,7 @@ pub(crate) enum Endpoint {
 ///
 /// # Example
 /// ```
-/// use google_cloud_spanner::client::KeyRange;
+/// use google_cloud_spanner::key::KeyRange;
 /// use google_cloud_spanner::key;
 ///
 /// let range = KeyRange::closed_open(key![1_i64], key![10_i64]);
@@ -85,7 +92,7 @@ impl KeyRange {
     ///
     /// # Example
     /// ```
-    /// use google_cloud_spanner::client::KeyRange;
+    /// use google_cloud_spanner::key::KeyRange;
     /// use google_cloud_spanner::key;
     ///
     /// // Creates a key for the range [1, 10)
@@ -102,7 +109,7 @@ impl KeyRange {
     ///
     /// # Example
     /// ```
-    /// use google_cloud_spanner::client::KeyRange;
+    /// use google_cloud_spanner::key::KeyRange;
     /// use google_cloud_spanner::key;
     ///
     /// // Creates a key for the range [1, 10]
@@ -119,7 +126,7 @@ impl KeyRange {
     ///
     /// # Example
     /// ```
-    /// use google_cloud_spanner::client::KeyRange;
+    /// use google_cloud_spanner::key::KeyRange;
     /// use google_cloud_spanner::key;
     ///
     /// // Creates a key for the range (1, 10]
@@ -136,7 +143,7 @@ impl KeyRange {
     ///
     /// # Example
     /// ```
-    /// use google_cloud_spanner::client::KeyRange;
+    /// use google_cloud_spanner::key::KeyRange;
     /// use google_cloud_spanner::key;
     ///
     /// // Creates a key for the range (1, 10)
@@ -169,7 +176,8 @@ impl KeyRange {
 ///
 /// # Example
 /// ```
-/// use google_cloud_spanner::client::{KeySet, KeyRange};
+/// use google_cloud_spanner::key::KeySet;
+/// use google_cloud_spanner::key::KeyRange;
 /// use google_cloud_spanner::key;
 ///
 /// let keyset = KeySet::builder()

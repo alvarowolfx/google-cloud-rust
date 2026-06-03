@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use google_cloud_spanner::client::{DatabaseClient, KeySet, ReadRequest};
+use google_cloud_spanner::client::DatabaseClient;
+use google_cloud_spanner::key::KeySet;
 use google_cloud_spanner::model::DirectedReadOptions;
 use google_cloud_spanner::model::directed_read_options::{IncludeReplicas, Replicas};
+use google_cloud_spanner::read::ReadRequest;
 
 pub async fn read_only_with_directed_read(db_client: &DatabaseClient) -> anyhow::Result<()> {
     let mut dro = DirectedReadOptions::default();
@@ -24,7 +26,7 @@ pub async fn read_only_with_directed_read(db_client: &DatabaseClient) -> anyhow:
 
     let read = ReadRequest::builder("AllTypes", vec!["Id"])
         .with_keys(KeySet::all())
-        .with_directed_read_options(dro)
+        .set_directed_read_options(dro)
         .build();
 
     let mut result_set = db_client
@@ -47,7 +49,7 @@ pub async fn read_write_with_directed_read_error(db_client: &DatabaseClient) -> 
 
     let read = ReadRequest::builder("AllTypes", vec!["Id"])
         .with_keys(KeySet::all())
-        .with_directed_read_options(dro)
+        .set_directed_read_options(dro)
         .build();
 
     // Read-write transaction runner
@@ -57,7 +59,7 @@ pub async fn read_write_with_directed_read_error(db_client: &DatabaseClient) -> 
         .run(async |tx| {
             let read = read.clone();
             let mut rs = tx.execute_read(read).await?;
-            let _ = rs.next().await;
+            let _ = rs.next().await.transpose()?;
             Ok(())
         })
         .await
@@ -70,12 +72,14 @@ pub async fn read_write_with_directed_read_error(db_client: &DatabaseClient) -> 
 
     let err = result.unwrap_err();
     let err_str = format!("{:?}", err);
-    // The proto documentation states that an INVALID_ARGUMENT error should be returned,
-    // but the emulator returns FailedPrecondition with a specific message.
+    // The proto documentation states that an INVALID_ARGUMENT error should be returned
+    // (which is what real Spanner returns), but the emulator returns FailedPrecondition
+    // with a specific message. We check for both to support both environments.
     assert!(
         err_str.contains("FailedPrecondition")
+            || err_str.contains("InvalidArgument")
             || err_str.contains("Directed reads can only be performed in a read-only transaction"),
-        "Expected FailedPrecondition error, got: {}",
+        "Expected FailedPrecondition or InvalidArgument error, got: {}",
         err_str
     );
 

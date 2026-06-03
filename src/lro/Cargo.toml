@@ -19,7 +19,7 @@ name        = "google-cloud-lro"
 #     version of all downstream dependencies. For details see:
 #         https://github.com/googleapis/google-cloud-rust/issues/3237
 #         https://github.com/googleapis/google-cloud-rust/issues/3265
-version = "1.6.0"
+version = "1.7.0"
 # Inherit other attributes from the workspace.
 authors.workspace      = true
 categories.workspace   = true
@@ -53,6 +53,10 @@ google-cloud-wkt         = { workspace = true }
 [target.'cfg(google_cloud_unstable_tracing)'.dependencies]
 tracing = { workspace = true }
 
+[target.'cfg(google_cloud_unstable_tracing)'.dev-dependencies]
+tracing-subscriber      = { workspace = true, features = ["registry"] }
+google-cloud-test-utils = { workspace = true }
+
 [features]
 unstable-stream = ["dep:futures", "dep:pin-project"]
 # DO NOT USE: this allows us to detect semver changes in types used in the
@@ -65,6 +69,7 @@ _internal-semver = []
 [dev-dependencies]
 anyhow.workspace     = true
 httptest.workspace   = true
+mockall.workspace    = true
 serde_json.workspace = true
 tokio                = { workspace = true, features = ["test-util"] }
 # Local dependencies

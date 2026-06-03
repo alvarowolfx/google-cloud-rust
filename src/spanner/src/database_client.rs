@@ -50,6 +50,7 @@ use std::sync::Arc;
 pub struct DatabaseClient {
     pub(crate) spanner: Spanner,
     pub(crate) session_maintainer: Arc<ManagedSessionMaintainer>,
+    pub(crate) leader_aware_routing_enabled: bool,
 }
 
 impl DatabaseClient {
@@ -57,7 +58,8 @@ impl DatabaseClient {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{Spanner, Statement};
+    /// # use google_cloud_spanner::client::Spanner;
+    /// # use google_cloud_spanner::statement::Statement;
     /// # async fn run(spanner: Spanner) -> Result<(), google_cloud_spanner::Error> {
     /// let db_client = spanner.database_client("projects/p/instances/i/databases/d").build().await?;
     /// let tx = db_client.single_use().build();
@@ -80,7 +82,8 @@ impl DatabaseClient {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{Spanner, Statement};
+    /// # use google_cloud_spanner::client::Spanner;
+    /// # use google_cloud_spanner::statement::Statement;
     /// # async fn run(spanner: Spanner) -> Result<(), google_cloud_spanner::Error> {
     /// let db_client = spanner.database_client("projects/p/instances/i/databases/d").build().await?;
     /// let tx = db_client.read_only_transaction().build().await?;
@@ -103,7 +106,8 @@ impl DatabaseClient {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{Spanner, Statement};
+    /// # use google_cloud_spanner::client::Spanner;
+    /// # use google_cloud_spanner::statement::Statement;
     /// # async fn build(spanner: Spanner) -> Result<(), google_cloud_spanner::Error> {
     /// let db_client = spanner.database_client("projects/p/instances/i/databases/d").build().await?;
     /// let transaction = db_client.batch_read_only_transaction().build().await?;
@@ -121,7 +125,8 @@ impl DatabaseClient {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{Spanner, Statement};
+    /// # use google_cloud_spanner::client::Spanner;
+    /// # use google_cloud_spanner::statement::Statement;
     /// # async fn run(spanner: Spanner) -> Result<(), google_cloud_spanner::Error> {
     /// let db_client = spanner.database_client("projects/p/instances/i/databases/d").build().await?;
     /// let transaction = db_client.partitioned_dml_transaction().build().await?;
@@ -144,7 +149,8 @@ impl DatabaseClient {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{Spanner, Statement};
+    /// # use google_cloud_spanner::client::Spanner;
+    /// # use google_cloud_spanner::statement::Statement;
     /// # async fn build(spanner: Spanner) -> Result<(), google_cloud_spanner::Error> {
     /// let db_client = spanner.database_client("projects/p/instances/i/databases/d").build().await?;
     /// let runner = db_client.read_write_transaction().build().await?;
@@ -168,7 +174,8 @@ impl DatabaseClient {
     ///
     /// # Example
     /// ```rust
-    /// # use google_cloud_spanner::client::{Mutation, Spanner};
+    /// # use google_cloud_spanner::client::Spanner;
+    /// # use google_cloud_spanner::mutation::Mutation;
     /// # async fn test_doc() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = Spanner::builder().build().await?;
     /// let db = client.database_client("projects/p/instances/i/databases/d").build().await?;
@@ -179,7 +186,7 @@ impl DatabaseClient {
     ///     .build();
     ///
     /// let response = db.write_only_transaction()
-    ///     .with_transaction_tag("my-tag")
+    ///     .set_transaction_tag("my-tag")
     ///     .build()
     ///     .write(vec![mutation])
     ///     .await?;
@@ -198,7 +205,9 @@ impl DatabaseClient {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{Spanner, Mutation, MutationGroup};
+    /// # use google_cloud_spanner::client::Spanner;
+    /// # use google_cloud_spanner::mutation::Mutation;
+    /// # use google_cloud_spanner::mutation::MutationGroup;
     /// # use google_cloud_gax::error::rpc::Code;
     /// # async fn sample() -> Result<(), Box<dyn std::error::Error>> {
     /// let client = Spanner::builder().build().await?;
@@ -253,6 +262,7 @@ pub struct DatabaseClientBuilder {
     database_name: String,
     database_role: Option<String>,
     options: Option<crate::RequestOptions>,
+    leader_aware_routing_enabled: bool,
 }
 
 impl DatabaseClientBuilder {
@@ -262,6 +272,7 @@ impl DatabaseClientBuilder {
             database_name,
             database_role: None,
             options: None,
+            leader_aware_routing_enabled: true,
         }
     }
 
@@ -314,6 +325,34 @@ impl DatabaseClientBuilder {
         self
     }
 
+    /// Sets whether Leader-Aware Routing (LAR) is enabled for read/write transactions.
+    ///
+    /// # Example
+    /// ```
+    /// # use google_cloud_spanner::client::Spanner;
+    /// # async fn sample() -> anyhow::Result<()> {
+    ///     let spanner = Spanner::builder().build().await?;
+    ///     let database_client = spanner
+    ///         .database_client("projects/my-project/instances/my-instance/databases/my-db")
+    ///         .with_leader_aware_routing(true)
+    ///         .build()
+    ///         .await?;
+    ///     # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// When LAR is enabled, modifying operations (Read-Write, Write-Only, and Partitioned DML
+    /// transactions) automatically route requests directly to the Spanner leader replica. This
+    /// eliminates internal forwarding hops between replicas and reduces overall transaction latency.
+    ///
+    /// Enabled by default.
+    ///
+    /// See also: <https://docs.cloud.google.com/spanner/docs/leader-aware-routing>
+    pub fn with_leader_aware_routing(mut self, enabled: bool) -> Self {
+        self.leader_aware_routing_enabled = enabled;
+        self
+    }
+
     /// Builds the [DatabaseClient] and creates a single multiplexed session that
     /// will be used for all operations on the database.
     pub async fn build(self) -> crate::Result<DatabaseClient> {
@@ -329,6 +368,7 @@ impl DatabaseClientBuilder {
         Ok(DatabaseClient {
             spanner: spanner_clone,
             session_maintainer,
+            leader_aware_routing_enabled: self.leader_aware_routing_enabled,
         })
     }
 }
@@ -337,6 +377,7 @@ impl DatabaseClientBuilder {
 mod tests {
     use super::*;
     use google_cloud_auth::credentials::anonymous::Builder as Anonymous;
+    use google_cloud_test_macros::tokio_test_no_panics;
     use spanner_grpc_mock::{MockSpanner, start};
 
     #[test]
@@ -345,7 +386,7 @@ mod tests {
         assert_impl_all!(DatabaseClient: Send, Sync, Clone, std::fmt::Debug);
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn test_database_client_builder() {
         let mut mock = MockSpanner::new();
         mock.expect_create_session().once().returning(|req| {
@@ -396,7 +437,7 @@ mod tests {
         assert_eq!(session.creator_role, "test-role");
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn test_database_client_builder_with_options() {
         let mut mock = MockSpanner::new();
         let mut seq = mockall::Sequence::new();
@@ -454,7 +495,7 @@ mod tests {
         );
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn test_database_client_builder_error() {
         let mut mock = MockSpanner::new();
         mock.expect_create_session().once().returning(|_| {

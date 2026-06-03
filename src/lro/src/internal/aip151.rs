@@ -18,7 +18,10 @@
 //! module may be changed or removed without warnings. Applications should not
 //! use any types contained within.
 
-use crate::{Poller, PollingBackoffPolicy, PollingErrorPolicy, PollingResult, Result};
+use crate::{
+    Poller, PollingBackoffPolicy, PollingErrorPolicy, PollingResult, Result,
+    sealed::Poller as SealedPoller,
+};
 use google_cloud_gax::polling_state::PollingState;
 use google_cloud_wkt::Empty;
 use google_cloud_wkt::message::Message;
@@ -48,72 +51,7 @@ where
         + Send
         + 'static,
 {
-    new_poller_with_options(
-        polling_error_policy,
-        polling_backoff_policy,
-        start,
-        query,
-        PollerOptions::default(),
-    )
-}
-
-/// Details for tracing a poller.
-#[derive(Clone, Debug, Default)]
-#[non_exhaustive]
-pub struct TracingDetails {
-    pub method_name: &'static str,
-}
-
-/// Options for creating a new poller.
-#[derive(Default)]
-#[non_exhaustive]
-pub struct PollerOptions {
-    pub tracing: Option<TracingDetails>,
-}
-
-/// Creates a new `impl Poller<R, M>` with options.
-///
-/// This is intended as an implementation detail of the generated clients.
-/// Applications should have no need to use this function directly.
-pub fn new_poller_with_options<ResponseType, MetadataType, S, SF, Q, QF>(
-    polling_error_policy: Arc<dyn PollingErrorPolicy>,
-    polling_backoff_policy: Arc<dyn PollingBackoffPolicy>,
-    start: S,
-    query: Q,
-    options: PollerOptions,
-) -> impl Poller<ResponseType, MetadataType>
-where
-    ResponseType: Message + serde::ser::Serialize + serde::de::DeserializeOwned + Send,
-    MetadataType: Message + serde::ser::Serialize + serde::de::DeserializeOwned + Send,
-    S: FnOnce() -> SF + Send + Sync,
-    SF: std::future::Future<Output = Result<Operation<ResponseType, MetadataType>>>
-        + Send
-        + 'static,
-    Q: Fn(String) -> QF + Send + Sync + Clone,
-    QF: std::future::Future<Output = Result<Operation<ResponseType, MetadataType>>>
-        + Send
-        + 'static,
-{
-    #[cfg(google_cloud_unstable_tracing)]
-    let longrunning_span = options.tracing.map(|t| {
-        tracing::info_span!(
-            "LRO Wait",
-            "gcp.rpc.method" = t.method_name,
-            "gcp.longrunning.operation_name" = tracing::field::Empty
-        )
-    });
-
-    #[cfg(not(google_cloud_unstable_tracing))]
-    let _ = options;
-
-    PollerImpl::new(
-        polling_error_policy,
-        polling_backoff_policy,
-        start,
-        query,
-        #[cfg(google_cloud_unstable_tracing)]
-        longrunning_span,
-    )
+    PollerImpl::new(polling_error_policy, polling_backoff_policy, start, query)
 }
 
 /// Creates a new `impl Poller<(), M>` from the closures created by the generator.
@@ -133,13 +71,7 @@ where
     Q: Fn(String) -> QF + Send + Sync + Clone,
     QF: std::future::Future<Output = Result<Operation<Empty, MetadataType>>> + Send + 'static,
 {
-    let poller = new_poller_with_options(
-        polling_error_policy,
-        polling_backoff_policy,
-        start,
-        query,
-        PollerOptions::default(),
-    );
+    let poller = new_poller(polling_error_policy, polling_backoff_policy, start, query);
     UnitResponsePoller::new(poller)
 }
 
@@ -160,13 +92,7 @@ where
     Q: Fn(String) -> QF + Send + Sync + Clone,
     QF: std::future::Future<Output = Result<Operation<ResponseType, Empty>>> + Send + 'static,
 {
-    let poller = new_poller_with_options(
-        polling_error_policy,
-        polling_backoff_policy,
-        start,
-        query,
-        PollerOptions::default(),
-    );
+    let poller = new_poller(polling_error_policy, polling_backoff_policy, start, query);
     UnitMetadataPoller::new(poller)
 }
 
@@ -186,13 +112,7 @@ where
     Q: Fn(String) -> QF + Send + Sync + Clone,
     QF: std::future::Future<Output = Result<Operation<Empty, Empty>>> + Send + 'static,
 {
-    let poller = new_poller_with_options(
-        polling_error_policy,
-        polling_backoff_policy,
-        start,
-        query,
-        PollerOptions::default(),
-    );
+    let poller = new_poller(polling_error_policy, polling_backoff_policy, start, query);
     UnitResponsePoller::new(UnitMetadataPoller::new(poller))
 }
 
@@ -206,7 +126,14 @@ impl<P> UnitResponsePoller<P> {
     }
 }
 
-impl<P> crate::sealed::Poller for UnitResponsePoller<P> {}
+impl<P> SealedPoller for UnitResponsePoller<P>
+where
+    P: SealedPoller + Send,
+{
+    async fn backoff(&mut self, state: &PollingState) {
+        self.poller.backoff(state).await
+    }
+}
 
 impl<P, M> Poller<(), M> for UnitResponsePoller<P>
 where
@@ -235,7 +162,14 @@ impl<P> UnitMetadataPoller<P> {
     }
 }
 
-impl<P> crate::sealed::Poller for UnitMetadataPoller<P> {}
+impl<P> SealedPoller for UnitMetadataPoller<P>
+where
+    P: SealedPoller + Send,
+{
+    async fn backoff(&mut self, state: &PollingState) {
+        self.poller.backoff(state).await
+    }
+}
 
 impl<P, R> Poller<R, ()> for UnitMetadataPoller<P>
 where
@@ -292,9 +226,6 @@ struct PollerImpl<S, Q> {
     query: Q,
     operation: Option<String>,
     state: PollingState,
-    #[cfg(google_cloud_unstable_tracing)]
-    #[expect(dead_code)]
-    longrunning_span: Option<tracing::Span>,
 }
 
 impl<S, Q> PollerImpl<S, Q> {
@@ -303,7 +234,6 @@ impl<S, Q> PollerImpl<S, Q> {
         backoff_policy: Arc<dyn PollingBackoffPolicy>,
         start: S,
         query: Q,
-        #[cfg(google_cloud_unstable_tracing)] longrunning_span: Option<tracing::Span>,
     ) -> Self {
         Self {
             error_policy,
@@ -312,8 +242,6 @@ impl<S, Q> PollerImpl<S, Q> {
             query,
             operation: None,
             state: PollingState::default(),
-            #[cfg(google_cloud_unstable_tracing)]
-            longrunning_span,
         }
     }
 }
@@ -350,6 +278,13 @@ where
     async fn poll(&mut self) -> Option<PollingResult<ResponseType, MetadataType>> {
         if let Some(start) = self.start.take() {
             let result = start().await;
+            #[cfg(google_cloud_unstable_tracing)]
+            if let Ok(ref op) = result {
+                let name = op.name();
+                if let Some(recorder) = crate::internal::LroRecorder::current() {
+                    recorder.record_destination_id(&name);
+                }
+            }
             let (op, poll) = crate::details::handle_start(result);
             self.operation = op;
             return Some(poll);
@@ -359,51 +294,38 @@ where
             let result = (self.query)(name.clone()).await;
             let (op, poll) =
                 crate::details::handle_poll(self.error_policy.clone(), &self.state, name, result);
+            #[cfg(google_cloud_unstable_tracing)]
+            if let Some(ref next_name) = op {
+                if let Some(recorder) = crate::internal::LroRecorder::current() {
+                    recorder.record_destination_id(next_name);
+                }
+            }
             self.operation = op;
             return Some(poll);
         }
         None
     }
-
-    async fn until_done(mut self) -> Result<ResponseType> {
-        let mut state = PollingState::default();
-        while let Some(p) = self.poll().await {
-            match p {
-                // Return, the operation completed or the polling policy is
-                // exhausted.
-                PollingResult::Completed(r) => return r,
-                // Continue, the operation was successfully polled and the
-                // polling policy was queried.
-                PollingResult::InProgress(_) => (),
-                // Continue, the polling policy was queried and decided the
-                // error is recoverable.
-                PollingResult::PollingError(_) => (),
-            }
-            state.attempt_count += 1;
-            tokio::time::sleep(self.backoff_policy.wait_period(&state)).await;
-        }
-        // We can only get here if `poll()` returns `None`, but it only returns
-        // `None` after it returned `Polling::Completed` and therefore this is
-        // never reached.
-        unreachable!("loop should exit via the `Completed` branch vs. this line");
+    async fn until_done(self) -> Result<ResponseType> {
+        crate::until_done(self).await
     }
 
     #[cfg(feature = "unstable-stream")]
     fn into_stream(
         self,
-    ) -> impl futures::Stream<Item = PollingResult<ResponseType, MetadataType>> + Unpin
-    where
-        ResponseType: Message + serde::de::DeserializeOwned,
-        MetadataType: Message + serde::de::DeserializeOwned,
-    {
-        use futures::stream::unfold;
-        Box::pin(unfold(self, |mut poller| async move {
-            poller.poll().await.map(|item| (item, poller))
-        }))
+    ) -> impl futures::Stream<Item = PollingResult<ResponseType, MetadataType>> + Unpin {
+        crate::into_stream(self)
     }
 }
-
-impl<S, Q> crate::sealed::Poller for PollerImpl<S, Q> {}
+impl<S, Q> SealedPoller for PollerImpl<S, Q>
+where
+    S: Send,
+    Q: Send,
+{
+    async fn backoff(&mut self, state: &PollingState) {
+        let backoff = self.backoff_policy.wait_period(state);
+        tokio::time::sleep(backoff).await;
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -418,6 +340,35 @@ mod tests {
     };
     use google_cloud_wkt::{Any, Duration, Timestamp};
     use std::time::Duration as StdDuration;
+
+    #[cfg(not(google_cloud_unstable_tracing))]
+    pub(crate) struct DummySpan;
+
+    #[cfg(not(google_cloud_unstable_tracing))]
+    fn test_span() -> DummySpan {
+        DummySpan
+    }
+
+    #[cfg(not(google_cloud_unstable_tracing))]
+    pub(crate) trait Instrument: Sized {
+        fn instrument(self, _span: DummySpan) -> Self {
+            self
+        }
+    }
+
+    #[cfg(not(google_cloud_unstable_tracing))]
+    impl<T> Instrument for T {}
+
+    #[cfg(google_cloud_unstable_tracing)]
+    use tracing::Instrument;
+
+    #[cfg(google_cloud_unstable_tracing)]
+    fn test_span() -> tracing::Span {
+        tracing::info_span!(
+            "test_span",
+            gcp.resource.destination.id = tracing::field::Empty,
+        )
+    }
 
     type ResponseType = Duration;
     type MetadataType = Timestamp;
@@ -452,10 +403,8 @@ mod tests {
             Arc::new(ExponentialBackoff::default()),
             start,
             query,
-            #[cfg(google_cloud_unstable_tracing)]
-            None,
         );
-        let p0 = poller.poll().await;
+        let p0 = poller.poll().instrument(test_span()).await;
         match p0.unwrap() {
             PollingResult::InProgress(m) => {
                 assert_eq!(m, Some(Timestamp::clamp(123, 0)));
@@ -465,7 +414,7 @@ mod tests {
             }
         }
 
-        let p1 = poller.poll().await;
+        let p1 = poller.poll().instrument(test_span()).await;
         match p1.unwrap() {
             PollingResult::Completed(r) => {
                 let response = r.unwrap();
@@ -476,52 +425,8 @@ mod tests {
             }
         }
 
-        let p2 = poller.poll().await;
+        let p2 = poller.poll().instrument(test_span()).await;
         assert!(p2.is_none(), "{p2:?}");
-    }
-
-    #[cfg(google_cloud_unstable_tracing)]
-    #[test]
-    fn test_poller_initialization_with_tracing() {
-        let start = || async {
-            let op = google_cloud_longrunning::model::Operation::default();
-            Ok(TestOperation::new(op))
-        };
-        let query = |_: String| async {
-            let op = google_cloud_longrunning::model::Operation::default();
-            Ok(TestOperation::new(op))
-        };
-
-        let _poller = new_poller_with_options::<Duration, Timestamp, _, _, _, _>(
-            Arc::new(AlwaysContinue),
-            Arc::new(ExponentialBackoff::default()),
-            start,
-            query,
-            PollerOptions {
-                tracing: Some(TracingDetails {
-                    method_name: "test_method",
-                }),
-            },
-        );
-    }
-
-    #[cfg(not(google_cloud_unstable_tracing))]
-    #[test]
-    fn test_poller_initialization_no_tracing() {
-        let start = || async { panic!() };
-        let query = |_: String| async { panic!() };
-
-        let _poller = new_poller_with_options::<Duration, Timestamp, _, _, _, _>(
-            Arc::new(AlwaysContinue),
-            Arc::new(ExponentialBackoff::default()),
-            start,
-            query,
-            PollerOptions {
-                tracing: Some(TracingDetails {
-                    method_name: "test_method",
-                }),
-            },
-        );
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -547,12 +452,11 @@ mod tests {
         };
 
         use futures::StreamExt;
-        let mut stream = new_poller_with_options(
+        let mut stream = new_poller(
             Arc::new(AlwaysContinue),
             Arc::new(ExponentialBackoff::default()),
             start,
             query,
-            PollerOptions::default(),
         )
         .into_stream();
         let p0 = stream.next().await;
@@ -611,10 +515,8 @@ mod tests {
             ),
             start,
             query,
-            #[cfg(google_cloud_unstable_tracing)]
-            None,
         );
-        let response = poller.until_done().await?;
+        let response = poller.until_done().instrument(test_span()).await?;
         assert_eq!(response, Duration::clamp(234, 0));
 
         Ok(())
@@ -1028,8 +930,6 @@ mod tests {
             ),
             start,
             query,
-            #[cfg(google_cloud_unstable_tracing)]
-            None,
         );
         let response = poller.until_done().await?;
         assert_eq!(response, Duration::clamp(234, 0));
@@ -1060,8 +960,6 @@ mod tests {
             ),
             start,
             query,
-            #[cfg(google_cloud_unstable_tracing)]
-            None,
         );
         let response = poller.until_done().await;
         assert!(response.is_err(), "{response:?}");
@@ -1071,6 +969,77 @@ mod tests {
         );
 
         Ok(())
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn test_unit_pollers_backoff() {
+        use crate::sealed::Poller as _;
+
+        let start_resp = || async move {
+            Ok::<EmptyResponseOperation, Error>(
+                EmptyResponseOperation::new(OperationAny::default()),
+            )
+        };
+        let query_resp = |_: String| async move {
+            Ok::<EmptyResponseOperation, Error>(
+                EmptyResponseOperation::new(OperationAny::default()),
+            )
+        };
+
+        let mut poller = new_unit_response_poller(
+            Arc::new(AlwaysContinue),
+            Arc::new(
+                ExponentialBackoffBuilder::new()
+                    .with_initial_delay(StdDuration::from_millis(1))
+                    .clamp(),
+            ),
+            start_resp,
+            query_resp,
+        );
+        poller.backoff(&PollingState::default()).await;
+
+        let start_meta = || async move {
+            Ok::<EmptyMetadataOperation, Error>(
+                EmptyMetadataOperation::new(OperationAny::default()),
+            )
+        };
+        let query_meta = |_: String| async move {
+            Ok::<EmptyMetadataOperation, Error>(
+                EmptyMetadataOperation::new(OperationAny::default()),
+            )
+        };
+
+        let mut poller = new_unit_metadata_poller(
+            Arc::new(AlwaysContinue),
+            Arc::new(
+                ExponentialBackoffBuilder::new()
+                    .with_initial_delay(StdDuration::from_millis(1))
+                    .clamp(),
+            ),
+            start_meta,
+            query_meta,
+        );
+        poller.backoff(&PollingState::default()).await;
+
+        type EmptyOperation = Operation<Empty, Empty>;
+        let start_unit = || async move {
+            Ok::<EmptyOperation, Error>(EmptyOperation::new(OperationAny::default()))
+        };
+        let query_unit = |_: String| async move {
+            Ok::<EmptyOperation, Error>(EmptyOperation::new(OperationAny::default()))
+        };
+
+        let mut poller = new_unit_poller(
+            Arc::new(AlwaysContinue),
+            Arc::new(
+                ExponentialBackoffBuilder::new()
+                    .with_initial_delay(StdDuration::from_millis(1))
+                    .clamp(),
+            ),
+            start_unit,
+            query_unit,
+        );
+        poller.backoff(&PollingState::default()).await;
     }
 
     fn service_error() -> Error {
@@ -1091,5 +1060,144 @@ mod tests {
 
     fn polling_error() -> Error {
         Error::io("something failed")
+    }
+
+    #[cfg(google_cloud_unstable_tracing)]
+    #[tokio::test]
+    async fn test_poller_tracing() {
+        let guard = google_cloud_test_utils::test_layer::TestLayer::initialize();
+
+        let start = || async move {
+            let any = Any::from_msg(&Timestamp::clamp(123, 0))
+                .expect("test message deserializes via Any::from_msg");
+            let op = OperationAny::default()
+                .set_name("test-operation-123")
+                .set_metadata(any);
+            let op = TestOperation::new(op);
+            Ok::<TestOperation, Error>(op)
+        };
+
+        let count = Arc::new(std::sync::Mutex::new(0));
+        let query_count = count.clone();
+        let query = move |_: String| {
+            let mut c = query_count.lock().unwrap();
+            *c += 1;
+            let is_done = *c > 1;
+            async move {
+                if is_done {
+                    let any = Any::from_msg(&Duration::clamp(234, 0))
+                        .expect("test message deserializes via Any::from_msg");
+                    let result = ResultAny::Response(any.into());
+                    let op = OperationAny::default().set_done(true).set_result(result);
+                    let op = TestOperation::new(op);
+                    Ok::<TestOperation, Error>(op)
+                } else {
+                    let any = Any::from_msg(&Timestamp::clamp(123, 0))
+                        .expect("test message deserializes via Any::from_msg");
+                    let op = OperationAny::default()
+                        .set_name("test-operation-123")
+                        .set_metadata(any);
+                    let op = TestOperation::new(op);
+                    Ok::<TestOperation, Error>(op)
+                }
+            }
+        };
+
+        let mut poller = PollerImpl::new(
+            Arc::new(AlwaysContinue),
+            Arc::new(ExponentialBackoff::default()),
+            start,
+            query,
+        );
+
+        let span = test_span();
+        let poller_ref = &mut poller;
+        let recorder = crate::internal::LroRecorder::new(span.clone());
+        let _ = recorder
+            .scope(async move { poller_ref.poll().instrument(span).await })
+            .await;
+
+        {
+            let captured = google_cloud_test_utils::test_layer::TestLayer::capture(&guard);
+            let got = captured
+                .iter()
+                .find(|s| s.name == "test_span")
+                .unwrap_or_else(|| panic!("missing `test_span` in captured spans: {captured:?}"));
+            assert_eq!(
+                got.attributes
+                    .get("gcp.resource.destination.id")
+                    .and_then(|v| v.as_string()),
+                Some("test-operation-123".to_string())
+            );
+        }
+
+        let span = test_span();
+        let poller_ref2 = &mut poller;
+        let recorder2 = crate::internal::LroRecorder::new(span.clone());
+        let _ = recorder2
+            .scope(async move { poller_ref2.poll().instrument(span).await })
+            .await;
+
+        {
+            let captured = google_cloud_test_utils::test_layer::TestLayer::capture(&guard);
+            let got = captured
+                .iter()
+                .find(|s| s.name == "test_span")
+                .unwrap_or_else(|| panic!("missing `test_span` in captured spans: {captured:?}"));
+            assert_eq!(
+                got.attributes
+                    .get("gcp.resource.destination.id")
+                    .and_then(|v| v.as_string()),
+                Some("test-operation-123".to_string())
+            );
+        }
+    }
+
+    #[cfg(google_cloud_unstable_tracing)]
+    #[tokio::test]
+    async fn test_poller_tracing_immediate_done() {
+        let guard = google_cloud_test_utils::test_layer::TestLayer::initialize();
+
+        let start = || async move {
+            let any = Any::from_msg(&Duration::clamp(234, 0))
+                .expect("test message deserializes via Any::from_msg");
+            let result = ResultAny::Response(any.into());
+            let op = OperationAny::default()
+                .set_name("immediate-operation-123")
+                .set_done(true)
+                .set_result(result);
+            let op = TestOperation::new(op);
+            Ok::<TestOperation, Error>(op)
+        };
+
+        let query = |_: String| async move { panic!("should not query") };
+
+        let mut poller = PollerImpl::new(
+            Arc::new(AlwaysContinue),
+            Arc::new(ExponentialBackoff::default()),
+            start,
+            query,
+        );
+
+        let span = test_span();
+        let poller_ref = &mut poller;
+        let recorder = crate::internal::LroRecorder::new(span.clone());
+        let _ = recorder
+            .scope(async move { poller_ref.poll().instrument(span).await })
+            .await;
+
+        {
+            let captured = google_cloud_test_utils::test_layer::TestLayer::capture(&guard);
+            let got = captured
+                .iter()
+                .find(|s| s.name == "test_span")
+                .unwrap_or_else(|| panic!("missing `test_span` in captured spans: {captured:?}"));
+            assert_eq!(
+                got.attributes
+                    .get("gcp.resource.destination.id")
+                    .and_then(|v| v.as_string()),
+                Some("immediate-operation-123".to_string())
+            );
+        }
     }
 }

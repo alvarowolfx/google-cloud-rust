@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use google_cloud_spanner::client::{DatabaseClient, Mutation, Statement};
+use google_cloud_spanner::client::DatabaseClient;
+use google_cloud_spanner::mutation::Mutation;
+use google_cloud_spanner::statement::Statement;
 use google_cloud_test_utils::resource_names::LowercaseAlphanumeric;
 
 pub async fn partitioned_dml_update(db_client: &DatabaseClient) -> anyhow::Result<()> {
@@ -44,10 +46,15 @@ pub async fn partitioned_dml_update(db_client: &DatabaseClient) -> anyhow::Resul
     ];
     write_tx.write(mutations).await?;
 
-    // 2. Execute partitioned DML
+    // 2. Execute partitioned DML scoped strictly to our own generated row IDs to prevent shared state flakiness
     let pdml_tx = db_client.partitioned_dml_transaction().build().await?;
-    let stmt =
-        Statement::builder("UPDATE AllTypes SET ColBool = true WHERE ColBool = false").build();
+    let stmt = Statement::builder(
+        "UPDATE AllTypes SET ColBool = true WHERE ColBool = false AND Id IN (@id1, @id2, @id3)",
+    )
+    .add_param("id1", &id1)
+    .add_param("id2", &id2)
+    .add_param("id3", &id3)
+    .build();
     let updated_count = pdml_tx.execute_update(stmt).await?;
 
     // Partitioned DML returns lower bound, which should be at most 2 for the records we just inserted.

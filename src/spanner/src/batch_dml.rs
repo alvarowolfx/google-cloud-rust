@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::client::Statement;
 use crate::error::{BatchUpdateError, internal_error};
 use crate::model::result_set_stats::RowCount;
 use crate::model::{ExecuteBatchDmlResponse, RequestOptions};
+use crate::statement::Statement;
 use google_cloud_gax::backoff_policy::BackoffPolicyArg;
 use google_cloud_gax::error::rpc::Code;
 use google_cloud_gax::error::rpc::Status as RpcStatus;
@@ -47,17 +47,17 @@ impl BatchDmlBuilder {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::Statement;
-    /// # use google_cloud_spanner::batch_dml::BatchDml;
+    /// # use google_cloud_spanner::statement::Statement;
+    /// # use google_cloud_spanner::batch::BatchDml;
     /// let statement1 = Statement::builder("UPDATE users SET active = true WHERE id = 1").build();
     /// let batch = BatchDml::builder()
     ///     .add_statement(statement1)
-    ///     .with_request_tag("my-tag")
+    ///     .set_request_tag("my-tag")
     ///     .build();
     /// ```
     ///
     /// See also: [Troubleshooting with tags](https://docs.cloud.google.com/spanner/docs/introspection/troubleshooting-with-tags)
-    pub fn with_request_tag(mut self, tag: impl Into<String>) -> Self {
+    pub fn set_request_tag(mut self, tag: impl Into<String>) -> Self {
         self.request_options
             .get_or_insert_with(RequestOptions::default)
             .request_tag = tag.into();
@@ -101,8 +101,25 @@ pub struct BatchDml {
 }
 
 impl BatchDml {
+    /// Creates a new builder for constructing a [`BatchDml`] request.
     pub fn builder() -> BatchDmlBuilder {
         BatchDmlBuilder::new()
+    }
+}
+
+impl From<BatchDmlBuilder> for BatchDml {
+    fn from(builder: BatchDmlBuilder) -> Self {
+        builder.build()
+    }
+}
+
+impl<T: Into<Statement>> From<Vec<T>> for BatchDml {
+    fn from(statements: Vec<T>) -> Self {
+        BatchDml {
+            statements: statements.into_iter().map(Into::into).collect(),
+            request_options: None,
+            gax_options: GaxRequestOptions::default(),
+        }
     }
 }
 
@@ -110,17 +127,17 @@ impl BatchDml {
 pub(crate) fn process_response(response: ExecuteBatchDmlResponse) -> crate::Result<Vec<i64>> {
     let mut update_counts = Vec::with_capacity(response.result_sets.len());
     for result_set in response.result_sets {
-        let exact_count = result_set
-            .stats
-            .ok_or_else(|| internal_error("No stats returned for a successful statement"))
-            .and_then(|stats| match stats.row_count {
-                Some(RowCount::RowCountExact(c)) => Ok(c),
-                _ => Err(internal_error(
-                    "ExecuteBatchDml returned an invalid or missing row count type",
-                )),
-            });
-
-        update_counts.push(exact_count?);
+        if let Some(stats) = result_set.stats {
+            let exact_count = match stats.row_count {
+                Some(RowCount::RowCountExact(c)) => c,
+                _ => {
+                    return Err(internal_error(
+                        "ExecuteBatchDml returned an invalid or missing row count type",
+                    ));
+                }
+            };
+            update_counts.push(exact_count);
+        }
     }
 
     // If a non-zero status is present, it halted the batch somewhere in the middle of the batch.
@@ -211,7 +228,7 @@ mod tests {
 
         let batch = BatchDml::builder()
             .add_statement(stmt)
-            .with_request_tag("tag1")
+            .set_request_tag("tag1")
             .build();
 
         assert_eq!(batch.statements.len(), 1);
@@ -336,9 +353,8 @@ mod tests {
             ..Default::default()
         };
 
-        let result = process_response(response);
-        let err = result.expect_err("should fail");
-        assert!(err.to_string().contains("No stats returned"));
+        let result = process_response(response).expect("should return empty update counts");
+        assert!(result.is_empty());
     }
 
     #[test]
@@ -363,6 +379,78 @@ mod tests {
         assert!(
             err.to_string()
                 .contains("invalid or missing row count type")
+        );
+    }
+
+    #[test]
+    fn from_vector_of_strings() {
+        let statements = vec!["UPDATE table SET col = 1", "UPDATE table SET col = 2"];
+        let batch: BatchDml = statements.into();
+        assert_eq!(batch.statements.len(), 2);
+        assert_eq!(batch.statements[0].sql, "UPDATE table SET col = 1");
+        assert_eq!(batch.statements[1].sql, "UPDATE table SET col = 2");
+    }
+
+    #[test]
+    fn from_vector_of_statements() {
+        let statement1 = Statement::builder("UPDATE table SET col = 1").build();
+        let statement2 = Statement::builder("UPDATE table SET col = 2").build();
+        let statements = vec![statement1, statement2];
+        let batch: BatchDml = statements.into();
+        assert_eq!(batch.statements.len(), 2);
+        assert_eq!(batch.statements[0].sql, "UPDATE table SET col = 1");
+        assert_eq!(batch.statements[1].sql, "UPDATE table SET col = 2");
+    }
+
+    #[test]
+    fn from_builder() {
+        let builder = BatchDml::builder().add_statement("UPDATE table SET col = 1");
+        let batch: BatchDml = builder.into();
+        assert_eq!(batch.statements.len(), 1);
+        assert_eq!(batch.statements[0].sql, "UPDATE table SET col = 1");
+    }
+
+    #[test]
+    fn process_response_metadata_no_stats_grpc_error() {
+        let rs = ResultSet {
+            metadata: Some(crate::model::ResultSetMetadata {
+                transaction: Some(crate::model::Transaction {
+                    id: vec![7, 7, 7].into(),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }),
+            stats: None,
+            ..Default::default()
+        };
+
+        let err_status = Status::default()
+            .set_code(Code::InvalidArgument as i32)
+            .set_message("Table not found or syntax invalid");
+
+        let response = ExecuteBatchDmlResponse {
+            result_sets: vec![rs],
+            status: Some(err_status),
+            ..Default::default()
+        };
+
+        let result = process_response(response);
+        let err = result.expect_err("should return error");
+        let batch_err = BatchUpdateError::extract(&err)
+            .expect("should extract BatchUpdateError cleanly and not return internal error");
+
+        assert_eq!(
+            batch_err.update_counts,
+            Vec::<i64>::new(),
+            "Update counts should be completely empty"
+        );
+        assert_eq!(
+            batch_err.status.status().expect("status").code,
+            Code::InvalidArgument
+        );
+        assert_eq!(
+            batch_err.status.status().expect("status").message,
+            "Table not found or syntax invalid"
         );
     }
 }

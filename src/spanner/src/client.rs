@@ -20,34 +20,24 @@ use crate::model::{
 };
 use crate::server_streaming::builder;
 use gaxi::options::{ClientConfig, Credentials};
-use std::sync::atomic::{AtomicUsize, Ordering};
+use google_cloud_gax::client_builder::ClientBuilder as GaxClientBuilder;
+use google_cloud_gax::options::{
+    RequestOptions as GaxRequestOptions, internal::RequestOptionsExt as _,
+};
+use google_cloud_spanner_admin_database_v1::builder::database_admin::ClientBuilder as DatabaseAdminBuilder;
+use google_cloud_spanner_admin_instance_v1::builder::instance_admin::ClientBuilder as InstanceAdminBuilder;
+use http::{
+    HeaderMap,
+    header::{HeaderName, HeaderValue},
+};
+use std::sync::{
+    LazyLock,
+    atomic::{AtomicUsize, Ordering},
+};
 
 pub use crate::database_client::DatabaseClient;
-pub use crate::error::SpannerInternalError;
-pub use crate::from_value::{ConvertError, FromValue};
-pub use crate::key::{Key, KeyRange, KeySet, KeySetBuilder};
-pub use crate::mutation::{Mutation, MutationGroup, ValueBinder, WriteBuilder};
-pub use crate::read::ConfiguredReadRequestBuilder;
-pub use crate::read::ReadRequest;
-pub use crate::read::ReadRequestBuilder;
-pub use crate::read_only_transaction::MultiUseReadOnlyTransaction;
-pub use crate::read_only_transaction::MultiUseReadOnlyTransactionBuilder;
-pub use crate::read_only_transaction::SingleUseReadOnlyTransaction;
-pub use crate::read_only_transaction::SingleUseReadOnlyTransactionBuilder;
-pub use crate::read_write_transaction::ReadWriteTransaction;
-pub use crate::result_set::ResultSet;
-pub use crate::result_set::ResultSetError;
-pub use crate::result_set_metadata::ResultSetMetadata;
-pub use crate::row::Row;
-pub use crate::statement::Statement;
-pub use crate::timestamp_bound::TimestampBound;
-pub use crate::to_value::ToValue;
-pub use crate::transaction_retry_policy::BasicTransactionRetryPolicy;
-pub use crate::transaction_runner::TransactionRunner;
-pub use crate::transaction_runner::TransactionRunnerBuilder;
-pub use crate::types::{Type, TypeCode};
-pub use crate::value::{Kind, Value};
-pub use wkt::{DurationError, TimestampError};
+pub use google_cloud_spanner_admin_database_v1::client::DatabaseAdmin;
+pub use google_cloud_spanner_admin_instance_v1::client::InstanceAdmin;
 
 /// A client for the [Spanner] API.
 ///
@@ -58,8 +48,10 @@ pub use wkt::{DurationError, TimestampError};
 pub struct Spanner {
     pub(crate) channels: Vec<Channel>,
     pub(crate) counter: std::sync::Arc<AtomicUsize>,
+    pub(crate) config: ClientConfig,
 }
 
+/// A factory for constructing `Spanner` clients.
 pub struct Factory;
 
 impl google_cloud_gax::client_builder::internal::ClientFactory for Factory {
@@ -80,6 +72,7 @@ impl google_cloud_gax::client_builder::internal::ClientFactory for Factory {
         Ok(Spanner {
             channels,
             counter: std::sync::Arc::new(AtomicUsize::new(0)),
+            config,
         })
     }
 }
@@ -120,8 +113,67 @@ fn with_default_idempotency(mut options: crate::RequestOptions) -> crate::Reques
     options
 }
 
-#[allow(dead_code)]
+pub(crate) static LAR_HEADER_MAP: LazyLock<HeaderMap> = LazyLock::new(|| {
+    let mut map = HeaderMap::new();
+    map.insert(
+        HeaderName::from_static("x-goog-spanner-route-to-leader"),
+        HeaderValue::from_static("true"),
+    );
+    map
+});
+
+pub(crate) fn amend_request_options_for_lar(
+    leader_aware_routing_enabled: bool,
+    mut options: GaxRequestOptions,
+) -> GaxRequestOptions {
+    if leader_aware_routing_enabled {
+        let mut headers = options
+            .get_extension::<HeaderMap>()
+            .cloned()
+            .unwrap_or_default();
+        headers.extend((*LAR_HEADER_MAP).clone());
+        options = options.insert_extension(headers);
+    }
+    options
+}
+
+fn map_emulator_admin_endpoint(endpoint: &str, is_emulator: bool) -> String {
+    let mut ep = endpoint.trim_end_matches('/').to_string();
+    if is_emulator && ep.ends_with(":9010") {
+        ep = ep.replace(":9010", ":9020");
+    }
+    ep
+}
+
 impl Spanner {
+    /// Returns a builder for the `Spanner` client.
+    ///
+    /// # Example
+    /// ```
+    /// # use google_cloud_spanner::client::Spanner;
+    /// # async fn sample() -> anyhow::Result<()> {
+    /// let spanner = Spanner::builder().build().await?;
+    ///
+    /// let db_client = spanner
+    ///     .database_client("projects/my-project/instances/my-instance/databases/my-db")
+    ///     .build()
+    ///     .await?;
+    ///
+    /// let tx = db_client.single_use().build();
+    /// let mut rs = tx.execute_query("SELECT 1").await?;
+    ///
+    /// while let Some(row) = rs.next().await {
+    ///     let row = row?;
+    ///     let val: i64 = row.get(0);
+    ///     assert_eq!(val, 1);
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// The returned builder is pre-configured with standard defaults. It automatically
+    /// detects and connects to the Spanner emulator if the `SPANNER_EMULATOR_HOST`
+    /// environment variable is set.
     pub fn builder() -> ClientBuilder {
         let builder = google_cloud_gax::client_builder::internal::new_builder(Factory);
         // The Spanner client should automatically use the Spanner emulator if the
@@ -139,6 +191,50 @@ impl Spanner {
         builder
             .with_endpoint(full_endpoint)
             .with_credentials(google_cloud_auth::credentials::anonymous::Builder::new().build())
+    }
+
+    /// Returns a builder for the [DatabaseAdmin] client.
+    ///
+    /// This builder is automatically pre-configured with the same endpoints, credentials,
+    /// and routing configurations as this `Spanner` instance.
+    /// If configured to use the Emulator (via `SPANNER_EMULATOR_HOST`), it maps the gRPC endpoint port
+    /// (`9010`) to the REST admin port (`9020`).
+    pub fn database_admin_builder(&self) -> DatabaseAdminBuilder {
+        self.configure_admin_builder(DatabaseAdmin::builder())
+    }
+
+    /// Returns a builder for the [InstanceAdmin] client.
+    ///
+    /// This builder is automatically pre-configured with the same endpoints, credentials,
+    /// and routing configurations as this `Spanner` instance.
+    /// If configured to use the Emulator (via `SPANNER_EMULATOR_HOST`), it maps the gRPC endpoint port
+    /// (`9010`) to the REST admin port (`9020`).
+    pub fn instance_admin_builder(&self) -> InstanceAdminBuilder {
+        self.configure_admin_builder(InstanceAdmin::builder())
+    }
+
+    fn configure_admin_builder<F, C>(
+        &self,
+        mut builder: GaxClientBuilder<F, C>,
+    ) -> GaxClientBuilder<F, C>
+    where
+        C: Clone + From<Credentials>,
+    {
+        if let Some(ref endpoint) = self.config.endpoint {
+            let is_emulator = std::env::var("SPANNER_EMULATOR_HOST")
+                .ok()
+                .filter(|s| !s.is_empty())
+                .is_some();
+            let ep = map_emulator_admin_endpoint(endpoint, is_emulator);
+            builder = builder.with_endpoint(ep);
+        }
+        if let Some(ref cred) = self.config.cred {
+            builder = builder.with_credentials(cred.clone());
+        }
+        if let Some(ref ud) = self.config.universe_domain {
+            builder = builder.with_universe_domain(ud.clone());
+        }
+        builder
     }
 
     /// Returns a new [DatabaseClientBuilder](crate::database_client::DatabaseClientBuilder) for
@@ -182,6 +278,7 @@ impl Spanner {
                 grpc_client: None,
             }],
             counter: std::sync::Arc::new(AtomicUsize::new(0)),
+            config: ClientConfig::default(),
         }
     }
 
@@ -201,7 +298,6 @@ impl Spanner {
         ExecuteBatchDmlRequest,
         ExecuteBatchDmlResponse
     );
-    define_idempotent_rpc!(read, crate::model::ReadRequest, crate::model::ResultSet);
     define_idempotent_rpc!(begin_transaction, BeginTransactionRequest, Transaction);
     define_idempotent_rpc!(commit, CommitRequest, CommitResponse);
     define_idempotent_rpc!(rollback, RollbackRequest, ());
@@ -295,7 +391,9 @@ impl Channel {
 mod tests {
     use super::*;
     use crate::model::CreateSessionRequest;
+    use crate::read::ReadRequest;
     use crate::result_set::tests::adapt;
+    use crate::statement::Statement;
     use gaxi::grpc::tonic::MetadataMap;
     use gaxi::grpc::tonic::{Code as GrpcCode, Response, Status};
     use google_cloud_auth::credentials::anonymous::Builder as Anonymous;
@@ -330,7 +428,7 @@ mod tests {
         assert_not_impl_any!(Spanner: std::panic::RefUnwindSafe, std::panic::UnwindSafe);
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn channel_pool_default_size() {
         let mock = MockSpanner::new();
         let (address, _server) = start("0.0.0.0:0", mock)
@@ -347,7 +445,34 @@ mod tests {
         assert_eq!(client.channels.len(), 4);
     }
 
-    #[tokio::test]
+    #[test]
+    fn test_map_emulator_admin_endpoint() {
+        // 1. Test normal endpoint without emulator (should remain unchanged)
+        assert_eq!(
+            map_emulator_admin_endpoint("https://spanner.googleapis.com", false),
+            "https://spanner.googleapis.com"
+        );
+
+        // 2. Test emulator endpoint mapping (9010 -> 9020)
+        assert_eq!(
+            map_emulator_admin_endpoint("http://localhost:9010", true),
+            "http://localhost:9020"
+        );
+
+        // 3. Test emulator endpoint with trailing slash (should be trimmed and mapped)
+        assert_eq!(
+            map_emulator_admin_endpoint("http://127.0.0.1:9010/", true),
+            "http://127.0.0.1:9020"
+        );
+
+        // 4. Test emulator endpoint without is_emulator active (should remain unchanged)
+        assert_eq!(
+            map_emulator_admin_endpoint("http://localhost:9010", false),
+            "http://localhost:9010"
+        );
+    }
+
+    #[tokio_test_no_panics]
     async fn channel_selection() {
         let mock = MockSpanner::new();
         let (address, _server) = start("0.0.0.0:0", mock)
@@ -374,7 +499,7 @@ mod tests {
         assert_eq!(hint4 % 4, 0);
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn test_create_session() {
         // 1. Setup Mock Server
         let mut mock = MockSpanner::new();
@@ -421,7 +546,7 @@ mod tests {
         );
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn test_create_session_retry() {
         use google_cloud_gax::options::RequestOptionsBuilder;
         use google_cloud_gax::retry_policy::{Aip194Strict, RetryPolicyExt};
@@ -481,7 +606,7 @@ mod tests {
         );
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn test_execute_sql() {
         use crate::model::ExecuteSqlRequest;
 
@@ -524,7 +649,7 @@ mod tests {
         assert!(result_set.metadata.is_some());
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn test_execute_batch_dml() {
         use crate::model::ExecuteBatchDmlRequest;
 
@@ -567,46 +692,7 @@ mod tests {
         assert!(response.status.is_some());
     }
 
-    #[tokio::test]
-    async fn test_read() {
-        use crate::model::ReadRequest;
-
-        let mut mock = MockSpanner::new();
-        mock.expect_read().once().returning(|_| {
-            Ok(gaxi::grpc::tonic::Response::new(mock_v1::ResultSet {
-                metadata: None,
-                rows: vec![],
-                stats: None,
-                precommit_token: None,
-                cache_update: None,
-            }))
-        });
-
-        let (address, _server) = start("0.0.0.0:0", mock)
-            .await
-            .expect("Failed to start mock server");
-        let client = Spanner::builder()
-            .with_endpoint(address)
-            .with_credentials(Anonymous::new().build())
-            .build()
-            .await
-            .expect("Failed to build client");
-
-        let mut req = ReadRequest::new();
-        req.table = "test_table".to_string();
-
-        let result_set = client
-            .read(
-                req,
-                crate::RequestOptions::default(),
-                client.next_channel_hint(),
-            )
-            .await
-            .expect("Failed to call read");
-        assert!(result_set.metadata.is_none());
-    }
-
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn test_begin_transaction() {
         use crate::model::BeginTransactionRequest;
 
@@ -644,7 +730,7 @@ mod tests {
         assert_eq!(tx.id, vec![1, 2, 3]);
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn test_commit() {
         use crate::model::CommitRequest;
 
@@ -686,7 +772,7 @@ mod tests {
         assert!(response.commit_timestamp.is_some());
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn test_rollback() {
         use crate::model::RollbackRequest;
 
@@ -718,7 +804,7 @@ mod tests {
             .expect("Failed to call rollback");
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn test_execute_streaming_sql() {
         use crate::model::ExecuteSqlRequest;
 
@@ -769,7 +855,7 @@ mod tests {
         assert!(result.unwrap().is_ok());
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn test_streaming_read() {
         use crate::model::ReadRequest;
 
@@ -821,7 +907,7 @@ mod tests {
         assert!(result.unwrap().is_ok());
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn test_batch_write() {
         use crate::model::BatchWriteRequest;
 
@@ -863,7 +949,7 @@ mod tests {
         assert!(result.unwrap().is_ok());
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn test_execute_streaming_sql_error() {
         use crate::model::ExecuteSqlRequest;
 
@@ -907,7 +993,7 @@ mod tests {
         );
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn default_retry_respected() -> anyhow::Result<()> {
         use crate::model::CreateSessionRequest;
 
@@ -958,7 +1044,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn override_idempotency_to_false() -> anyhow::Result<()> {
         use crate::model::CreateSessionRequest;
 
@@ -1028,7 +1114,19 @@ mod tests {
                 "grpc-timeout header should be present for query"
             );
 
-            let (_tx, rx) = tokio::sync::mpsc::channel(1);
+            let (tx, rx) = tokio::sync::mpsc::channel(1);
+            let metadata = mock_v1::ResultSetMetadata {
+                transaction: Some(mock_v1::Transaction {
+                    id: vec![42],
+                    ..Default::default()
+                }),
+                ..Default::default()
+            };
+            let prs = mock_v1::PartialResultSet {
+                metadata: Some(metadata),
+                ..Default::default()
+            };
+            tx.try_send(Ok(prs)).unwrap();
             Ok(Response::new(rx))
         });
 
@@ -1040,7 +1138,16 @@ mod tests {
                 "grpc-timeout header should be present for read"
             );
 
-            let (_tx, rx) = tokio::sync::mpsc::channel(1);
+            let (tx, rx) = tokio::sync::mpsc::channel(1);
+            let metadata = mock_v1::ResultSetMetadata {
+                transaction: None,
+                ..Default::default()
+            };
+            let prs = mock_v1::PartialResultSet {
+                metadata: Some(metadata),
+                ..Default::default()
+            };
+            tx.try_send(Ok(prs)).unwrap();
             Ok(Response::new(rx))
         });
 
@@ -1053,6 +1160,13 @@ mod tests {
             );
 
             Ok(Response::new(mock_v1::ResultSet {
+                metadata: Some(mock_v1::ResultSetMetadata {
+                    transaction: Some(mock_v1::Transaction {
+                        id: vec![42],
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                }),
                 stats: Some(mock_v1::ResultSetStats {
                     row_count: Some(mock_v1::result_set_stats::RowCount::RowCountExact(1)),
                     ..Default::default()
@@ -1114,7 +1228,8 @@ mod tests {
                 let stmt = Statement::builder("SELECT 1")
                     .with_attempt_timeout(Duration::from_secs(10))
                     .build();
-                let _ = tx.execute_query(stmt).await?;
+                // TODO(#5673): ensure that transaction ID is processed even if ResultSet is dropped
+                let _rs = tx.execute_query(stmt).await?;
 
                 // Read
                 let req = ReadRequest::builder("Table", vec!["Col"])
@@ -1143,7 +1258,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn retry_policy_respected() -> anyhow::Result<()> {
         use google_cloud_gax::retry_policy::{Aip194Strict, RetryPolicyExt};
 
@@ -1180,6 +1295,13 @@ mod tests {
             .in_sequence(&mut seq)
             .returning(|_| {
                 Ok(Response::new(mock_v1::ResultSet {
+                    metadata: Some(mock_v1::ResultSetMetadata {
+                        transaction: Some(mock_v1::Transaction {
+                            id: vec![42],
+                            ..Default::default()
+                        }),
+                        ..Default::default()
+                    }),
                     stats: Some(mock_v1::ResultSetStats {
                         row_count: Some(mock_v1::result_set_stats::RowCount::RowCountExact(1)),
                         ..Default::default()
@@ -1328,6 +1450,13 @@ mod tests {
                 );
 
                 let res = ResultSet {
+                    metadata: Some(spanner_grpc_mock::google::spanner::v1::ResultSetMetadata {
+                        transaction: Some(Transaction {
+                            id: vec![1, 2, 3],
+                            ..Default::default()
+                        }),
+                        ..Default::default()
+                    }),
                     stats: Some(ResultSetStats {
                         row_count: Some(RowCount::RowCountExact(1)),
                         ..Default::default()
@@ -1381,7 +1510,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[tokio_test_no_panics]
     async fn transaction_timeout_ticks_down() -> anyhow::Result<()> {
         use spanner_grpc_mock::google::spanner::v1::Transaction;
 
@@ -1395,16 +1524,6 @@ mod tests {
         });
 
         let mut seq = mockall::Sequence::new();
-
-        mock.expect_begin_transaction()
-            .once()
-            .in_sequence(&mut seq)
-            .returning(|_| {
-                Ok(Response::new(Transaction {
-                    id: vec![1],
-                    ..Default::default()
-                }))
-            });
 
         let previous_timeout = Arc::new(AtomicU64::new(0));
         let prev_clone1 = previous_timeout.clone();
@@ -1423,15 +1542,6 @@ mod tests {
             });
 
         // Second attempt: Checks that timeout is <= previous
-        mock.expect_begin_transaction()
-            .once()
-            .in_sequence(&mut seq)
-            .returning(|_| {
-                Ok(Response::new(Transaction {
-                    id: vec![2],
-                    ..Default::default()
-                }))
-            });
 
         let prev_clone2 = previous_timeout.clone();
         mock.expect_execute_sql()
@@ -1449,6 +1559,13 @@ mod tests {
                 prev_clone2.store(timeout_val, Ordering::SeqCst); // store for next check
 
                 let res = ResultSet {
+                    metadata: Some(spanner_grpc_mock::google::spanner::v1::ResultSetMetadata {
+                        transaction: Some(Transaction {
+                            id: vec![2],
+                            ..Default::default()
+                        }),
+                        ..Default::default()
+                    }),
                     stats: Some(ResultSetStats {
                         row_count: Some(RowCount::RowCountExact(1)),
                         ..Default::default()

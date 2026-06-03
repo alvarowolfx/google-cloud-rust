@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use google_cloud_spanner::client::{DatabaseClient, KeyRange, KeySet, Mutation, ReadRequest};
+use google_cloud_spanner::client::DatabaseClient;
 use google_cloud_spanner::key;
+use google_cloud_spanner::key::{KeyRange, KeySet};
+use google_cloud_spanner::mutation::Mutation;
+use google_cloud_spanner::read::ReadRequest;
 use google_cloud_test_utils::resource_names::LowercaseAlphanumeric;
 
 pub async fn read_single_key(db_client: &DatabaseClient) -> anyhow::Result<()> {
@@ -210,7 +213,7 @@ pub async fn read_with_limit(db_client: &DatabaseClient) -> anyhow::Result<()> {
 
     let read = ReadRequest::builder("AllTypes", vec!["Id", "ColString"])
         .with_keys(keyset)
-        .with_limit(2) // limit to 2 rows
+        .set_limit(2) // limit to 2 rows
         .build();
 
     let mut result_set = db_client

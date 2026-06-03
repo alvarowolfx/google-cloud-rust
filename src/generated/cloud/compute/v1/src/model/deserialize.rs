@@ -31318,9 +31318,11 @@ impl<'de> serde::de::Deserialize<'de> for super::FirewallPolicyRule {
             __rule_name,
             __rule_tuple_count,
             __security_profile_group,
+            __target_forwarding_rules,
             __target_resources,
             __target_secure_tags,
             __target_service_accounts,
+            __target_type,
             __tls_inspect,
             Unknown(std::string::String),
         }
@@ -31353,9 +31355,11 @@ impl<'de> serde::de::Deserialize<'de> for super::FirewallPolicyRule {
                             "ruleName" => Ok(__FieldTag::__rule_name),
                             "ruleTupleCount" => Ok(__FieldTag::__rule_tuple_count),
                             "securityProfileGroup" => Ok(__FieldTag::__security_profile_group),
+                            "targetForwardingRules" => Ok(__FieldTag::__target_forwarding_rules),
                             "targetResources" => Ok(__FieldTag::__target_resources),
                             "targetSecureTags" => Ok(__FieldTag::__target_secure_tags),
                             "targetServiceAccounts" => Ok(__FieldTag::__target_service_accounts),
+                            "targetType" => Ok(__FieldTag::__target_type),
                             "tlsInspect" => Ok(__FieldTag::__tls_inspect),
                             _ => Ok(__FieldTag::Unknown(value.to_string())),
                         }
@@ -31501,6 +31505,14 @@ impl<'de> serde::de::Deserialize<'de> for super::FirewallPolicyRule {
                             result.security_profile_group =
                                 map.next_value::<std::option::Option<std::string::String>>()?;
                         }
+                        __FieldTag::__target_forwarding_rules => {
+                            if !fields.insert(__FieldTag::__target_forwarding_rules) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for target_forwarding_rules",
+                                ));
+                            }
+                            result.target_forwarding_rules = map.next_value::<std::option::Option<std::vec::Vec<std::string::String>>>()?.unwrap_or_default();
+                        }
                         __FieldTag::__target_resources => {
                             if !fields.insert(__FieldTag::__target_resources) {
                                 return std::result::Result::Err(A::Error::duplicate_field(
@@ -31528,6 +31540,16 @@ impl<'de> serde::de::Deserialize<'de> for super::FirewallPolicyRule {
                                 ));
                             }
                             result.target_service_accounts = map.next_value::<std::option::Option<std::vec::Vec<std::string::String>>>()?.unwrap_or_default();
+                        }
+                        __FieldTag::__target_type => {
+                            if !fields.insert(__FieldTag::__target_type) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for target_type",
+                                ));
+                            }
+                            result.target_type = map.next_value::<std::option::Option<
+                                crate::model::firewall_policy_rule::TargetType,
+                            >>()?;
                         }
                         __FieldTag::__tls_inspect => {
                             if !fields.insert(__FieldTag::__tls_inspect) {

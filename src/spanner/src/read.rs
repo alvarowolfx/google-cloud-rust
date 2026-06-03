@@ -25,8 +25,8 @@ use std::time::Duration;
 ///
 /// # Example
 /// ```
-/// # use google_cloud_spanner::client::ReadRequest;
-/// # use google_cloud_spanner::client::KeySet;
+/// # use google_cloud_spanner::read::ReadRequest;
+/// # use google_cloud_spanner::key::KeySet;
 /// # use google_cloud_spanner::key;
 /// // Read all rows from a table using its primary key.
 /// let read_all = ReadRequest::builder("Users", vec!["Id", "Name"])
@@ -36,7 +36,7 @@ use std::time::Duration;
 /// // Read specific rows using an index.
 /// let read_by_id = ReadRequest::builder("Users", vec!["Id", "Name"])
 ///     .with_index("UsersByIndex", key![1_i64])
-///     .with_limit(10)
+///     .set_limit(10)
 ///     .build();
 /// ```
 ///
@@ -54,7 +54,8 @@ impl ReadRequestBuilder {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{ReadRequest, KeySet};
+    /// # use google_cloud_spanner::read::ReadRequest;
+    /// # use google_cloud_spanner::key::KeySet;
     /// let request = ReadRequest::builder("Users", vec!["Id", "Name"]).with_keys(KeySet::all());
     /// ```
     ///
@@ -79,7 +80,8 @@ impl ReadRequestBuilder {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{ReadRequest, KeySet};
+    /// # use google_cloud_spanner::read::ReadRequest;
+    /// # use google_cloud_spanner::key::KeySet;
     /// # use google_cloud_spanner::key;
     /// let request = ReadRequest::builder("Users", vec!["Id", "Name"]).with_index("UsersByIndex", key![1_i64]);
     /// ```
@@ -126,15 +128,16 @@ impl ConfiguredReadRequestBuilder {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{ReadRequest, KeySet};
+    /// # use google_cloud_spanner::read::ReadRequest;
+    /// # use google_cloud_spanner::key::KeySet;
     /// let request = ReadRequest::builder("Users", vec!["Id"])
     ///     .with_keys(KeySet::all())
-    ///     .with_limit(10)
+    ///     .set_limit(10)
     ///     .build();
     /// ```
     ///
     /// If fewer rows are found, only the matching rows will be returned.
-    pub fn with_limit(mut self, limit: i64) -> Self {
+    pub fn set_limit(mut self, limit: i64) -> Self {
         self.limit = Some(limit);
         self
     }
@@ -143,15 +146,16 @@ impl ConfiguredReadRequestBuilder {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{ReadRequest, KeySet};
+    /// # use google_cloud_spanner::read::ReadRequest;
+    /// # use google_cloud_spanner::key::KeySet;
     /// let request = ReadRequest::builder("Users", vec!["Id"])
     ///     .with_keys(KeySet::all())
-    ///     .with_request_tag("my-tag")
+    ///     .set_request_tag("my-tag")
     ///     .build();
     /// ```
     ///
     /// See also: [Troubleshooting with tags](https://docs.cloud.google.com/spanner/docs/introspection/troubleshooting-with-tags)
-    pub fn with_request_tag(mut self, tag: impl Into<String>) -> Self {
+    pub fn set_request_tag(mut self, tag: impl Into<String>) -> Self {
         self.request_options
             .get_or_insert_with(crate::model::RequestOptions::default)
             .request_tag = tag.into();
@@ -162,14 +166,15 @@ impl ConfiguredReadRequestBuilder {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{ReadRequest, KeySet};
+    /// # use google_cloud_spanner::read::ReadRequest;
+    /// # use google_cloud_spanner::key::KeySet;
     /// # use google_cloud_spanner::model::request_options::Priority;
     /// let request = ReadRequest::builder("Users", vec!["Id"])
     ///     .with_keys(KeySet::all())
-    ///     .with_priority(Priority::Low)
+    ///     .set_priority(Priority::Low)
     ///     .build();
     /// ```
-    pub fn with_priority(mut self, priority: Priority) -> Self {
+    pub fn set_priority(mut self, priority: Priority) -> Self {
         self.request_options
             .get_or_insert_with(crate::model::RequestOptions::default)
             .priority = priority;
@@ -179,19 +184,19 @@ impl ConfiguredReadRequestBuilder {
     /// Sets the directed read options for this request.
     ///
     /// ```
-    /// # use google_cloud_spanner::client::ReadRequest;
-    /// # use google_cloud_spanner::client::KeySet;
+    /// # use google_cloud_spanner::read::ReadRequest;
+    /// # use google_cloud_spanner::key::KeySet;
     /// # use google_cloud_spanner::model::DirectedReadOptions;
     /// let dro = DirectedReadOptions::default();
     /// let req = ReadRequest::builder("MyTable", vec!["col1"])
     ///     .with_keys(KeySet::all())
-    ///     .with_directed_read_options(dro)
+    ///     .set_directed_read_options(dro)
     ///     .build();
     /// ```
     ///
     /// DirectedReadOptions can only be specified for a read-only transaction,
     /// otherwise Spanner returns an INVALID_ARGUMENT error.
-    pub fn with_directed_read_options(mut self, options: DirectedReadOptions) -> Self {
+    pub fn set_directed_read_options(mut self, options: DirectedReadOptions) -> Self {
         self.directed_read_options = Some(options);
         self
     }
@@ -200,11 +205,12 @@ impl ConfiguredReadRequestBuilder {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{ReadRequest, KeySet};
+    /// # use google_cloud_spanner::read::ReadRequest;
+    /// # use google_cloud_spanner::key::KeySet;
     /// # use google_cloud_spanner::model::read_request::OrderBy;
     /// let request = ReadRequest::builder("Users", vec!["Id"])
     ///     .with_keys(KeySet::all())
-    ///     .with_order_by(OrderBy::NoOrder);
+    ///     .set_order_by(OrderBy::NoOrder);
     /// ```
     ///
     /// By default, Spanner returns result rows in primary key order (or index key
@@ -214,7 +220,7 @@ impl ConfiguredReadRequestBuilder {
     /// (`ORDER_BY_PRIMARY_KEY`) order, setting `ORDER_BY_NO_ORDER` option allows
     /// Spanner to optimize row retrieval, resulting in lower latencies in certain
     /// cases (for example, bulk point lookups).
-    pub fn with_order_by(mut self, order_by: OrderBy) -> Self {
+    pub fn set_order_by(mut self, order_by: OrderBy) -> Self {
         self.order_by = Some(order_by);
         self
     }
@@ -223,11 +229,12 @@ impl ConfiguredReadRequestBuilder {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::{ReadRequest, KeySet};
+    /// # use google_cloud_spanner::read::ReadRequest;
+    /// # use google_cloud_spanner::key::KeySet;
     /// # use google_cloud_spanner::model::read_request::LockHint;
     /// let request = ReadRequest::builder("Users", vec!["Id"])
     ///     .with_keys(KeySet::all())
-    ///     .with_lock_hint(LockHint::Exclusive);
+    ///     .set_lock_hint(LockHint::Exclusive);
     /// ```
     ///
     /// Lock hints can only be used with read-write transactions.
@@ -242,7 +249,7 @@ impl ConfiguredReadRequestBuilder {
     ///
     /// Request exclusive locks judiciously because they block others from reading that
     /// data for the entire transaction, rather than just when the writes are being performed.
-    pub fn with_lock_hint(mut self, lock_hint: LockHint) -> Self {
+    pub fn set_lock_hint(mut self, lock_hint: LockHint) -> Self {
         self.lock_hint = Some(lock_hint);
         self
     }
@@ -305,7 +312,7 @@ impl ReadRequest {
     ///
     /// # Example
     /// ```
-    /// # use google_cloud_spanner::client::ReadRequest;
+    /// # use google_cloud_spanner::read::ReadRequest;
     /// let builder = ReadRequest::builder("Users", vec!["Id", "Name"]);
     /// ```
     ///
@@ -383,7 +390,7 @@ mod tests {
     fn with_limit() {
         let req = ReadRequest::builder("MyTable", vec!["col1"])
             .with_keys(KeySet::all())
-            .with_limit(42)
+            .set_limit(42)
             .build();
         assert_eq!(req.limit, Some(42));
     }
@@ -392,7 +399,7 @@ mod tests {
     fn with_request_tag() {
         let req = ReadRequest::builder("MyTable", vec!["col1"])
             .with_keys(KeySet::all())
-            .with_request_tag("tag1")
+            .set_request_tag("tag1")
             .build();
         assert_eq!(
             req.request_options
@@ -406,7 +413,7 @@ mod tests {
     fn with_priority() {
         let req = ReadRequest::builder("MyTable", vec!["col1"])
             .with_keys(KeySet::all())
-            .with_priority(Priority::High)
+            .set_priority(Priority::High)
             .build();
         assert_eq!(
             req.request_options
@@ -421,7 +428,7 @@ mod tests {
         let dro = DirectedReadOptions::default();
         let req = ReadRequest::builder("MyTable", vec!["col1"])
             .with_keys(KeySet::all())
-            .with_directed_read_options(dro.clone())
+            .set_directed_read_options(dro.clone())
             .build();
         assert_eq!(req.directed_read_options, Some(dro));
     }
@@ -430,7 +437,7 @@ mod tests {
     fn with_order_by() {
         let req = ReadRequest::builder("MyTable", vec!["col1"])
             .with_keys(KeySet::all())
-            .with_order_by(OrderBy::PrimaryKey)
+            .set_order_by(OrderBy::PrimaryKey)
             .build();
         assert_eq!(req.order_by, Some(OrderBy::PrimaryKey));
     }
@@ -439,7 +446,7 @@ mod tests {
     fn with_lock_hint() {
         let req = ReadRequest::builder("MyTable", vec!["col1"])
             .with_keys(KeySet::all())
-            .with_lock_hint(LockHint::Exclusive)
+            .set_lock_hint(LockHint::Exclusive)
             .build();
         assert_eq!(req.lock_hint, Some(LockHint::Exclusive));
     }
