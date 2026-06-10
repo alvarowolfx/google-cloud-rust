@@ -720,18 +720,18 @@ impl RunQueryRequest {
 impl RunQueryRequest {
     pub(crate) fn force_job_path(&self) -> bool {
         false
-        || self.allow_large_results.is_some()
-        || self.clustering.is_some()
-        || self.continuous.is_some()
+        || !wkt::internal::is_default(&self.allow_large_results)
+        || !wkt::internal::is_default(&self.clustering)
+        || !wkt::internal::is_default(&self.continuous)
         || !wkt::internal::is_default(&self.create_disposition)
-        || self.destination_table.is_some()
+        || !wkt::internal::is_default(&self.destination_table)
         || !wkt::internal::is_default(&self.external_table_definitions)
-        || self.flatten_results.is_some()
+        || !wkt::internal::is_default(&self.flatten_results)
         || !wkt::internal::is_default(&self.priority)
-        || self.range_partitioning.is_some()
+        || !wkt::internal::is_default(&self.range_partitioning)
         || !wkt::internal::is_default(&self.schema_update_options)
-        || self.script_options.is_some()
-        || self.time_partitioning.is_some()
+        || !wkt::internal::is_default(&self.script_options)
+        || !wkt::internal::is_default(&self.time_partitioning)
         || !wkt::internal::is_default(&self.user_defined_function_resources)
         || !wkt::internal::is_default(&self.write_disposition)
     }
@@ -740,27 +740,27 @@ impl RunQueryRequest {
 impl std::convert::From<RunQueryRequest> for google_cloud_bigquery_v2::model::QueryRequest {
     fn from(req: RunQueryRequest) -> Self {
         let mut out = Self::default();
-        out.connection_properties = req.connection_properties.into();
-        out.create_session = req.create_session.into();
-        out.default_dataset = req.default_dataset.into();
-        out.destination_encryption_configuration = req.destination_encryption_configuration.into();
-        out.dry_run = req.dry_run.into();
-        out.job_creation_mode = req.job_creation_mode.into();
-        out.job_timeout_ms = req.job_timeout_ms.into();
-        out.labels = req.labels.into();
-        out.location = req.location.into();
-        out.max_results = req.max_results.into();
-        out.max_slots = req.max_slots.into();
-        out.maximum_bytes_billed = req.maximum_bytes_billed.into();
-        out.parameter_mode = req.parameter_mode.into();
-        out.query = req.query.into();
-        out.query_parameters = req.query_parameters.into();
-        out.request_id = req.request_id.into();
-        out.reservation = req.reservation.into();
-        out.timeout_ms = req.timeout_ms.into();
-        out.use_legacy_sql = req.use_legacy_sql.into();
-        out.use_query_cache = req.use_query_cache.into();
-        out.write_incremental_results = req.write_incremental_results.into();
+        out.connection_properties = req.connection_properties;
+        out.create_session = req.create_session;
+        out.default_dataset = req.default_dataset;
+        out.destination_encryption_configuration = req.destination_encryption_configuration;
+        out.dry_run = req.dry_run;
+        out.job_creation_mode = req.job_creation_mode;
+        out.job_timeout_ms = req.job_timeout_ms;
+        out.labels = req.labels;
+        out.location = req.location;
+        out.max_results = req.max_results;
+        out.max_slots = req.max_slots;
+        out.maximum_bytes_billed = req.maximum_bytes_billed;
+        out.parameter_mode = req.parameter_mode;
+        out.query = req.query;
+        out.query_parameters = req.query_parameters;
+        out.request_id = req.request_id;
+        out.reservation = req.reservation;
+        out.timeout_ms = req.timeout_ms;
+        out.use_legacy_sql = req.use_legacy_sql;
+        out.use_query_cache = req.use_query_cache;
+        out.write_incremental_results = req.write_incremental_results;
         out
     }
 }
@@ -768,31 +768,31 @@ impl std::convert::From<RunQueryRequest> for google_cloud_bigquery_v2::model::Qu
 impl std::convert::From<RunQueryRequest> for google_cloud_bigquery_v2::model::JobConfigurationQuery {
     fn from(req: RunQueryRequest) -> Self {
         let mut out = Self::default();
-        out.allow_large_results = req.allow_large_results.into();
-        out.clustering = req.clustering.into();
-        out.connection_properties = req.connection_properties.into();
-        out.continuous = req.continuous.into();
-        out.create_disposition = req.create_disposition.into();
-        out.create_session = req.create_session.into();
-        out.default_dataset = req.default_dataset.into();
-        out.destination_encryption_configuration = req.destination_encryption_configuration.into();
-        out.destination_table = req.destination_table.into();
-        out.external_table_definitions = req.external_table_definitions.into();
-        out.flatten_results = req.flatten_results.into();
-        out.maximum_bytes_billed = req.maximum_bytes_billed.into();
-        out.parameter_mode = req.parameter_mode.into();
-        out.priority = req.priority.into();
-        out.query = req.query.into();
-        out.query_parameters = req.query_parameters.into();
-        out.range_partitioning = req.range_partitioning.into();
-        out.schema_update_options = req.schema_update_options.into();
-        out.script_options = req.script_options.into();
-        out.time_partitioning = req.time_partitioning.into();
-        out.use_legacy_sql = req.use_legacy_sql.into();
-        out.use_query_cache = req.use_query_cache.into();
-        out.user_defined_function_resources = req.user_defined_function_resources.into();
-        out.write_disposition = req.write_disposition.into();
-        out.write_incremental_results = req.write_incremental_results.into();
+        out.allow_large_results = req.allow_large_results;
+        out.clustering = req.clustering;
+        out.connection_properties = req.connection_properties;
+        out.continuous = req.continuous;
+        out.create_disposition = req.create_disposition;
+        out.create_session = req.create_session;
+        out.default_dataset = req.default_dataset;
+        out.destination_encryption_configuration = req.destination_encryption_configuration;
+        out.destination_table = req.destination_table;
+        out.external_table_definitions = req.external_table_definitions;
+        out.flatten_results = req.flatten_results;
+        out.maximum_bytes_billed = req.maximum_bytes_billed;
+        out.parameter_mode = req.parameter_mode;
+        out.priority = req.priority;
+        out.query = req.query;
+        out.query_parameters = req.query_parameters;
+        out.range_partitioning = req.range_partitioning;
+        out.schema_update_options = req.schema_update_options;
+        out.script_options = req.script_options;
+        out.time_partitioning = req.time_partitioning;
+        out.use_legacy_sql = req.use_legacy_sql;
+        out.use_query_cache = req.use_query_cache;
+        out.user_defined_function_resources = req.user_defined_function_resources;
+        out.write_disposition = req.write_disposition;
+        out.write_incremental_results = req.write_incremental_results;
         out
     }
 }
@@ -800,31 +800,31 @@ impl std::convert::From<RunQueryRequest> for google_cloud_bigquery_v2::model::Jo
 impl std::convert::From<RunQueryRequest> for google_cloud_bigquery_v2::model::JobConfiguration {
     fn from(req: RunQueryRequest) -> Self {
         let mut query = google_cloud_bigquery_v2::model::JobConfigurationQuery::default();
-        query.allow_large_results = req.allow_large_results.into();
-        query.clustering = req.clustering.into();
-        query.connection_properties = req.connection_properties.into();
-        query.continuous = req.continuous.into();
-        query.create_disposition = req.create_disposition.into();
-        query.create_session = req.create_session.into();
-        query.default_dataset = req.default_dataset.into();
-        query.destination_encryption_configuration = req.destination_encryption_configuration.into();
-        query.destination_table = req.destination_table.into();
-        query.external_table_definitions = req.external_table_definitions.into();
-        query.flatten_results = req.flatten_results.into();
-        query.maximum_bytes_billed = req.maximum_bytes_billed.into();
-        query.parameter_mode = req.parameter_mode.into();
-        query.priority = req.priority.into();
-        query.query = req.query.into();
-        query.query_parameters = req.query_parameters.into();
-        query.range_partitioning = req.range_partitioning.into();
-        query.schema_update_options = req.schema_update_options.into();
-        query.script_options = req.script_options.into();
-        query.time_partitioning = req.time_partitioning.into();
-        query.use_legacy_sql = req.use_legacy_sql.into();
-        query.use_query_cache = req.use_query_cache.into();
-        query.user_defined_function_resources = req.user_defined_function_resources.into();
-        query.write_disposition = req.write_disposition.into();
-        query.write_incremental_results = req.write_incremental_results.into();
+        query.allow_large_results = req.allow_large_results;
+        query.clustering = req.clustering;
+        query.connection_properties = req.connection_properties;
+        query.continuous = req.continuous;
+        query.create_disposition = req.create_disposition;
+        query.create_session = req.create_session;
+        query.default_dataset = req.default_dataset;
+        query.destination_encryption_configuration = req.destination_encryption_configuration;
+        query.destination_table = req.destination_table;
+        query.external_table_definitions = req.external_table_definitions;
+        query.flatten_results = req.flatten_results;
+        query.maximum_bytes_billed = req.maximum_bytes_billed;
+        query.parameter_mode = req.parameter_mode;
+        query.priority = req.priority;
+        query.query = req.query;
+        query.query_parameters = req.query_parameters;
+        query.range_partitioning = req.range_partitioning;
+        query.schema_update_options = req.schema_update_options;
+        query.script_options = req.script_options;
+        query.time_partitioning = req.time_partitioning;
+        query.use_legacy_sql = req.use_legacy_sql;
+        query.use_query_cache = req.use_query_cache;
+        query.user_defined_function_resources = req.user_defined_function_resources;
+        query.write_disposition = req.write_disposition;
+        query.write_incremental_results = req.write_incremental_results;
         let mut out = Self::default();
         out.query = Some(query);
         out.dry_run = req.dry_run.into();
