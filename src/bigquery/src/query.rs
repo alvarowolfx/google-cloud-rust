@@ -30,5 +30,5 @@ pub(crate) use query_handle::{CompleteQuery, Query};
 
 pub use from_sql::{ConversionError, FromSql, Interval, Range, deserialize};
 pub(crate) use row::Row;
-pub(crate) use run_query::RunQuery;
+pub use run_query::{RunQuery, RunQueryRequest};
 pub(crate) use schema::Schema;

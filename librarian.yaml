@@ -453,7 +453,7 @@ libraries:
       modules:
         - output: src/bigquery/src/generated
           api_path: google/cloud/bigquery/v2
-          template: bigquery-query-builder
+          template: bigquery
   - name: google-cloud-bigquery-analyticshub-v1
     version: 1.11.0
     copyright_year: "2025"

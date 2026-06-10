@@ -24,12 +24,10 @@ use std::sync::Arc;
 /// A unified request builder for configuring and running a SQL query.
 /// It automatically routes to either `jobs.query` (fast path) or `jobs.insert` (job path)
 /// depending on the configured fields.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct RunQuery {
     pub(crate) job_service: Arc<JobService>,
-    pub(crate) query_request: QueryRequest,
-    pub(crate) job_config: JobConfiguration,
-    pub(crate) force_job_path: bool,
+    pub(crate) request: RunQueryRequest,
     pub(crate) project_id: Option<String>,
 }
 
@@ -38,19 +36,9 @@ impl RunQuery {
     pub fn new(job_service: Arc<JobService>, sql: String) -> Self {
         Self {
             job_service,
-            query_request: QueryRequest::new()
+            request: RunQueryRequest::default()
                 .set_query(sql.clone())
-                .set_use_legacy_sql(wkt::BoolValue::from(false))
-                .set_format_options(
-                    google_cloud_bigquery_v2::model::DataFormatOptions::new()
-                        .set_use_int64_timestamp(true),
-                ),
-            job_config: JobConfiguration::new().set_query(
-                JobConfigurationQuery::new()
-                    .set_query(sql)
-                    .set_use_legacy_sql(wkt::BoolValue::from(false)),
-            ),
-            force_job_path: false,
+                .set_use_legacy_sql(wkt::BoolValue::from(false)),
             project_id: None,
         }
     }
@@ -69,9 +57,10 @@ impl RunQuery {
             .clone()
             .ok_or_else(|| google_cloud_gax::error::Error::io("No project id provided"))?;
 
-        if self.force_job_path {
+        if self.request.force_job_path() {
             // Route to jobs.insert (Job Path) using InsertJobExecutor
-            let job = Job::new().set_configuration(self.job_config);
+            let job_config: JobConfiguration = self.request.into();
+            let job = Job::new().set_configuration(job_config);
 
             InsertJobExecutor {
                 job_service: self.job_service,
@@ -82,9 +71,14 @@ impl RunQuery {
             .await
         } else {
             // Route to jobs.query (Fast Path) using PostQueryExecutor
+            let query_request: QueryRequest = self.request.into();
+            let query_request = query_request.set_format_options(
+                google_cloud_bigquery_v2::model::DataFormatOptions::new()
+                    .set_use_int64_timestamp(true),
+            );
             let req = PostQueryRequest::new()
                 .set_project_id(project_id)
-                .set_query_request(self.query_request);
+                .set_query_request(query_request);
 
             PostQueryExecutor {
                 job_service: self.job_service,
@@ -97,3 +91,4 @@ impl RunQuery {
 }
 
 include!("../generated/run_query_builder.rs");
+include!("../generated/run_query_request.rs");

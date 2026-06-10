@@ -162,6 +162,7 @@ pub(crate) async fn poll_query_results(
             .ok_or_else(|| google_cloud_gax::error::Error::io("can't poll stateless queries"))?;
 
         let mut req = GetQueryResultsRequest::new()
+            .set_max_results(0u32)
             .set_project_id(job_ref.project_id.clone())
             .set_job_id(job_ref.job_id.clone());
         if let Some(location) = job_ref.location.clone() {
