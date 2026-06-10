@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::Result;
-use crate::query::Query;
+use crate::error::QueryError;
+use crate::query::{Query, Result};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{InsertJobRequest, Job, PostQueryRequest};
 use std::sync::Arc;
@@ -33,11 +33,12 @@ impl PostQueryExecutor {
             .await?;
 
         let errors = res.errors.clone();
-        if let Some(first_err) = errors.into_iter().next() {
-            let rpc_status = google_cloud_gax::error::rpc::Status::default()
-                .set_code(google_cloud_gax::error::rpc::Code::Unknown)
-                .set_message(first_err.message);
-            return Err(google_cloud_gax::error::Error::service(rpc_status));
+        if let Some(first_err) = errors.first() {
+            return Err(QueryError::JobFailed {
+                reason: first_err.reason.clone(),
+                message: first_err.message.clone(),
+                errors: res.errors,
+            });
         }
 
         let completed = res.job_complete.unwrap_or(false);
@@ -69,10 +70,7 @@ impl InsertJobExecutor {
             .and_then(|c| c.query.as_ref())
             .is_some();
         if !is_query {
-            let rpc_status = google_cloud_gax::error::rpc::Status::default()
-                .set_code(google_cloud_gax::error::rpc::Code::InvalidArgument)
-                .set_message("Only Query Jobs are supported by this client.");
-            return Err(google_cloud_gax::error::Error::service(rpc_status));
+            return Err(QueryError::UnsupportedJobType);
         }
 
         let insert_req = InsertJobRequest::new()
@@ -86,13 +84,17 @@ impl InsertJobExecutor {
             .send()
             .await?;
 
-        if let Some(ref status) = res.status {
-            if let Some(ref err) = status.error_result {
-                let rpc_status = google_cloud_gax::error::rpc::Status::default()
-                    .set_code(google_cloud_gax::error::rpc::Code::Unknown)
-                    .set_message(err.message.clone());
-                return Err(google_cloud_gax::error::Error::service(rpc_status));
-            }
+        if let Some(err) = res.status.as_ref().and_then(|s| s.error_result.as_ref()) {
+            let errors = res
+                .status
+                .as_ref()
+                .map(|s| s.errors.clone())
+                .unwrap_or_default();
+            return Err(QueryError::JobFailed {
+                reason: err.reason.clone(),
+                message: err.message.clone(),
+                errors,
+            });
         }
 
         let job_ref = res

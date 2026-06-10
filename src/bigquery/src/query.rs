@@ -24,11 +24,15 @@ mod row;
 mod run_query;
 mod schema;
 
+use crate::error::QueryError;
+
+pub(crate) type Result<T> = std::result::Result<T, QueryError>;
+
 pub(crate) use iterator::RowIterator;
 pub(crate) use metadata::QueryMetadata;
 pub(crate) use query_handle::{CompleteQuery, Query};
 
-pub use from_sql::{ConversionError, FromSql, Interval, Range, deserialize};
+pub use from_sql::{FromSql, Interval, Range, deserialize};
 pub(crate) use row::Row;
 pub use run_query::{RunQuery, RunQueryRequest};
 pub(crate) use schema::Schema;

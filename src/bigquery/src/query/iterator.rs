@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::query::{CompleteQuery, Row, Schema};
+use crate::error::QueryError;
+use crate::query::{CompleteQuery, Result, Row, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{GetQueryResultsRequest, JobReference};
 use std::collections::VecDeque;
@@ -60,9 +61,10 @@ impl RowIterator {
     }
 
     /// Fetches the next row from the result set.
-    pub async fn next(&mut self) -> Option<Result<Row, google_cloud_gax::error::Error>> {
+    pub async fn next(&mut self) -> Option<Result<Row>> {
         if let Some(raw_row) = self.rows.pop_front() {
-            let row = crate::query::row::convert_row(raw_row, &self.schema);
+            let row =
+                crate::query::row::convert_row(raw_row, &self.schema).map_err(QueryError::from);
             return Some(row);
         }
 
@@ -81,9 +83,9 @@ impl RowIterator {
                     }
 
                     // Convert and return the first fetched row
-                    self.rows
-                        .pop_front()
-                        .map(|r| crate::query::row::convert_row(r, &self.schema))
+                    self.rows.pop_front().map(|r| {
+                        crate::query::row::convert_row(r, &self.schema).map_err(QueryError::from)
+                    })
                 }
                 Err(e) => {
                     self.is_done = true;
@@ -96,14 +98,9 @@ impl RowIterator {
         }
     }
 
-    async fn fetch_page(
-        &self,
-        token: String,
-    ) -> Result<(Vec<wkt::Struct>, Option<String>), google_cloud_gax::error::Error> {
+    async fn fetch_page(&self, token: String) -> Result<(Vec<wkt::Struct>, Option<String>)> {
         let Some(job_ref) = &self.job_ref else {
-            return Err(google_cloud_gax::error::Error::io(
-                "Stateless queries can't have more pages",
-            ));
+            return Err(QueryError::StatelessQuery);
         };
 
         let mut req = GetQueryResultsRequest::new()
@@ -127,10 +124,11 @@ impl RowIterator {
             .await?;
 
         if let Some(first_err) = res.errors.first() {
-            let rpc_status = google_cloud_gax::error::rpc::Status::default()
-                .set_code(google_cloud_gax::error::rpc::Code::Unknown)
-                .set_message(first_err.message.clone());
-            return Err(google_cloud_gax::error::Error::service(rpc_status));
+            return Err(QueryError::JobFailed {
+                reason: first_err.reason.clone(),
+                message: first_err.message.clone(),
+                errors: res.errors,
+            });
         }
 
         let page_token = if res.page_token.is_empty() {

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::Result;
+use crate::error::QueryError;
 use crate::query::metadata::QueryMetadata;
-use crate::query::{RowIterator, Schema};
+use crate::query::{Result, RowIterator, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{
     GetQueryResultsRequest, GetQueryResultsResponse, Job, JobReference, QueryResponse,
@@ -37,10 +37,8 @@ impl Query {
     /// Periodically checks the status of the background job until it finishes.
     /// Returns an error if a remote service or connection failure happens during polling.
     pub async fn until_done(&self) -> Result<CompleteQuery> {
-        if self.completed {
-            if let Some(ref initial_response) = self.initial_response {
-                return Ok(CompleteQuery::from_query_response(self, initial_response));
-            }
+        if let (true, Some(initial_response)) = (self.completed, &self.initial_response) {
+            return Ok(CompleteQuery::from_query_response(self, initial_response));
         }
 
         let res = poll_query_results(&self.job_service, self.job_ref.as_ref()).await?;
@@ -132,9 +130,7 @@ impl CompleteQuery {
 
     /// Performs a network call to fetch the full `Job` resource from the backend.
     pub async fn job_metadata(&self) -> Result<Job> {
-        let job_ref = self.job_ref.as_ref().ok_or_else(|| {
-            google_cloud_gax::error::Error::io("cannot fetch job metadata for stateless queries")
-        })?;
+        let job_ref = self.job_ref.as_ref().ok_or(QueryError::StatelessQuery)?;
 
         let mut req = self
             .job_service
@@ -146,9 +142,8 @@ impl CompleteQuery {
             req = req.set_location(location);
         }
 
-        req.send()
-            .await
-            .map_err(|_| google_cloud_gax::error::Error::io("failing to get job metadata"))
+        let job = req.send().await.map_err(QueryError::Service)?;
+        Ok(job)
     }
 }
 
@@ -158,8 +153,7 @@ pub(crate) async fn poll_query_results(
     job_ref: Option<&JobReference>,
 ) -> Result<GetQueryResultsResponse> {
     loop {
-        let job_ref = job_ref
-            .ok_or_else(|| google_cloud_gax::error::Error::io("can't poll stateless queries"))?;
+        let job_ref = job_ref.ok_or(QueryError::StatelessQuery)?;
 
         let mut req = GetQueryResultsRequest::new()
             .set_max_results(0u32)
@@ -173,13 +167,15 @@ pub(crate) async fn poll_query_results(
             .get_query_results()
             .with_request(req)
             .send()
-            .await?;
+            .await
+            .map_err(QueryError::Service)?;
 
-        if let Some(first_err) = res.errors.clone().into_iter().next() {
-            let rpc_status = google_cloud_gax::error::rpc::Status::default()
-                .set_code(google_cloud_gax::error::rpc::Code::Unknown)
-                .set_message(first_err.message);
-            return Err(google_cloud_gax::error::Error::service(rpc_status));
+        if let Some(first_err) = res.errors.first() {
+            return Err(QueryError::JobFailed {
+                reason: first_err.reason.clone(),
+                message: first_err.message.clone(),
+                errors: res.errors,
+            });
         }
 
         let completed = res.job_complete.unwrap_or(false);

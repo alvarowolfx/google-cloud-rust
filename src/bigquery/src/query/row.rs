@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::error::{ConvertError, RowError};
 use crate::query::Schema;
 use crate::query::from_sql::FromSql;
 use std::sync::Arc;
@@ -64,31 +65,6 @@ impl ColumnIndex for String {
     }
 }
 
-/// Errors that can occur when getting a value from a [`Row`].
-#[derive(thiserror::Error, Debug)]
-#[non_exhaustive]
-pub enum RowError {
-    /// The requested column name or index was not found in the row.
-    #[error("Could not find column with index: {0}")]
-    ColumnNotFound(String),
-
-    /// The requested column index was out of range.
-    #[error("Column index out of range: {index} (expected < {len})")]
-    IndexOutOfRange { index: usize, len: usize },
-
-    /// Failed to convert the value to the target type.
-    #[error("Type conversion error for column '{column}': {source}")]
-    TypeConversion {
-        column: String,
-        #[source]
-        source: Box<dyn std::error::Error + Send + Sync>,
-    },
-
-    /// The JSON format from the API did not match expectations.
-    #[error("Internal service JSON layout invalid: {0}")]
-    InvalidRowFormat(String),
-}
-
 impl Row {
     /// Returns the raw values of the row.
     pub fn raw_values(&self) -> &[wkt::Value] {
@@ -110,7 +86,7 @@ impl Row {
         T::from_sql(val.clone()).map_err(|e| {
             crate::Error::deser(RowError::TypeConversion {
                 column: format!("{:?}", index),
-                source: Box::new(e),
+                source: e,
             })
         })
     }
@@ -160,7 +136,7 @@ fn normalize_value(
                 let num = s.parse::<i64>().map_err(|e| {
                     crate::Error::deser(RowError::TypeConversion {
                         column: "unknown".to_string(),
-                        source: Box::new(e),
+                        source: ConvertError::Convert(Box::new(e)),
                     })
                 })?;
                 Ok(wkt::Value::Number(serde_json::Number::from(num)))
@@ -169,7 +145,7 @@ fn normalize_value(
                 let num = s.parse::<f64>().map_err(|e| {
                     crate::Error::deser(RowError::TypeConversion {
                         column: "unknown".to_string(),
-                        source: Box::new(e),
+                        source: ConvertError::Convert(Box::new(e)),
                     })
                 })?;
                 Ok(wkt::Value::Number(
@@ -181,7 +157,7 @@ fn normalize_value(
                 let b = s.parse::<bool>().map_err(|e| {
                     crate::Error::deser(RowError::TypeConversion {
                         column: "unknown".to_string(),
-                        source: Box::new(e),
+                        source: ConvertError::Convert(Box::new(e)),
                     })
                 })?;
                 Ok(wkt::Value::Bool(b))

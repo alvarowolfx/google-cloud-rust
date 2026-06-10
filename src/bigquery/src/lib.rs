@@ -27,7 +27,8 @@
 pub use google_cloud_gax::Result;
 pub use google_cloud_gax::error::Error;
 
-pub use crate::query::{ConversionError, FromSql, Interval, Range, deserialize};
+pub use crate::error::{ConvertError, QueryError, RowError};
+pub use crate::query::{FromSql, Interval, Range, deserialize};
 
 pub(crate) use google_cloud_gax::client_builder::Result as ClientBuilderResult;
 
@@ -35,6 +36,8 @@ mod client_builder;
 
 /// Re-export as `builders` as well for alias compatibility.
 pub use builder as builders;
+
+pub mod error;
 
 /// High-level BigQuery client and execution entrypoints.
 pub mod client;

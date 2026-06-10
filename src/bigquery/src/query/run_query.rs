@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::Result;
+use crate::error::QueryError;
 use crate::query::execution::{InsertJobExecutor, PostQueryExecutor};
-use crate::query::query_handle::Query;
+use crate::query::{Query, Result};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{
     Job, JobConfiguration, JobConfigurationQuery, PostQueryRequest, QueryRequest,
@@ -55,7 +55,7 @@ impl RunQuery {
         let project_id = self
             .project_id
             .clone()
-            .ok_or_else(|| google_cloud_gax::error::Error::io("No project id provided"))?;
+            .ok_or(QueryError::MissingProjectId)?;
 
         if self.request.force_job_path() {
             // Route to jobs.insert (Job Path) using InsertJobExecutor
