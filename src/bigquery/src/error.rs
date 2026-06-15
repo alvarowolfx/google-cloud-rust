@@ -15,7 +15,7 @@
 //! Custom errors for the Cloud BigQuery query client.
 
 use google_cloud_bigquery_v2::model::ErrorProto;
-use google_cloud_gax::error::Error as GaxError;
+use google_cloud_gax::error::Error;
 
 /// Errors that can occur during query configuration, execution, or polling.
 #[derive(thiserror::Error, Debug)]
@@ -31,12 +31,8 @@ pub enum QueryError {
 
     /// The query job failed on the BigQuery service side.
     /// Includes the list of error protocols returned by the service.
-    #[error("query job failed: {reason} - {message}")]
+    #[error("query job failed: {errors:?}")]
     JobFailed {
-        /// The primary error reason code (e.g., "invalidQuery", "backendError").
-        reason: String,
-        /// The error message.
-        message: String,
         /// The list of all errors associated with the job.
         errors: Vec<ErrorProto>,
     },
@@ -45,9 +41,14 @@ pub enum QueryError {
     #[error("cannot perform this operation on a stateless query")]
     StatelessQuery,
 
-    /// An error occurred during service communications.
-    #[error("service error: {0}")]
-    Service(#[from] GaxError),
+    /// The underlying RPC failed.
+    #[non_exhaustive]
+    #[error("the operation failed. RPC error: {source}")]
+    Rpc {
+        /// The error returned by the service for the request.
+        #[source]
+        source: Error,
+    },
 }
 
 /// Errors that can occur when retrieving value cells from a [`Row`](crate::query::Row).
@@ -80,6 +81,15 @@ pub enum RowError {
     /// The JSON format returned by the service did not match expectations.
     #[error("internal service JSON layout invalid: {0}")]
     InvalidRowFormat(String),
+
+    /// The underlying RPC failed.
+    #[non_exhaustive]
+    #[error("the operation failed. RPC error: {source}")]
+    Rpc {
+        /// The error returned by the service for the request.
+        #[source]
+        source: Error,
+    },
 }
 
 /// Represents failures when converting a raw BigQuery cell value (`wkt::Value`) to a Rust type.
@@ -102,4 +112,41 @@ pub enum ConvertError {
     /// An error occurred during custom conversion (e.g. parsing date/time strings).
     #[error("cannot convert value: {0}")]
     Convert(#[source] Box<dyn std::error::Error + Send + Sync + 'static>),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use google_cloud_gax::error::rpc::{Code, Status};
+
+    #[test]
+    fn test_job_failed_display() {
+        let err = QueryError::JobFailed {
+            errors: vec![
+                ErrorProto::new()
+                    .set_reason("invalidQuery")
+                    .set_message("Syntax error: Unexpected end of input"),
+            ],
+        };
+        assert!(err.to_string().contains("query job failed:"));
+        assert!(err.to_string().contains("invalidQuery"));
+        assert!(
+            err.to_string()
+                .contains("Syntax error: Unexpected end of input")
+        );
+    }
+
+    #[test]
+    fn test_rpc_display() {
+        let status = Status::default()
+            .set_code(Code::InvalidArgument)
+            .set_message("simulated bad request");
+        let err = QueryError::Rpc {
+            source: Error::service(status),
+        };
+        assert_eq!(
+            err.to_string(),
+            "the operation failed. RPC error: the service reports an error with code INVALID_ARGUMENT described as: simulated bad request"
+        );
+    }
 }

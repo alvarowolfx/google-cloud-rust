@@ -45,6 +45,14 @@ impl BigQuery {
         if builder.config.tracing {
             job_service_builder = job_service_builder.with_tracing();
         }
+        if let Some(retry_policy) = builder.config.retry_policy {
+            job_service_builder = job_service_builder.with_retry_policy(retry_policy);
+        }
+        if let Some(backoff_policy) = builder.config.backoff_policy {
+            job_service_builder = job_service_builder.with_backoff_policy(backoff_policy);
+        }
+        job_service_builder =
+            job_service_builder.with_retry_throttler(builder.config.retry_throttler);
         let job_service = Arc::new(job_service_builder.build().await?);
 
         Ok(BigQuery { job_service })
@@ -82,5 +90,20 @@ impl BigQuery {
             initial_job: Some(job),
             is_job_path: true,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::BigQuery;
+    use google_cloud_auth::credentials::anonymous::Builder as Anonymous;
+
+    #[tokio::test]
+    async fn test_bigquery_builder() -> anyhow::Result<()> {
+        let _client = BigQuery::builder()
+            .with_credentials(Anonymous::new().build())
+            .build()
+            .await?;
+        Ok(())
     }
 }

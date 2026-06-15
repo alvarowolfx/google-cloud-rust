@@ -142,7 +142,10 @@ impl CompleteQuery {
             req = req.set_location(location);
         }
 
-        let job = req.send().await.map_err(QueryError::Service)?;
+        let job = req
+            .send()
+            .await
+            .map_err(|e| QueryError::Rpc { source: e })?;
         Ok(job)
     }
 }
@@ -168,14 +171,10 @@ pub(crate) async fn poll_query_results(
             .with_request(req)
             .send()
             .await
-            .map_err(QueryError::Service)?;
+            .map_err(|e| QueryError::Rpc { source: e })?;
 
-        if let Some(first_err) = res.errors.first() {
-            return Err(QueryError::JobFailed {
-                reason: first_err.reason.clone(),
-                message: first_err.message.clone(),
-                errors: res.errors,
-            });
+        if !res.errors.is_empty() {
+            return Err(QueryError::JobFailed { errors: res.errors });
         }
 
         let completed = res.job_complete.unwrap_or(false);

@@ -16,41 +16,36 @@ use crate::{Poller, PollingResult, Result, sealed};
 use google_cloud_gax::polling_state::PollingState;
 use tracing::{Instrument, Span, info_span};
 
-#[cfg(google_cloud_unstable_tracing)]
-use crate::POLL_ATTEMPT_COUNT;
-
-#[cfg(google_cloud_unstable_tracing)]
-tokio::task_local! {
-    /// A task-local context propagating the active LRO `Span`.
-    ///
-    /// This is accessed across module boundaries to dynamically retrieve the
-    /// active span context, allowing the inner pollers to record the LRO's actual
-    /// operation name/resource destination ID when first fetched, without requiring
-    /// passing tracing parameters through all method signatures.
-    pub(crate) static LRO_SPAN: Span;
-}
-
-#[cfg(google_cloud_unstable_tracing)]
 tokio::task_local! {
     static LRO_RECORDER: LroRecorder;
 }
 
-#[cfg(google_cloud_unstable_tracing)]
 /// A recorder that manages LRO spans and propagates active telemetry context.
 ///
-/// Since `LroRecorder` is cloned to establish task-local scopes (like `LRO_RECORDER`),
-/// it is designed to be completely **stateless** and read-only, wrapping only the active LRO `Span`.
-/// Stateful counting (e.g., `poll_attempt_count`) is managed entirely on the decorator itself,
-/// completely eliminating any risk of divergent state or cloning race conditions.
+/// To prevent concurrent mutation race conditions under multi-threaded tokio executors,
+/// `LroRecorder` is largely immutable. Context updates (like setting the transient `attempt_count`
+/// during a polling cycle) are performed using copy-on-write builders (`with_attempt_count`)
+/// to establish new task-local scopes.
+///
+/// The `destination_id` is an exception: it is a write-once, read-many value shared across
+/// all clones of a given recorder, ensuring that once discovered, the ID propagates to all
+/// future polling spans.
 #[derive(Clone, Debug)]
-pub(crate) struct LroRecorder {
+#[non_exhaustive]
+pub struct LroRecorder {
     span: Span,
+    attempt_count: Option<u32>,
+    destination_id: std::sync::Arc<std::sync::OnceLock<String>>,
 }
 
-#[cfg(google_cloud_unstable_tracing)]
 impl LroRecorder {
+    /// Creates a new `LroRecorder` wrapping the given tracing `Span`.
     pub fn new(span: Span) -> Self {
-        Self { span }
+        Self {
+            span,
+            attempt_count: None,
+            destination_id: std::sync::Arc::new(std::sync::OnceLock::new()),
+        }
     }
 
     /// Returns the recorder in the current task scope.
@@ -66,12 +61,62 @@ impl LroRecorder {
         LRO_RECORDER.scope(self.clone(), future).await
     }
 
+    /// Returns the active LRO tracing `Span` wrapped by this recorder.
     pub fn span(&self) -> &Span {
         &self.span
     }
 
+    /// Returns the current LRO polling attempt count, if active.
+    ///
+    /// This returns `Some(u32)` when queried during an active polling attempt,
+    /// and `None` otherwise (e.g., when executing outside the scope of an active polling cycle).
+    pub fn attempt_count(&self) -> Option<u32> {
+        self.attempt_count
+    }
+}
+
+/// Helper macro to record telemetry for Discovery LROs.
+#[macro_export]
+#[doc(hidden)]
+macro_rules! record_discovery_polling_result {
+    ($span:expr, $op:expr) => {
+        let span = &$span;
+        let op = &$op;
+        let done = $crate::internal::DiscoveryOperation::done(op);
+        span.record("gcp.longrunning.done", done);
+        if done {
+            let error = $crate::internal::DiscoveryOperation::error(op);
+            let code = error.as_ref().map(|e| e.code as i32).unwrap_or(0);
+            span.record("gcp.longrunning.status_code", code);
+            if let Some(status) = error {
+                span.record("otel.status_code", "ERROR");
+                span.record("otel.status_description", &status.message);
+                span.record("error.type", status.code.to_string());
+            }
+        }
+    };
+}
+
+impl LroRecorder {
+    /// Creates a new clone of `LroRecorder` carrying the specified LRO polling attempt count.
+    ///
+    /// Since `LroRecorder` is immutable to guarantee thread-safety, this updates the context
+    /// via copy-on-write, returning a new value to be bound to a new task-local scope.
+    pub fn with_attempt_count(&self, count: u32) -> Self {
+        Self {
+            span: self.span.clone(),
+            attempt_count: Some(count),
+            destination_id: self.destination_id.clone(),
+        }
+    }
+
     pub fn record_destination_id(&self, name: &str) {
         self.span.record("gcp.resource.destination.id", name);
+        let _ = self.destination_id.set(name.to_string());
+    }
+
+    pub fn destination_id(&self) -> Option<String> {
+        self.destination_id.get().cloned()
     }
 
     pub fn record_error(&self, err: &crate::Error) {
@@ -89,33 +134,41 @@ impl LroRecorder {
     }
 }
 
+/// Injects LRO-specific telemetry attributes into the active span.
+#[macro_export]
+#[doc(hidden)]
+macro_rules! record_polling_attributes {
+    ($span:expr) => {
+        if let Some(recorder) = $crate::LroRecorder::current() {
+            if let Some(attempt) = recorder.attempt_count() {
+                let span = &$span;
+                span.record("gcp.longrunning.poll_attempt_count", attempt);
+            }
+            if let Some(dest_id) = recorder.destination_id() {
+                let span = &$span;
+                span.record("gcp.resource.destination.id", dest_id);
+            }
+        }
+    };
+}
+
 /// Decorate a poller with tracing information.
 #[derive(Clone, Debug)]
 pub struct Tracing<P> {
     inner: P,
-    #[cfg(google_cloud_unstable_tracing)]
     recorder: LroRecorder,
     /// Stateful count of poll attempts managed directly on the decorator.
-    #[cfg(google_cloud_unstable_tracing)]
     poll_attempt_count: u32,
-    #[cfg(google_cloud_unstable_tracing)]
     started: bool,
-    #[cfg(not(google_cloud_unstable_tracing))]
-    span: Span,
 }
 
 impl<P> Tracing<P> {
     pub(crate) fn new(inner: P, span: Span) -> Self {
         Self {
             inner,
-            #[cfg(google_cloud_unstable_tracing)]
             recorder: LroRecorder::new(span),
-            #[cfg(google_cloud_unstable_tracing)]
             poll_attempt_count: 0,
-            #[cfg(google_cloud_unstable_tracing)]
             started: false,
-            #[cfg(not(google_cloud_unstable_tracing))]
-            span,
         }
     }
 }
@@ -126,18 +179,10 @@ where
 {
     async fn backoff(&mut self, state: &PollingState) {
         let span = info_span!("LRO Sleep");
-        #[cfg(google_cloud_unstable_tracing)]
-        {
-            let inner = &mut self.inner;
-            return self
-                .recorder
-                .record_action(|_| async move { inner.backoff(state).instrument(span).await })
-                .await;
-        }
-        #[cfg(not(google_cloud_unstable_tracing))]
-        {
-            self.inner.backoff(state).await
-        }
+        let inner = &mut self.inner;
+        self.recorder
+            .record_action(|_| async move { inner.backoff(state).instrument(span).await })
+            .await
     }
 }
 
@@ -148,56 +193,39 @@ where
     MetadataType: Send,
 {
     async fn poll(&mut self) -> Option<PollingResult<ResponseType, MetadataType>> {
-        #[cfg(google_cloud_unstable_tracing)]
-        {
-            // Stateful count of poll attempts is managed directly on the decorator instance,
-            // which is called via `&mut self` and is safe from divergent mutations.
-            let attempt = if self.started {
-                self.poll_attempt_count += 1;
-                self.poll_attempt_count
-            } else {
-                self.started = true;
-                0 // Initial triggers record nothing
-            };
+        // Stateful count of poll attempts is managed directly on the decorator instance,
+        // which is called via `&mut self` and is safe from divergent mutations.
+        let attempt = if self.started {
+            self.poll_attempt_count += 1;
+            self.poll_attempt_count
+        } else {
+            self.started = true;
+            0 // Initial triggers record nothing
+        };
 
-            let inner = &mut self.inner;
-            let span = self.recorder.span().clone();
+        let inner = &mut self.inner;
+        let span = self.recorder.span().clone();
 
-            // We map both the stateless LRO span context scope AND the transient POLL_ATTEMPT_COUNT
-            // task-local key (using our stateful `attempt` count) for the duration of the active poll future.
-            self.recorder
-                .scope(async move {
-                    POLL_ATTEMPT_COUNT
-                        .scope(attempt, async move { inner.poll().instrument(span).await })
-                        .await
-                })
-                .await
-        }
-        #[cfg(not(google_cloud_unstable_tracing))]
-        {
-            self.inner.poll().await
-        }
+        // We map the consolidated LroRecorder (holding the active LRO span and stateful attempt count)
+        // for the duration of the active poll future.
+        let recorder = self.recorder.with_attempt_count(attempt);
+        recorder
+            .scope(async move { inner.poll().instrument(span).await })
+            .await
     }
 
     async fn until_done(self) -> Result<ResponseType> {
-        #[cfg(google_cloud_unstable_tracing)]
-        {
-            let this = self;
-            let recorder = this.recorder.clone();
-            let result = recorder
-                .record_action(|wait_span| async move {
-                    crate::until_done(this).instrument(wait_span).await
-                })
-                .await;
-            if let Err(ref e) = result {
-                recorder.record_error(e);
-            }
-            result
+        let this = self;
+        let recorder = this.recorder.clone();
+        let result = recorder
+            .record_action(|wait_span| async move {
+                crate::until_done(this).instrument(wait_span).await
+            })
+            .await;
+        if let Err(ref e) = result {
+            recorder.record_error(e);
         }
-        #[cfg(not(google_cloud_unstable_tracing))]
-        {
-            crate::until_done(self).await
-        }
+        result
     }
     #[cfg(feature = "unstable-stream")]
     fn into_stream(
@@ -211,6 +239,9 @@ where
 mod tests {
     use super::*;
     use crate::Error;
+    use gaxi::client_request_signals;
+    use gaxi::options::InstrumentationClientInfo;
+    use google_cloud_test_utils::test_layer::TestLayer;
     use google_cloud_wkt::{Duration, Timestamp};
 
     struct FailingPoller;
@@ -234,15 +265,14 @@ mod tests {
         }
     }
 
-    #[cfg(google_cloud_unstable_tracing)]
     #[tokio::test]
     async fn test_tracing_decorator_error_reporting() {
-        let guard = google_cloud_test_utils::test_layer::TestLayer::initialize();
+        let guard = TestLayer::initialize();
 
         let span = tracing::info_span!(
             "test_span",
-            otel.status_code = tracing::field::Empty,
-            otel.status_description = tracing::field::Empty,
+            "otel.status_code" = tracing::field::Empty,
+            "otel.status_description" = tracing::field::Empty,
         );
 
         let poller = Tracing::new(FailingPoller, span);
@@ -251,7 +281,7 @@ mod tests {
         assert!(got.is_err());
 
         {
-            let captured = google_cloud_test_utils::test_layer::TestLayer::capture(&guard);
+            let captured = TestLayer::capture(&guard);
             let got = captured
                 .iter()
                 .find(|s| s.name == "test_span")
@@ -272,18 +302,20 @@ mod tests {
         }
     }
 
-    #[cfg(google_cloud_unstable_tracing)]
     struct CountingPoller {
         attempts: Vec<u32>,
     }
-    #[cfg(google_cloud_unstable_tracing)]
     impl sealed::Poller for CountingPoller {
         async fn backoff(&mut self, _state: &PollingState) {}
     }
-    #[cfg(google_cloud_unstable_tracing)]
     impl Poller<Duration, Timestamp> for CountingPoller {
         async fn poll(&mut self) -> Option<PollingResult<Duration, Timestamp>> {
-            let attempt = POLL_ATTEMPT_COUNT.try_with(|c| *c).unwrap();
+            // Safe to unwrap because this mock poller is only called under the `Tracing::poll`
+            // decorator, which guarantees that an active `LroRecorder` is in scope with a
+            // populated attempt count.
+            let attempt = LroRecorder::current()
+                .and_then(|r| r.attempt_count())
+                .unwrap();
             self.attempts.push(attempt);
             Some(PollingResult::InProgress(None))
         }
@@ -298,7 +330,6 @@ mod tests {
         }
     }
 
-    #[cfg(google_cloud_unstable_tracing)]
     #[tokio::test]
     async fn test_tracing_decorator_attempt_counting() {
         let span = tracing::info_span!("test_lro_span");
@@ -317,9 +348,9 @@ mod tests {
         assert_eq!(traced.inner.attempts, vec![0, 1, 2]);
     }
 
-    #[cfg(google_cloud_unstable_tracing)]
     #[tokio::test]
     async fn test_lro_recorder_span_nesting() {
+        let _guard = TestLayer::initialize();
         let span = tracing::info_span!("test_lro_span");
         let recorder = LroRecorder::new(span.clone());
 
@@ -335,5 +366,242 @@ mod tests {
                 assert_eq!(active_recorder.span, span_clone);
             })
             .await;
+    }
+
+    #[cfg(google_cloud_unstable_tracing)]
+    #[tokio::test]
+    async fn record_polling_attributes_macro() {
+        let guard = TestLayer::initialize();
+
+        let span =
+            client_request_signals!(info: &InstrumentationClientInfo::default(), method: "test");
+
+        let recorder = LroRecorder::new(span.clone()).with_attempt_count(42);
+        recorder.record_destination_id("my-test-lro-id");
+
+        recorder
+            .scope(async move {
+                crate::record_polling_attributes!(&span);
+            })
+            .await;
+
+        drop(recorder);
+
+        let captured = TestLayer::capture(&guard);
+        let got = captured
+            .iter()
+            .find(|s| s.name == "client_request")
+            .unwrap();
+
+        assert_eq!(
+            got.attributes.get("gcp.longrunning.poll_attempt_count"),
+            Some(&google_cloud_test_utils::test_layer::AttributeValue::UInt64(42))
+        );
+        assert_eq!(
+            got.attributes.get("gcp.resource.destination.id"),
+            Some(
+                &google_cloud_test_utils::test_layer::AttributeValue::String(
+                    std::borrow::Cow::Borrowed("my-test-lro-id")
+                )
+            )
+        );
+    }
+
+    #[cfg(google_cloud_unstable_tracing)]
+    #[tokio::test]
+    async fn record_polling_attributes_macro_no_recorder() {
+        let guard = TestLayer::initialize();
+
+        let span =
+            client_request_signals!(info: &InstrumentationClientInfo::default(), method: "test");
+
+        crate::record_polling_attributes!(&span);
+
+        drop(span); // capture it
+
+        let captured = TestLayer::capture(&guard);
+        let got = captured
+            .iter()
+            .find(|s| s.name == "client_request")
+            .unwrap();
+
+        assert!(
+            got.attributes
+                .get("gcp.longrunning.poll_attempt_count")
+                .is_none()
+        );
+    }
+
+    #[cfg(google_cloud_unstable_tracing)]
+    #[tokio::test]
+    async fn record_polling_attributes_macro_no_attempt_count() {
+        let guard = TestLayer::initialize();
+
+        let span =
+            client_request_signals!(info: &InstrumentationClientInfo::default(), method: "test");
+
+        let recorder = LroRecorder::new(span.clone());
+
+        recorder
+            .scope(async move {
+                crate::record_polling_attributes!(&span);
+            })
+            .await;
+
+        drop(recorder);
+
+        let captured = TestLayer::capture(&guard);
+        let got = captured
+            .iter()
+            .find(|s| s.name == "client_request")
+            .unwrap();
+
+        assert!(
+            got.attributes
+                .get("gcp.longrunning.poll_attempt_count")
+                .is_none()
+        );
+    }
+
+    #[derive(Default)]
+    struct MockDiscoveryOperation {
+        done: bool,
+        error: Option<google_cloud_gax::error::rpc::Status>,
+    }
+
+    impl crate::internal::DiscoveryOperation for MockDiscoveryOperation {
+        fn done(&self) -> bool {
+            self.done
+        }
+
+        fn name(&self) -> Option<&String> {
+            None
+        }
+
+        fn error(&self) -> Option<google_cloud_gax::error::rpc::Status> {
+            self.error.clone()
+        }
+    }
+
+    #[tokio::test]
+    async fn record_discovery_polling_result_success() {
+        let guard = TestLayer::initialize();
+        let span =
+            client_request_signals!(info: &InstrumentationClientInfo::default(), method: "test");
+        let op = MockDiscoveryOperation {
+            done: true,
+            error: None,
+        };
+
+        record_discovery_polling_result!(span, op);
+
+        {
+            let captured = TestLayer::capture(&guard);
+            let got = captured
+                .iter()
+                .find(|s| s.name == "client_request")
+                .unwrap();
+
+            assert_eq!(
+                got.attributes
+                    .get("gcp.longrunning.done")
+                    .and_then(|v| v.as_bool()),
+                Some(true)
+            );
+            assert_eq!(
+                got.attributes
+                    .get("gcp.longrunning.status_code")
+                    .and_then(|v| v.as_i64()),
+                Some(0)
+            );
+            assert_eq!(
+                got.attributes
+                    .get("otel.status_code")
+                    .and_then(|v| v.as_string()),
+                Some("UNSET".to_string())
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn record_discovery_polling_result_error() {
+        let guard = TestLayer::initialize();
+        let span =
+            client_request_signals!(info: &InstrumentationClientInfo::default(), method: "test");
+        let status = google_cloud_gax::error::rpc::Status::default()
+            .set_code(google_cloud_gax::error::rpc::Code::NotFound)
+            .set_message("not found");
+        let op = MockDiscoveryOperation {
+            done: true,
+            error: Some(status),
+        };
+
+        record_discovery_polling_result!(span, op);
+
+        {
+            let captured = TestLayer::capture(&guard);
+            let got = captured
+                .iter()
+                .find(|s| s.name == "client_request")
+                .unwrap();
+
+            assert_eq!(
+                got.attributes
+                    .get("gcp.longrunning.done")
+                    .and_then(|v| v.as_bool()),
+                Some(true)
+            );
+            assert_eq!(
+                got.attributes
+                    .get("gcp.longrunning.status_code")
+                    .and_then(|v| v.as_i64()),
+                Some(google_cloud_gax::error::rpc::Code::NotFound as i64)
+            );
+            assert_eq!(
+                got.attributes
+                    .get("otel.status_code")
+                    .and_then(|v| v.as_string()),
+                Some("ERROR".to_string())
+            );
+            assert_eq!(
+                got.attributes
+                    .get("otel.status_description")
+                    .and_then(|v| v.as_string()),
+                Some("not found".to_string())
+            );
+            assert_eq!(
+                got.attributes.get("error.type").and_then(|v| v.as_string()),
+                Some("NOT_FOUND".to_string())
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn record_discovery_polling_result_in_progress() {
+        let guard = TestLayer::initialize();
+        let span =
+            client_request_signals!(info: &InstrumentationClientInfo::default(), method: "test");
+        let op = MockDiscoveryOperation {
+            done: false,
+            error: None,
+        };
+
+        record_discovery_polling_result!(span, op);
+
+        {
+            let captured = TestLayer::capture(&guard);
+            let got = captured
+                .iter()
+                .find(|s| s.name == "client_request")
+                .unwrap();
+
+            assert_eq!(
+                got.attributes
+                    .get("gcp.longrunning.done")
+                    .and_then(|v| v.as_bool()),
+                Some(false)
+            );
+            assert!(got.attributes.get("gcp.longrunning.status_code").is_none());
+        }
     }
 }

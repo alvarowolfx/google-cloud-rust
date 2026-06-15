@@ -20,20 +20,23 @@ use crate::model::result_set_stats::RowCount;
 use crate::precommit::PrecommitTokenTracker;
 use crate::read_only_transaction::{ReadContextTransactionSelector, TransactionState};
 use crate::result_set_metadata::ResultSetMetadata;
+use crate::retry_policy::SpannerRetryPolicy;
 use crate::row::Row;
 use crate::server_streaming::stream::PartialResultSetStream;
 use bytes::Bytes;
 use gaxi::prost::FromProto;
 use google_cloud_gax::backoff_policy::BackoffPolicy;
-use google_cloud_gax::error::Error as GaxError;
 use google_cloud_gax::exponential_backoff::ExponentialBackoffBuilder;
 use google_cloud_gax::options::RequestOptions as GaxRequestOptions;
-use google_cloud_gax::retry_policy::{Aip194Strict, RetryPolicyExt};
+use google_cloud_gax::retry_policy::RetryPolicyExt;
+use google_cloud_gax::retry_result::RetryResult;
 use google_cloud_gax::retry_state::RetryState;
 use std::collections::VecDeque;
 use std::mem::take;
 use std::sync::Arc;
-use tokio::time::sleep;
+use std::time::Duration;
+use tokio::runtime::Handle;
+use tokio::time::{sleep, timeout};
 
 #[cfg(feature = "unstable-stream")]
 use futures::Stream;
@@ -62,6 +65,7 @@ pub struct ResultSet {
     local_metadata: Option<ResultSetMetadata>,
     stats: Option<ResultSetStats>,
     precommit_token_tracker: PrecommitTokenTracker,
+    tokio_handle: Option<Handle>,
 
     // Fields for retries and buffering of a stream of PartialResultSets.
     client: DatabaseClient,
@@ -146,12 +150,13 @@ impl ResultSet {
             transaction_selector,
             channel_hint,
             gax_options,
+            tokio_handle: Handle::try_current().ok(),
         }
     }
 
     fn apply_defaults(mut gax_options: GaxRequestOptions) -> GaxRequestOptions {
         if gax_options.retry_policy().is_none() {
-            gax_options.set_retry_policy(Aip194Strict.with_attempt_limit(10));
+            gax_options.set_retry_policy(SpannerRetryPolicy::new().with_attempt_limit(10));
         }
         if gax_options.backoff_policy().is_none() {
             gax_options.set_backoff_policy(Self::default_backoff_policy());
@@ -295,7 +300,11 @@ impl ResultSet {
             }
 
             if self.seen_last {
-                self.stream = None;
+                if let Some(handle) = &self.tokio_handle
+                    && let Some(s) = self.stream.take()
+                {
+                    drain_stream_in_background(handle, s);
+                }
                 return None;
             }
 
@@ -453,24 +462,31 @@ impl ResultSet {
         self.local_metadata = Some(meta);
         Ok(())
     }
-
     async fn handle_stream_error(&mut self, e: crate::Error) -> crate::Result<()> {
-        if self.safe_to_retry && self.should_retry(&e) {
-            self.retry_count += 1;
-            // Clear the buffer and restart the stream using the last
-            // resume_token that we have seen.
-            self.partial_result_sets_buffer.clear();
+        let mut e = e;
+        if self.safe_to_retry {
+            match self.check_retry(e) {
+                Ok(()) => {
+                    self.retry_count += 1;
+                    // Clear the buffer and restart the stream using the last
+                    // resume_token that we have seen.
+                    self.partial_result_sets_buffer.clear();
 
-            // Apply backoff delay if policy is present
-            if let Some(policy) = self.gax_options.backoff_policy() {
-                let state =
-                    RetryState::new(self.safe_to_retry).set_attempt_count(self.retry_count as u32);
-                let delay = policy.on_failure(&state);
-                sleep(delay).await;
+                    // Apply backoff delay if policy is present
+                    if let Some(policy) = self.gax_options.backoff_policy() {
+                        let state = RetryState::new(self.safe_to_retry)
+                            .set_attempt_count(self.retry_count as u32);
+                        let delay = policy.on_failure(&state);
+                        sleep(delay).await;
+                    }
+
+                    self.restart_stream().await?;
+                    return Ok(());
+                }
+                Err(err) => {
+                    e = err;
+                }
             }
-
-            self.restart_stream().await?;
-            return Ok(());
         }
 
         // Check if this stream included an inlined BeginTransaction option
@@ -655,18 +671,47 @@ impl ResultSet {
         Ok(())
     }
 
-    fn should_retry(&self, e: &crate::Error) -> bool {
+    fn check_retry(&self, e: crate::Error) -> Result<(), crate::Error> {
         if let Some(policy) = self.gax_options.retry_policy() {
             let state =
                 RetryState::new(self.safe_to_retry).set_attempt_count(self.retry_count as u32);
 
-            if let Some(status) = e.status() {
-                let gax_error = GaxError::service(status.clone());
-                return policy.on_error(&state, gax_error).is_continue();
+            match policy.on_error(&state, e) {
+                RetryResult::Continue(_) => return Ok(()),
+                RetryResult::Permanent(err) | RetryResult::Exhausted(err) => return Err(err),
             }
         }
-        false
+        Err(e)
     }
+}
+
+impl Drop for ResultSet {
+    fn drop(&mut self) {
+        // If the query stream has finished sending all chunks (seen_last is true), but
+        // the client hasn't read the trailers/EOF yet, dropping the stream receiver
+        // would cause tonic to send an HTTP/2 RST_STREAM.
+        // If an application often executes a query that it knows only returns one or a
+        // few rows, and the application stops reading after that many rows, then these
+        // stream resets could trigger GFE/frontend security protection (too_many_internal_resets).
+        // To prevent this, we drain the remaining trailers asynchronously in a background task.
+        // Note: We only do this if seen_last is true, to prevent a background task from potentially
+        // iterating through a large number of partial results.
+        if self.seen_last
+            && let Some(handle) = &self.tokio_handle
+            && let Some(s) = self.stream.take()
+        {
+            drain_stream_in_background(handle, s);
+        }
+    }
+}
+
+fn drain_stream_in_background(handle: &Handle, mut stream: PartialResultSetStream) {
+    handle.spawn(async move {
+        let _ = timeout(Duration::from_secs(5), async move {
+            while let Some(Ok(_)) = stream.next_message().await {}
+        })
+        .await;
+    });
 }
 
 /// Merges two values from successive `PartialResultSet`s into a single value.
@@ -736,7 +781,7 @@ pub(crate) mod tests {
     use crate::read::ReadRequest;
     use crate::statement::Statement;
     use crate::transaction::BeginTransactionOption;
-    use gaxi::grpc::tonic::{Code as GrpcCode, Response, Status};
+    use gaxi::grpc::tonic::{Code as GrpcCode, MetadataMap, Response, Status};
     use google_cloud_auth::credentials::anonymous::Builder as Anonymous;
     use google_cloud_gax::backoff_policy::BackoffPolicy;
     use google_cloud_gax::retry_policy::{Aip194Strict, RetryPolicyExt};
@@ -1201,6 +1246,101 @@ pub(crate) mod tests {
     }
 
     #[tokio_test_no_panics]
+    async fn test_result_set_transport_error_retry() -> anyhow::Result<()> {
+        let mut mock = MockSpanner::new();
+        let mut seq = mockall::Sequence::new();
+
+        // Fail with transport error in the middle of stream on first call
+        mock.expect_streaming_read()
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_request| {
+                let mut status = Status::unavailable("connection reset");
+                let mut headers = std::mem::take(status.metadata_mut()).into_headers();
+                headers.insert("content-type", http::HeaderValue::from_static("text/html"));
+                *status.metadata_mut() = MetadataMap::from_headers(headers);
+                let stream = adapt([
+                    Ok(PartialResultSet {
+                        metadata: metadata(2),
+                        values: vec![string_val("row1"), string_val("b")],
+                        resume_token: b"token1".to_vec(),
+                        ..Default::default()
+                    }),
+                    Err(status),
+                ]);
+                Ok(Response::from(stream))
+            });
+
+        // Succeed on second call
+        mock.expect_streaming_read()
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_request| {
+                let stream = adapt([Ok(PartialResultSet {
+                    values: vec![string_val("row2"), string_val("d")],
+                    resume_token: b"token2".to_vec(),
+                    last: true,
+                    ..Default::default()
+                })]);
+                Ok(Response::from(stream))
+            });
+
+        mock.expect_create_session().returning(|_| {
+            Ok(Response::new(Session {
+                name: "session".to_string(),
+                multiplexed: true,
+                ..Default::default()
+            }))
+        });
+
+        let (address, _server) = start("127.0.0.1:0", mock).await?;
+
+        let client: Spanner = Spanner::builder()
+            .with_endpoint(address)
+            .with_credentials(Anonymous::new().build())
+            .build()
+            .await?;
+
+        let db_client = client.database_client("db").build().await?;
+        let tx = db_client.single_use().build();
+
+        let mut mock_backoff = MockBackoffPolicy::new();
+        mock_backoff
+            .expect_on_failure()
+            .times(1)
+            .returning(|_| Duration::from_nanos(1));
+
+        let read_req = ReadRequest::builder("table", vec!["Id", "Value"])
+            .with_keys(KeySet::all())
+            .with_backoff_policy(mock_backoff)
+            .build();
+
+        let mut rs: ResultSet = tx.execute_read(read_req).await?;
+
+        let row1 = rs.next().await.expect("Stream ended unexpectedly")?;
+        assert_eq!(
+            row1.raw_values()[0].0,
+            string_val("row1"),
+            "Expected row1 to be read successfully before transport error"
+        );
+
+        // This next() call should trigger the retry because the previous stream ended with a transport error.
+        let row2 = rs.next().await.expect("Stream ended unexpectedly")?;
+        assert_eq!(
+            row2.raw_values()[0].0,
+            string_val("row2"),
+            "Expected stream to resume and return row2 after transport error retry"
+        );
+
+        assert!(
+            rs.next().await.is_none(),
+            "Expected stream to end successfully"
+        );
+
+        Ok(())
+    }
+
+    #[tokio_test_no_panics]
     async fn test_result_set_one_row() {
         let mut rs = run_mock_query(vec![PartialResultSet {
             metadata: metadata(2),
@@ -1251,7 +1391,7 @@ pub(crate) mod tests {
     }
 
     #[tokio_test_no_panics]
-    async fn result_set_early_termination_not_cancelled() -> anyhow::Result<()> {
+    async fn result_set_last_flag_drained_in_background() -> anyhow::Result<()> {
         let mut mock = MockSpanner::new();
         let (tx, rx) = tokio::sync::mpsc::channel(10);
 
@@ -1293,21 +1433,144 @@ pub(crate) mod tests {
         let row = rs.next().await.expect("Expected a row")?;
         assert_eq!(row.raw_values()[0].0, string_val("a"));
 
-        // 3. Call next again. It should see seen_last and return None early,
-        // and drain/cancel the stream cleanly without detached tasks.
+        // 3. Call next again. It should see seen_last and return None early.
         assert!(rs.next().await.is_none());
         drop(rs);
-        tx.closed().await;
 
-        // 4. Now try to send another message. The stream is cancelled (dropped), so this fails.
-        let send_result = tx
-            .send(Ok(PartialResultSet {
-                values: vec![string_val("c"), string_val("d")],
+        // 4. Since the stream is being drained in a background task, the connection
+        // receiver should still be alive, and therefore tx should NOT be closed yet.
+        assert!(
+            !tx.is_closed(),
+            "Expected stream to remain open in background task for draining"
+        );
+
+        // 5. Drop the sender to close the stream.
+        drop(tx);
+
+        Ok(())
+    }
+
+    #[tokio_test_no_panics]
+    async fn result_set_last_flag_drained_in_background_on_drop() -> anyhow::Result<()> {
+        let mut mock = MockSpanner::new();
+        let (tx, rx) = tokio::sync::mpsc::channel(10);
+
+        mock.expect_execute_streaming_sql()
+            .return_once(move |_request| Ok(Response::from(rx)));
+
+        mock.expect_create_session().returning(|_| {
+            Ok(Response::new(Session {
+                name: "session".to_string(),
+                multiplexed: true,
                 ..Default::default()
             }))
-            .await;
+        });
 
-        assert!(send_result.is_err(), "Expected stream to be cancelled");
+        let (address, _server) = start("127.0.0.1:0", mock).await?;
+
+        let client: Spanner = Spanner::builder()
+            .with_endpoint(address)
+            .with_credentials(Anonymous::new().build())
+            .build()
+            .await?;
+
+        let db_client = client.database_client("db").build().await?;
+        let tx_single = db_client.single_use().build();
+
+        // 1. Send the first message with last: true
+        tx.send(Ok(PartialResultSet {
+            metadata: metadata(2),
+            values: vec![string_val("a"), string_val("b")],
+            last: true,
+            ..Default::default()
+        }))
+        .await
+        .expect("Failed to send first message");
+
+        let mut result_set: ResultSet = tx_single.execute_query("SELECT 1").await?;
+
+        // 2. Consume the first message
+        let row = result_set.next().await.expect("Expected a row")?;
+        assert_eq!(row.raw_values()[0].0, string_val("a"));
+
+        // 3. Drop result_set early (without calling next() to get None).
+        // Since we got a message with last: true, seen_last is true.
+        // It should spawn a background task on drop.
+        drop(result_set);
+
+        // 4. Since the stream is being drained in a background task, the connection
+        // receiver should still be alive, and therefore tx should NOT be closed yet.
+        assert!(
+            !tx.is_closed(),
+            "Expected stream to remain open in background task for draining"
+        );
+
+        // 5. Drop the sender to close the stream.
+        drop(tx);
+
+        Ok(())
+    }
+
+    #[tokio_test_no_panics]
+    async fn result_set_last_flag_drained_in_background_on_drop_outside_runtime()
+    -> anyhow::Result<()> {
+        let mut mock = MockSpanner::new();
+        let (tx, rx) = tokio::sync::mpsc::channel(10);
+
+        mock.expect_execute_streaming_sql()
+            .return_once(move |_request| Ok(Response::from(rx)));
+
+        mock.expect_create_session().returning(|_| {
+            Ok(Response::new(Session {
+                name: "session".to_string(),
+                multiplexed: true,
+                ..Default::default()
+            }))
+        });
+
+        let (address, _server) = start("127.0.0.1:0", mock).await?;
+
+        let client: Spanner = Spanner::builder()
+            .with_endpoint(address)
+            .with_credentials(Anonymous::new().build())
+            .build()
+            .await?;
+
+        let db_client = client.database_client("db").build().await?;
+        let tx_single = db_client.single_use().build();
+
+        // 1. Send the first message with last: true
+        tx.send(Ok(PartialResultSet {
+            metadata: metadata(2),
+            values: vec![string_val("a"), string_val("b")],
+            last: true,
+            ..Default::default()
+        }))
+        .await
+        .expect("Failed to send first message");
+
+        let mut result_set: ResultSet = tx_single.execute_query("SELECT 1").await?;
+
+        // 2. Consume the first message
+        let row = result_set.next().await.expect("Expected a row")?;
+        assert_eq!(row.raw_values()[0].0, string_val("a"));
+
+        // 3. Move the ResultSet to a separate non-Tokio OS thread and drop it there.
+        std::thread::spawn(move || {
+            drop(result_set);
+        })
+        .join()
+        .expect("Thread panicked");
+
+        // 4. Since the stream is being drained in a background task on the captured runtime,
+        // the connection receiver should still be alive, and therefore tx should NOT be closed yet.
+        assert!(
+            !tx.is_closed(),
+            "Expected stream to remain open in background task for draining when dropped outside runtime"
+        );
+
+        // 5. Drop the sender to close the stream.
+        drop(tx);
 
         Ok(())
     }

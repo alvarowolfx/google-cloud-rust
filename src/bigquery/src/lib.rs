@@ -30,10 +30,6 @@ pub use google_cloud_gax::error::Error;
 pub use crate::error::{ConvertError, QueryError, RowError};
 pub use crate::query::{FromSql, Interval, Range, deserialize};
 
-pub(crate) use google_cloud_gax::client_builder::Result as ClientBuilderResult;
-
-mod client_builder;
-
 /// Re-export as `builders` as well for alias compatibility.
 pub use builder as builders;
 
@@ -41,18 +37,22 @@ pub mod error;
 
 /// High-level BigQuery client and execution entrypoints.
 pub mod client;
+mod client_builder;
 pub(crate) mod query;
 
+pub(crate) use google_cloud_gax::client_builder::Result as ClientBuilderResult;
+
 pub mod model {
-    //! Re-exports for the Google Cloud BigQuery API.
+    //! Re-exports for the Google Cloud BigQuery v2 API types.
     pub use crate::query::{RunQuery, RunQueryRequest};
     pub use google_cloud_bigquery_v2::model::*;
 }
 
 pub mod builder {
-    //! Request builders.
+    //! Builders for the BigQuery client.
     pub mod bigquery {
-        //! Request builders for [BigQuery][crate::client::BigQuery].
+        //! Builder for [BigQuery][crate::client::BigQuery].
         pub use crate::client_builder::ClientBuilder;
+        pub use crate::query::{RunQuery, RunQueryRequest};
     }
 }

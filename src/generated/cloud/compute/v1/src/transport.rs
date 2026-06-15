@@ -10183,6 +10183,7 @@ impl super::stub::ForwardingRules for ForwardingRules {
                 var_forwarding_rule,
             );
             let builder = self.inner.builder(Method::GET, path);
+            let builder = req.view.iter().fold(builder, |builder, p| builder.query(&[("view", p)]));
             let builder = Ok(builder);
             Some(builder.map(|b| (b, Method::GET, path_template, resource_name)))
         })
@@ -12233,6 +12234,10 @@ impl super::stub::GlobalForwardingRules for GlobalForwardingRules {
                     var_project, var_forwarding_rule,
                 );
                 let builder = self.inner.builder(Method::GET, path);
+                let builder = req
+                    .view
+                    .iter()
+                    .fold(builder, |builder, p| builder.query(&[("view", p)]));
                 let builder = Ok(builder);
                 Some(builder.map(|b| (b, Method::GET, path_template, resource_name)))
             })
@@ -74241,6 +74246,88 @@ impl Rollouts {
 
 #[cfg(feature = "rollouts")]
 impl super::stub::Rollouts for Rollouts {
+    async fn advance(
+        &self,
+        req: crate::model::rollouts::AdvanceRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::Operation>> {
+        use gaxi::http::reqwest::{HeaderValue, Method};
+        use gaxi::path_parameter::PathMismatchBuilder;
+        use gaxi::path_parameter::try_match;
+        use gaxi::routing_parameter::Segment;
+        use google_cloud_gax::error::binding::BindingError;
+        let (builder, method, _path_template, _resource_name) = None
+            .or_else(|| {
+                let var_project = try_match(
+                    Some(&req).map(|m| &m.project).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                )?;
+                let var_rollout = try_match(
+                    Some(&req).map(|m| &m.rollout).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                )?;
+                let path = format!(
+                    "/compute/v1/projects/{}/global/rollouts/{}/advance",
+                    var_project, var_rollout,
+                );
+                let path_template =
+                    "/compute/v1/projects/{project}/global/rollouts/{rollout}/advance";
+
+                let resource_name = format!(
+                    "//compute.googleapis.com/projects/{}/global/rollouts/{}",
+                    var_project, var_rollout,
+                );
+                let builder = self.inner.builder(Method::POST, path);
+                let builder = req.current_wave_number.iter().fold(builder, |builder, p| {
+                    builder.query(&[("currentWaveNumber", p)])
+                });
+                let builder = req
+                    .request_id
+                    .iter()
+                    .fold(builder, |builder, p| builder.query(&[("requestId", p)]));
+                let builder = Ok(builder);
+                Some(builder.map(|b| (b, Method::POST, path_template, resource_name)))
+            })
+            .ok_or_else(|| {
+                let mut paths = Vec::new();
+                {
+                    let builder = PathMismatchBuilder::default();
+                    let builder = builder.maybe_add(
+                        Some(&req).map(|m| &m.project).map(|s| s.as_str()),
+                        &[Segment::SingleWildcard],
+                        "project",
+                        "*",
+                    );
+                    let builder = builder.maybe_add(
+                        Some(&req).map(|m| &m.rollout).map(|s| s.as_str()),
+                        &[Segment::SingleWildcard],
+                        "rollout",
+                        "*",
+                    );
+                    paths.push(builder.build());
+                }
+                google_cloud_gax::error::Error::binding(BindingError { paths })
+            })??;
+        if let Some(recorder) = gaxi::observability::RequestRecorder::current() {
+            recorder.on_client_request(
+                gaxi::observability::ClientRequestAttributes::default()
+                    .set_rpc_method("google.cloud.compute.v1.rollouts/advance")
+                    .set_url_template(_path_template)
+                    .set_resource_name(_resource_name),
+            );
+        }
+        let options = google_cloud_gax::options::internal::set_default_idempotency(
+            options,
+            gaxi::http::default_idempotency(&method),
+        );
+        let builder = builder.query(&[("$alt", "json")]).header(
+            "x-goog-api-client",
+            HeaderValue::from_static(&crate::info::X_GOOG_API_CLIENT_HEADER),
+        );
+        let body = gaxi::http::handle_empty(None::<gaxi::http::NoBody>, &method);
+        self.inner.execute(builder, body, options).await
+    }
+
     async fn cancel(
         &self,
         req: crate::model::rollouts::CancelRequest,
@@ -74539,6 +74626,172 @@ impl super::stub::Rollouts for Rollouts {
             recorder.on_client_request(
                 gaxi::observability::ClientRequestAttributes::default()
                     .set_rpc_method("google.cloud.compute.v1.rollouts/list")
+                    .set_url_template(_path_template)
+                    .set_resource_name(_resource_name),
+            );
+        }
+        let options = google_cloud_gax::options::internal::set_default_idempotency(
+            options,
+            gaxi::http::default_idempotency(&method),
+        );
+        let builder = builder.query(&[("$alt", "json")]).header(
+            "x-goog-api-client",
+            HeaderValue::from_static(&crate::info::X_GOOG_API_CLIENT_HEADER),
+        );
+        let body = gaxi::http::handle_empty(None::<gaxi::http::NoBody>, &method);
+        self.inner.execute(builder, body, options).await
+    }
+
+    async fn pause(
+        &self,
+        req: crate::model::rollouts::PauseRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::Operation>> {
+        use gaxi::http::reqwest::{HeaderValue, Method};
+        use gaxi::path_parameter::PathMismatchBuilder;
+        use gaxi::path_parameter::try_match;
+        use gaxi::routing_parameter::Segment;
+        use google_cloud_gax::error::binding::BindingError;
+        let (builder, method, _path_template, _resource_name) = None
+            .or_else(|| {
+                let var_project = try_match(
+                    Some(&req).map(|m| &m.project).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                )?;
+                let var_rollout = try_match(
+                    Some(&req).map(|m| &m.rollout).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                )?;
+                let path = format!(
+                    "/compute/v1/projects/{}/global/rollouts/{}/pause",
+                    var_project, var_rollout,
+                );
+                let path_template =
+                    "/compute/v1/projects/{project}/global/rollouts/{rollout}/pause";
+
+                let resource_name = format!(
+                    "//compute.googleapis.com/projects/{}/global/rollouts/{}",
+                    var_project, var_rollout,
+                );
+                let builder = self.inner.builder(Method::POST, path);
+                let builder = req
+                    .etag
+                    .iter()
+                    .fold(builder, |builder, p| builder.query(&[("etag", p)]));
+                let builder = req
+                    .request_id
+                    .iter()
+                    .fold(builder, |builder, p| builder.query(&[("requestId", p)]));
+                let builder = Ok(builder);
+                Some(builder.map(|b| (b, Method::POST, path_template, resource_name)))
+            })
+            .ok_or_else(|| {
+                let mut paths = Vec::new();
+                {
+                    let builder = PathMismatchBuilder::default();
+                    let builder = builder.maybe_add(
+                        Some(&req).map(|m| &m.project).map(|s| s.as_str()),
+                        &[Segment::SingleWildcard],
+                        "project",
+                        "*",
+                    );
+                    let builder = builder.maybe_add(
+                        Some(&req).map(|m| &m.rollout).map(|s| s.as_str()),
+                        &[Segment::SingleWildcard],
+                        "rollout",
+                        "*",
+                    );
+                    paths.push(builder.build());
+                }
+                google_cloud_gax::error::Error::binding(BindingError { paths })
+            })??;
+        if let Some(recorder) = gaxi::observability::RequestRecorder::current() {
+            recorder.on_client_request(
+                gaxi::observability::ClientRequestAttributes::default()
+                    .set_rpc_method("google.cloud.compute.v1.rollouts/pause")
+                    .set_url_template(_path_template)
+                    .set_resource_name(_resource_name),
+            );
+        }
+        let options = google_cloud_gax::options::internal::set_default_idempotency(
+            options,
+            gaxi::http::default_idempotency(&method),
+        );
+        let builder = builder.query(&[("$alt", "json")]).header(
+            "x-goog-api-client",
+            HeaderValue::from_static(&crate::info::X_GOOG_API_CLIENT_HEADER),
+        );
+        let body = gaxi::http::handle_empty(None::<gaxi::http::NoBody>, &method);
+        self.inner.execute(builder, body, options).await
+    }
+
+    async fn resume(
+        &self,
+        req: crate::model::rollouts::ResumeRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::Operation>> {
+        use gaxi::http::reqwest::{HeaderValue, Method};
+        use gaxi::path_parameter::PathMismatchBuilder;
+        use gaxi::path_parameter::try_match;
+        use gaxi::routing_parameter::Segment;
+        use google_cloud_gax::error::binding::BindingError;
+        let (builder, method, _path_template, _resource_name) = None
+            .or_else(|| {
+                let var_project = try_match(
+                    Some(&req).map(|m| &m.project).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                )?;
+                let var_rollout = try_match(
+                    Some(&req).map(|m| &m.rollout).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                )?;
+                let path = format!(
+                    "/compute/v1/projects/{}/global/rollouts/{}/resume",
+                    var_project, var_rollout,
+                );
+                let path_template =
+                    "/compute/v1/projects/{project}/global/rollouts/{rollout}/resume";
+
+                let resource_name = format!(
+                    "//compute.googleapis.com/projects/{}/global/rollouts/{}",
+                    var_project, var_rollout,
+                );
+                let builder = self.inner.builder(Method::POST, path);
+                let builder = req
+                    .etag
+                    .iter()
+                    .fold(builder, |builder, p| builder.query(&[("etag", p)]));
+                let builder = req
+                    .request_id
+                    .iter()
+                    .fold(builder, |builder, p| builder.query(&[("requestId", p)]));
+                let builder = Ok(builder);
+                Some(builder.map(|b| (b, Method::POST, path_template, resource_name)))
+            })
+            .ok_or_else(|| {
+                let mut paths = Vec::new();
+                {
+                    let builder = PathMismatchBuilder::default();
+                    let builder = builder.maybe_add(
+                        Some(&req).map(|m| &m.project).map(|s| s.as_str()),
+                        &[Segment::SingleWildcard],
+                        "project",
+                        "*",
+                    );
+                    let builder = builder.maybe_add(
+                        Some(&req).map(|m| &m.rollout).map(|s| s.as_str()),
+                        &[Segment::SingleWildcard],
+                        "rollout",
+                        "*",
+                    );
+                    paths.push(builder.build());
+                }
+                google_cloud_gax::error::Error::binding(BindingError { paths })
+            })??;
+        if let Some(recorder) = gaxi::observability::RequestRecorder::current() {
+            recorder.on_client_request(
+                gaxi::observability::ClientRequestAttributes::default()
+                    .set_rpc_method("google.cloud.compute.v1.rollouts/resume")
                     .set_url_template(_path_template)
                     .set_resource_name(_resource_name),
             );

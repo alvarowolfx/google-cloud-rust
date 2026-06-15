@@ -19,7 +19,7 @@ name        = "google-cloud-lro"
 #     version of all downstream dependencies. For details see:
 #         https://github.com/googleapis/google-cloud-rust/issues/3237
 #         https://github.com/googleapis/google-cloud-rust/issues/3265
-version = "1.7.0"
+version = "1.8.0"
 # Inherit other attributes from the workspace.
 authors.workspace      = true
 categories.workspace   = true
@@ -56,6 +56,7 @@ tracing = { workspace = true }
 [target.'cfg(google_cloud_unstable_tracing)'.dev-dependencies]
 tracing-subscriber      = { workspace = true, features = ["registry"] }
 google-cloud-test-utils = { workspace = true }
+gaxi                    = { workspace = true, features = ["_internal-common"] }
 
 [features]
 unstable-stream = ["dep:futures", "dep:pin-project"]

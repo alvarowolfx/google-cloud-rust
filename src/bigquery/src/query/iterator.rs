@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::QueryError;
-use crate::query::{CompleteQuery, Result, Row, Schema};
+use crate::error::{QueryError, RowError};
+use crate::query::{CompleteQuery, Row, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{GetQueryResultsRequest, JobReference};
 use std::collections::VecDeque;
 use std::sync::Arc;
 
+pub type Result<T> = std::result::Result<T, RowError>;
 /// An iterator over rows returned by a query.
 pub struct RowIterator {
     job_service: Arc<JobService>,
@@ -63,8 +64,7 @@ impl RowIterator {
     /// Fetches the next row from the result set.
     pub async fn next(&mut self) -> Option<Result<Row>> {
         if let Some(raw_row) = self.rows.pop_front() {
-            let row =
-                crate::query::row::convert_row(raw_row, &self.schema).map_err(QueryError::from);
+            let row = crate::query::row::convert_row(raw_row, &self.schema);
             return Some(row);
         }
 
@@ -83,9 +83,9 @@ impl RowIterator {
                     }
 
                     // Convert and return the first fetched row
-                    self.rows.pop_front().map(|r| {
-                        crate::query::row::convert_row(r, &self.schema).map_err(QueryError::from)
-                    })
+                    self.rows
+                        .pop_front()
+                        .map(|r| crate::query::row::convert_row(r, &self.schema))
                 }
                 Err(e) => {
                     self.is_done = true;
@@ -100,7 +100,7 @@ impl RowIterator {
 
     async fn fetch_page(&self, token: String) -> Result<(Vec<wkt::Struct>, Option<String>)> {
         let Some(job_ref) = &self.job_ref else {
-            return Err(QueryError::StatelessQuery);
+            unreachable!("This stateless queries should not return a page token")
         };
 
         let mut req = GetQueryResultsRequest::new()
@@ -121,15 +121,14 @@ impl RowIterator {
             .get_query_results()
             .with_request(req)
             .send()
-            .await?;
+            .await
+            .map_err(|e| RowError::Rpc { source: e })?;
 
-        if let Some(first_err) = res.errors.first() {
-            return Err(QueryError::JobFailed {
-                reason: first_err.reason.clone(),
-                message: first_err.message.clone(),
-                errors: res.errors,
-            });
-        }
+        // TODO: Should we check this array?
+        // At this point the job is done and we are just reading it.
+        // if !res.errors.is_empty() {
+        //   return Err(RowError::Rpc { source: e });
+        // }
 
         let page_token = if res.page_token.is_empty() {
             None

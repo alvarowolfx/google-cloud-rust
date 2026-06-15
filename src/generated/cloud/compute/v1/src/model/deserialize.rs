@@ -13932,6 +13932,8 @@ impl<'de> serde::de::Deserialize<'de> for super::BackendServiceLogConfig {
         #[derive(PartialEq, Eq, Hash)]
         enum __FieldTag {
             __enable,
+            __logging_http_request_headers,
+            __logging_http_response_headers,
             __optional_fields,
             __optional_mode,
             __sample_rate,
@@ -13956,6 +13958,12 @@ impl<'de> serde::de::Deserialize<'de> for super::BackendServiceLogConfig {
                         use std::string::ToString;
                         match value {
                             "enable" => Ok(__FieldTag::__enable),
+                            "loggingHttpRequestHeaders" => {
+                                Ok(__FieldTag::__logging_http_request_headers)
+                            }
+                            "loggingHttpResponseHeaders" => {
+                                Ok(__FieldTag::__logging_http_response_headers)
+                            }
                             "optionalFields" => Ok(__FieldTag::__optional_fields),
                             "optionalMode" => Ok(__FieldTag::__optional_mode),
                             "sampleRate" => Ok(__FieldTag::__sample_rate),
@@ -13991,6 +13999,34 @@ impl<'de> serde::de::Deserialize<'de> for super::BackendServiceLogConfig {
                                 ));
                             }
                             result.enable = map.next_value::<std::option::Option<bool>>()?;
+                        }
+                        __FieldTag::__logging_http_request_headers => {
+                            if !fields.insert(__FieldTag::__logging_http_request_headers) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for logging_http_request_headers",
+                                ));
+                            }
+                            result.logging_http_request_headers = map
+                                .next_value::<std::option::Option<
+                                    std::vec::Vec<
+                                        crate::model::BackendServiceLogConfigLoggingHttpHeader,
+                                    >,
+                                >>()?
+                                .unwrap_or_default();
+                        }
+                        __FieldTag::__logging_http_response_headers => {
+                            if !fields.insert(__FieldTag::__logging_http_response_headers) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for logging_http_response_headers",
+                                ));
+                            }
+                            result.logging_http_response_headers = map
+                                .next_value::<std::option::Option<
+                                    std::vec::Vec<
+                                        crate::model::BackendServiceLogConfigLoggingHttpHeader,
+                                    >,
+                                >>()?
+                                .unwrap_or_default();
                         }
                         __FieldTag::__optional_fields => {
                             if !fields.insert(__FieldTag::__optional_fields) {
@@ -14028,6 +14064,87 @@ impl<'de> serde::de::Deserialize<'de> for super::BackendServiceLogConfig {
                                 }
                             }
                             result.sample_rate = map.next_value::<__With>()?.0;
+                        }
+                        __FieldTag::Unknown(key) => {
+                            let value = map.next_value::<serde_json::Value>()?;
+                            result._unknown_fields.insert(key, value);
+                        }
+                    }
+                }
+                std::result::Result::Ok(result)
+            }
+        }
+        deserializer.deserialize_any(Visitor)
+    }
+}
+
+#[cfg(any(feature = "backend-services", feature = "region-backend-services",))]
+#[doc(hidden)]
+impl<'de> serde::de::Deserialize<'de> for super::BackendServiceLogConfigLoggingHttpHeader {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[allow(non_camel_case_types)]
+        #[doc(hidden)]
+        #[derive(PartialEq, Eq, Hash)]
+        enum __FieldTag {
+            __header_name,
+            Unknown(std::string::String),
+        }
+        impl<'de> serde::de::Deserialize<'de> for __FieldTag {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct Visitor;
+                impl<'de> serde::de::Visitor<'de> for Visitor {
+                    type Value = __FieldTag;
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                        formatter
+                            .write_str("a field name for BackendServiceLogConfigLoggingHttpHeader")
+                    }
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<Self::Value, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        use std::result::Result::Ok;
+                        use std::string::ToString;
+                        match value {
+                            "headerName" => Ok(__FieldTag::__header_name),
+                            _ => Ok(__FieldTag::Unknown(value.to_string())),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(Visitor)
+            }
+        }
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = super::BackendServiceLogConfigLoggingHttpHeader;
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct BackendServiceLogConfigLoggingHttpHeader")
+            }
+            fn visit_map<A>(self, mut map: A) -> std::result::Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                #[allow(unused_imports)]
+                use serde::de::Error;
+                use std::option::Option::Some;
+                let mut fields = std::collections::HashSet::new();
+                let mut result = Self::Value::new();
+                while let Some(tag) = map.next_key::<__FieldTag>()? {
+                    #[allow(clippy::match_single_binding)]
+                    match tag {
+                        __FieldTag::__header_name => {
+                            if !fields.insert(__FieldTag::__header_name) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for header_name",
+                                ));
+                            }
+                            result.header_name =
+                                map.next_value::<std::option::Option<std::string::String>>()?;
                         }
                         __FieldTag::Unknown(key) => {
                             let value = map.next_value::<serde_json::Value>()?;
@@ -22786,6 +22903,244 @@ impl<'de> serde::de::Deserialize<'de> for super::Date {
                                 }
                             }
                             result.month = map.next_value::<__With>()?.0;
+                        }
+                        __FieldTag::__year => {
+                            if !fields.insert(__FieldTag::__year) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for year",
+                                ));
+                            }
+                            struct __With(std::option::Option<i32>);
+                            impl<'de> serde::de::Deserialize<'de> for __With {
+                                fn deserialize<D>(
+                                    deserializer: D,
+                                ) -> std::result::Result<Self, D::Error>
+                                where
+                                    D: serde::de::Deserializer<'de>,
+                                {
+                                    serde_with::As::< std::option::Option<wkt::internal::I32> >::deserialize(deserializer).map(__With)
+                                }
+                            }
+                            result.year = map.next_value::<__With>()?.0;
+                        }
+                        __FieldTag::Unknown(key) => {
+                            let value = map.next_value::<serde_json::Value>()?;
+                            result._unknown_fields.insert(key, value);
+                        }
+                    }
+                }
+                std::result::Result::Ok(result)
+            }
+        }
+        deserializer.deserialize_any(Visitor)
+    }
+}
+
+#[cfg(any(feature = "region-zones", feature = "zones",))]
+#[doc(hidden)]
+impl<'de> serde::de::Deserialize<'de> for super::DateTime {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[allow(non_camel_case_types)]
+        #[doc(hidden)]
+        #[derive(PartialEq, Eq, Hash)]
+        enum __FieldTag {
+            __day,
+            __hours,
+            __minutes,
+            __month,
+            __nanos,
+            __seconds,
+            __time_zone,
+            __utc_offset,
+            __year,
+            Unknown(std::string::String),
+        }
+        impl<'de> serde::de::Deserialize<'de> for __FieldTag {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct Visitor;
+                impl<'de> serde::de::Visitor<'de> for Visitor {
+                    type Value = __FieldTag;
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                        formatter.write_str("a field name for DateTime")
+                    }
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<Self::Value, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        use std::result::Result::Ok;
+                        use std::string::ToString;
+                        match value {
+                            "day" => Ok(__FieldTag::__day),
+                            "hours" => Ok(__FieldTag::__hours),
+                            "minutes" => Ok(__FieldTag::__minutes),
+                            "month" => Ok(__FieldTag::__month),
+                            "nanos" => Ok(__FieldTag::__nanos),
+                            "seconds" => Ok(__FieldTag::__seconds),
+                            "timeZone" => Ok(__FieldTag::__time_zone),
+                            "utcOffset" => Ok(__FieldTag::__utc_offset),
+                            "year" => Ok(__FieldTag::__year),
+                            _ => Ok(__FieldTag::Unknown(value.to_string())),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(Visitor)
+            }
+        }
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = super::DateTime;
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct DateTime")
+            }
+            fn visit_map<A>(self, mut map: A) -> std::result::Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                #[allow(unused_imports)]
+                use serde::de::Error;
+                use std::option::Option::Some;
+                let mut fields = std::collections::HashSet::new();
+                let mut result = Self::Value::new();
+                while let Some(tag) = map.next_key::<__FieldTag>()? {
+                    #[allow(clippy::match_single_binding)]
+                    match tag {
+                        __FieldTag::__day => {
+                            if !fields.insert(__FieldTag::__day) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for day",
+                                ));
+                            }
+                            struct __With(std::option::Option<i32>);
+                            impl<'de> serde::de::Deserialize<'de> for __With {
+                                fn deserialize<D>(
+                                    deserializer: D,
+                                ) -> std::result::Result<Self, D::Error>
+                                where
+                                    D: serde::de::Deserializer<'de>,
+                                {
+                                    serde_with::As::< std::option::Option<wkt::internal::I32> >::deserialize(deserializer).map(__With)
+                                }
+                            }
+                            result.day = map.next_value::<__With>()?.0;
+                        }
+                        __FieldTag::__hours => {
+                            if !fields.insert(__FieldTag::__hours) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for hours",
+                                ));
+                            }
+                            struct __With(std::option::Option<i32>);
+                            impl<'de> serde::de::Deserialize<'de> for __With {
+                                fn deserialize<D>(
+                                    deserializer: D,
+                                ) -> std::result::Result<Self, D::Error>
+                                where
+                                    D: serde::de::Deserializer<'de>,
+                                {
+                                    serde_with::As::< std::option::Option<wkt::internal::I32> >::deserialize(deserializer).map(__With)
+                                }
+                            }
+                            result.hours = map.next_value::<__With>()?.0;
+                        }
+                        __FieldTag::__minutes => {
+                            if !fields.insert(__FieldTag::__minutes) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for minutes",
+                                ));
+                            }
+                            struct __With(std::option::Option<i32>);
+                            impl<'de> serde::de::Deserialize<'de> for __With {
+                                fn deserialize<D>(
+                                    deserializer: D,
+                                ) -> std::result::Result<Self, D::Error>
+                                where
+                                    D: serde::de::Deserializer<'de>,
+                                {
+                                    serde_with::As::< std::option::Option<wkt::internal::I32> >::deserialize(deserializer).map(__With)
+                                }
+                            }
+                            result.minutes = map.next_value::<__With>()?.0;
+                        }
+                        __FieldTag::__month => {
+                            if !fields.insert(__FieldTag::__month) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for month",
+                                ));
+                            }
+                            struct __With(std::option::Option<i32>);
+                            impl<'de> serde::de::Deserialize<'de> for __With {
+                                fn deserialize<D>(
+                                    deserializer: D,
+                                ) -> std::result::Result<Self, D::Error>
+                                where
+                                    D: serde::de::Deserializer<'de>,
+                                {
+                                    serde_with::As::< std::option::Option<wkt::internal::I32> >::deserialize(deserializer).map(__With)
+                                }
+                            }
+                            result.month = map.next_value::<__With>()?.0;
+                        }
+                        __FieldTag::__nanos => {
+                            if !fields.insert(__FieldTag::__nanos) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for nanos",
+                                ));
+                            }
+                            struct __With(std::option::Option<i32>);
+                            impl<'de> serde::de::Deserialize<'de> for __With {
+                                fn deserialize<D>(
+                                    deserializer: D,
+                                ) -> std::result::Result<Self, D::Error>
+                                where
+                                    D: serde::de::Deserializer<'de>,
+                                {
+                                    serde_with::As::< std::option::Option<wkt::internal::I32> >::deserialize(deserializer).map(__With)
+                                }
+                            }
+                            result.nanos = map.next_value::<__With>()?.0;
+                        }
+                        __FieldTag::__seconds => {
+                            if !fields.insert(__FieldTag::__seconds) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for seconds",
+                                ));
+                            }
+                            struct __With(std::option::Option<i32>);
+                            impl<'de> serde::de::Deserialize<'de> for __With {
+                                fn deserialize<D>(
+                                    deserializer: D,
+                                ) -> std::result::Result<Self, D::Error>
+                                where
+                                    D: serde::de::Deserializer<'de>,
+                                {
+                                    serde_with::As::< std::option::Option<wkt::internal::I32> >::deserialize(deserializer).map(__With)
+                                }
+                            }
+                            result.seconds = map.next_value::<__With>()?.0;
+                        }
+                        __FieldTag::__time_zone => {
+                            if !fields.insert(__FieldTag::__time_zone) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for time_zone",
+                                ));
+                            }
+                            result.time_zone =
+                                map.next_value::<std::option::Option<crate::model::TimeZone>>()?;
+                        }
+                        __FieldTag::__utc_offset => {
+                            if !fields.insert(__FieldTag::__utc_offset) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for utc_offset",
+                                ));
+                            }
+                            result.utc_offset =
+                                map.next_value::<std::option::Option<wkt::Duration>>()?;
                         }
                         __FieldTag::__year => {
                             if !fields.insert(__FieldTag::__year) {
@@ -32300,6 +32655,7 @@ impl<'de> serde::de::Deserialize<'de> for super::ForwardingRule {
             __all_ports,
             __allow_global_access,
             __allow_psc_global_access,
+            __attached_extensions,
             __backend_service,
             __base_forwarding_rule,
             __creation_timestamp,
@@ -32358,6 +32714,7 @@ impl<'de> serde::de::Deserialize<'de> for super::ForwardingRule {
                             "allPorts" => Ok(__FieldTag::__all_ports),
                             "allowGlobalAccess" => Ok(__FieldTag::__allow_global_access),
                             "allowPscGlobalAccess" => Ok(__FieldTag::__allow_psc_global_access),
+                            "attachedExtensions" => Ok(__FieldTag::__attached_extensions),
                             "backendService" => Ok(__FieldTag::__backend_service),
                             "baseForwardingRule" => Ok(__FieldTag::__base_forwarding_rule),
                             "creationTimestamp" => Ok(__FieldTag::__creation_timestamp),
@@ -32450,6 +32807,12 @@ impl<'de> serde::de::Deserialize<'de> for super::ForwardingRule {
                             }
                             result.allow_psc_global_access = map.next_value::<std::option::Option<bool>>()?
                                 ;
+                        },
+                        __FieldTag::__attached_extensions => {
+                            if !fields.insert(__FieldTag::__attached_extensions) {
+                                return std::result::Result::Err(A::Error::duplicate_field("multiple values for attached_extensions"));
+                            }
+                            result.attached_extensions = map.next_value::<std::option::Option<std::vec::Vec<crate::model::ForwardingRuleAttachedExtension>>>()?.unwrap_or_default();
                         },
                         __FieldTag::__backend_service => {
                             if !fields.insert(__FieldTag::__backend_service) {
@@ -33060,6 +33423,86 @@ impl<'de> serde::de::Deserialize<'de> for super::forwarding_rule_aggregated_list
                                 ));
                             }
                             result.value =
+                                map.next_value::<std::option::Option<std::string::String>>()?;
+                        }
+                        __FieldTag::Unknown(key) => {
+                            let value = map.next_value::<serde_json::Value>()?;
+                            result._unknown_fields.insert(key, value);
+                        }
+                    }
+                }
+                std::result::Result::Ok(result)
+            }
+        }
+        deserializer.deserialize_any(Visitor)
+    }
+}
+
+#[cfg(any(feature = "forwarding-rules", feature = "global-forwarding-rules",))]
+#[doc(hidden)]
+impl<'de> serde::de::Deserialize<'de> for super::ForwardingRuleAttachedExtension {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[allow(non_camel_case_types)]
+        #[doc(hidden)]
+        #[derive(PartialEq, Eq, Hash)]
+        enum __FieldTag {
+            __reference,
+            Unknown(std::string::String),
+        }
+        impl<'de> serde::de::Deserialize<'de> for __FieldTag {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct Visitor;
+                impl<'de> serde::de::Visitor<'de> for Visitor {
+                    type Value = __FieldTag;
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                        formatter.write_str("a field name for ForwardingRuleAttachedExtension")
+                    }
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<Self::Value, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        use std::result::Result::Ok;
+                        use std::string::ToString;
+                        match value {
+                            "reference" => Ok(__FieldTag::__reference),
+                            _ => Ok(__FieldTag::Unknown(value.to_string())),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(Visitor)
+            }
+        }
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = super::ForwardingRuleAttachedExtension;
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct ForwardingRuleAttachedExtension")
+            }
+            fn visit_map<A>(self, mut map: A) -> std::result::Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                #[allow(unused_imports)]
+                use serde::de::Error;
+                use std::option::Option::Some;
+                let mut fields = std::collections::HashSet::new();
+                let mut result = Self::Value::new();
+                while let Some(tag) = map.next_key::<__FieldTag>()? {
+                    #[allow(clippy::match_single_binding)]
+                    match tag {
+                        __FieldTag::__reference => {
+                            if !fields.insert(__FieldTag::__reference) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for reference",
+                                ));
+                            }
+                            result.reference =
                                 map.next_value::<std::option::Option<std::string::String>>()?;
                         }
                         __FieldTag::Unknown(key) => {
@@ -108105,6 +108548,132 @@ impl<'de> serde::de::Deserialize<'de> for super::PerInstanceConfig {
     }
 }
 
+#[cfg(any(feature = "region-zones", feature = "zones",))]
+#[doc(hidden)]
+impl<'de> serde::de::Deserialize<'de> for super::PeriodicPartialMaintenanceSchedule {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[allow(non_camel_case_types)]
+        #[doc(hidden)]
+        #[derive(PartialEq, Eq, Hash)]
+        enum __FieldTag {
+            __sub_type,
+            __target_resource,
+            __type,
+            __window_end_time,
+            __window_start_time,
+            Unknown(std::string::String),
+        }
+        impl<'de> serde::de::Deserialize<'de> for __FieldTag {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct Visitor;
+                impl<'de> serde::de::Visitor<'de> for Visitor {
+                    type Value = __FieldTag;
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                        formatter.write_str("a field name for PeriodicPartialMaintenanceSchedule")
+                    }
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<Self::Value, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        use std::result::Result::Ok;
+                        use std::string::ToString;
+                        match value {
+                            "subType" => Ok(__FieldTag::__sub_type),
+                            "targetResource" => Ok(__FieldTag::__target_resource),
+                            "type" => Ok(__FieldTag::__type),
+                            "windowEndTime" => Ok(__FieldTag::__window_end_time),
+                            "windowStartTime" => Ok(__FieldTag::__window_start_time),
+                            _ => Ok(__FieldTag::Unknown(value.to_string())),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(Visitor)
+            }
+        }
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = super::PeriodicPartialMaintenanceSchedule;
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct PeriodicPartialMaintenanceSchedule")
+            }
+            fn visit_map<A>(self, mut map: A) -> std::result::Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                #[allow(unused_imports)]
+                use serde::de::Error;
+                use std::option::Option::Some;
+                let mut fields = std::collections::HashSet::new();
+                let mut result = Self::Value::new();
+                while let Some(tag) = map.next_key::<__FieldTag>()? {
+                    #[allow(clippy::match_single_binding)]
+                    match tag {
+                        __FieldTag::__sub_type => {
+                            if !fields.insert(__FieldTag::__sub_type) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for sub_type",
+                                ));
+                            }
+                            result.sub_type = map.next_value::<std::option::Option<
+                                crate::model::periodic_partial_maintenance_schedule::SubType,
+                            >>()?;
+                        }
+                        __FieldTag::__target_resource => {
+                            if !fields.insert(__FieldTag::__target_resource) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for target_resource",
+                                ));
+                            }
+                            result.target_resource =
+                                map.next_value::<std::option::Option<std::string::String>>()?;
+                        }
+                        __FieldTag::__type => {
+                            if !fields.insert(__FieldTag::__type) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for type",
+                                ));
+                            }
+                            result.r#type = map.next_value::<std::option::Option<
+                                crate::model::periodic_partial_maintenance_schedule::Type,
+                            >>()?;
+                        }
+                        __FieldTag::__window_end_time => {
+                            if !fields.insert(__FieldTag::__window_end_time) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for window_end_time",
+                                ));
+                            }
+                            result.window_end_time =
+                                map.next_value::<std::option::Option<crate::model::DateTime>>()?;
+                        }
+                        __FieldTag::__window_start_time => {
+                            if !fields.insert(__FieldTag::__window_start_time) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for window_start_time",
+                                ));
+                            }
+                            result.window_start_time =
+                                map.next_value::<std::option::Option<crate::model::DateTime>>()?;
+                        }
+                        __FieldTag::Unknown(key) => {
+                            let value = map.next_value::<serde_json::Value>()?;
+                            result._unknown_fields.insert(key, value);
+                        }
+                    }
+                }
+                std::result::Result::Ok(result)
+            }
+        }
+        deserializer.deserialize_any(Visitor)
+    }
+}
+
 #[cfg(any(
     feature = "backend-buckets",
     feature = "backend-services",
@@ -127998,6 +128567,7 @@ impl<'de> serde::de::Deserialize<'de> for super::ResourceStatusPhysicalHostTopol
         #[doc(hidden)]
         #[derive(PartialEq, Eq, Hash)]
         enum __FieldTag {
+            __additional_attributes,
             __block,
             __cluster,
             __host,
@@ -128022,6 +128592,7 @@ impl<'de> serde::de::Deserialize<'de> for super::ResourceStatusPhysicalHostTopol
                         use std::result::Result::Ok;
                         use std::string::ToString;
                         match value {
+                            "additionalAttributes" => Ok(__FieldTag::__additional_attributes),
                             "block" => Ok(__FieldTag::__block),
                             "cluster" => Ok(__FieldTag::__cluster),
                             "host" => Ok(__FieldTag::__host),
@@ -128051,6 +128622,15 @@ impl<'de> serde::de::Deserialize<'de> for super::ResourceStatusPhysicalHostTopol
                 while let Some(tag) = map.next_key::<__FieldTag>()? {
                     #[allow(clippy::match_single_binding)]
                     match tag {
+                        __FieldTag::__additional_attributes => {
+                            if !fields.insert(__FieldTag::__additional_attributes) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for additional_attributes",
+                                ));
+                            }
+                            result.additional_attributes = map.next_value::<std::option::Option<crate::model::ResourceStatusPhysicalHostTopologyAdditionalAttributes>>()?
+                                ;
+                        }
                         __FieldTag::__block => {
                             if !fields.insert(__FieldTag::__block) {
                                 return std::result::Result::Err(A::Error::duplicate_field(
@@ -128086,6 +128666,94 @@ impl<'de> serde::de::Deserialize<'de> for super::ResourceStatusPhysicalHostTopol
                             }
                             result.subblock =
                                 map.next_value::<std::option::Option<std::string::String>>()?;
+                        }
+                        __FieldTag::Unknown(key) => {
+                            let value = map.next_value::<serde_json::Value>()?;
+                            result._unknown_fields.insert(key, value);
+                        }
+                    }
+                }
+                std::result::Result::Ok(result)
+            }
+        }
+        deserializer.deserialize_any(Visitor)
+    }
+}
+
+#[cfg(feature = "instances")]
+#[doc(hidden)]
+impl<'de> serde::de::Deserialize<'de>
+    for super::ResourceStatusPhysicalHostTopologyAdditionalAttributes
+{
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[allow(non_camel_case_types)]
+        #[doc(hidden)]
+        #[derive(PartialEq, Eq, Hash)]
+        enum __FieldTag {
+            __accelerator_topology_ids,
+            Unknown(std::string::String),
+        }
+        impl<'de> serde::de::Deserialize<'de> for __FieldTag {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct Visitor;
+                impl<'de> serde::de::Visitor<'de> for Visitor {
+                    type Value = __FieldTag;
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                        formatter.write_str("a field name for ResourceStatusPhysicalHostTopologyAdditionalAttributes")
+                    }
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<Self::Value, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        use std::result::Result::Ok;
+                        use std::string::ToString;
+                        match value {
+                            "acceleratorTopologyIds" => Ok(__FieldTag::__accelerator_topology_ids),
+                            _ => Ok(__FieldTag::Unknown(value.to_string())),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(Visitor)
+            }
+        }
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = super::ResourceStatusPhysicalHostTopologyAdditionalAttributes;
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct ResourceStatusPhysicalHostTopologyAdditionalAttributes")
+            }
+            fn visit_map<A>(self, mut map: A) -> std::result::Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                #[allow(unused_imports)]
+                use serde::de::Error;
+                use std::option::Option::Some;
+                let mut fields = std::collections::HashSet::new();
+                let mut result = Self::Value::new();
+                while let Some(tag) = map.next_key::<__FieldTag>()? {
+                    #[allow(clippy::match_single_binding)]
+                    match tag {
+                        __FieldTag::__accelerator_topology_ids => {
+                            if !fields.insert(__FieldTag::__accelerator_topology_ids) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for accelerator_topology_ids",
+                                ));
+                            }
+                            result.accelerator_topology_ids = map
+                                .next_value::<std::option::Option<
+                                    std::collections::HashMap<
+                                        std::string::String,
+                                        std::string::String,
+                                    >,
+                                >>()?
+                                .unwrap_or_default();
                         }
                         __FieldTag::Unknown(key) => {
                             let value = map.next_value::<serde_json::Value>()?;
@@ -128291,6 +128959,8 @@ impl<'de> serde::de::Deserialize<'de> for super::Rollout {
             __id,
             __kind,
             __name,
+            __pause_time,
+            __resume_time,
             __rollout_entity,
             __rollout_plan,
             __self_link,
@@ -128326,6 +128996,8 @@ impl<'de> serde::de::Deserialize<'de> for super::Rollout {
                             "id" => Ok(__FieldTag::__id),
                             "kind" => Ok(__FieldTag::__kind),
                             "name" => Ok(__FieldTag::__name),
+                            "pauseTime" => Ok(__FieldTag::__pause_time),
+                            "resumeTime" => Ok(__FieldTag::__resume_time),
                             "rolloutEntity" => Ok(__FieldTag::__rollout_entity),
                             "rolloutPlan" => Ok(__FieldTag::__rollout_plan),
                             "selfLink" => Ok(__FieldTag::__self_link),
@@ -128456,6 +129128,24 @@ impl<'de> serde::de::Deserialize<'de> for super::Rollout {
                                 ));
                             }
                             result.name =
+                                map.next_value::<std::option::Option<std::string::String>>()?;
+                        }
+                        __FieldTag::__pause_time => {
+                            if !fields.insert(__FieldTag::__pause_time) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for pause_time",
+                                ));
+                            }
+                            result.pause_time =
+                                map.next_value::<std::option::Option<std::string::String>>()?;
+                        }
+                        __FieldTag::__resume_time => {
+                            if !fields.insert(__FieldTag::__resume_time) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for resume_time",
+                                ));
+                            }
+                            result.resume_time =
                                 map.next_value::<std::option::Option<std::string::String>>()?;
                         }
                         __FieldTag::__rollout_entity => {
@@ -132185,6 +132875,7 @@ impl<'de> serde::de::Deserialize<'de> for super::Router {
             __md_5_authentication_keys,
             __name,
             __nats,
+            __ncc_gateway,
             __network,
             __params,
             __region,
@@ -132222,6 +132913,7 @@ impl<'de> serde::de::Deserialize<'de> for super::Router {
                             "md5AuthenticationKeys" => Ok(__FieldTag::__md_5_authentication_keys),
                             "name" => Ok(__FieldTag::__name),
                             "nats" => Ok(__FieldTag::__nats),
+                            "nccGateway" => Ok(__FieldTag::__ncc_gateway),
                             "network" => Ok(__FieldTag::__network),
                             "params" => Ok(__FieldTag::__params),
                             "region" => Ok(__FieldTag::__region),
@@ -132363,6 +133055,15 @@ impl<'de> serde::de::Deserialize<'de> for super::Router {
                                 ));
                             }
                             result.nats = map.next_value::<std::option::Option<std::vec::Vec<crate::model::RouterNat>>>()?.unwrap_or_default();
+                        }
+                        __FieldTag::__ncc_gateway => {
+                            if !fields.insert(__FieldTag::__ncc_gateway) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for ncc_gateway",
+                                ));
+                            }
+                            result.ncc_gateway =
+                                map.next_value::<std::option::Option<std::string::String>>()?;
                         }
                         __FieldTag::__network => {
                             if !fields.insert(__FieldTag::__network) {
@@ -135229,6 +135930,7 @@ impl<'de> serde::de::Deserialize<'de> for super::RouterStatus {
             __best_routes_for_router,
             __bgp_peer_status,
             __nat_status,
+            __ncc_gateway,
             __network,
             Unknown(std::string::String),
         }
@@ -135254,6 +135956,7 @@ impl<'de> serde::de::Deserialize<'de> for super::RouterStatus {
                             "bestRoutesForRouter" => Ok(__FieldTag::__best_routes_for_router),
                             "bgpPeerStatus" => Ok(__FieldTag::__bgp_peer_status),
                             "natStatus" => Ok(__FieldTag::__nat_status),
+                            "nccGateway" => Ok(__FieldTag::__ncc_gateway),
                             "network" => Ok(__FieldTag::__network),
                             _ => Ok(__FieldTag::Unknown(value.to_string())),
                         }
@@ -135319,6 +136022,15 @@ impl<'de> serde::de::Deserialize<'de> for super::RouterStatus {
                                     std::vec::Vec<crate::model::RouterStatusNatStatus>,
                                 >>()?
                                 .unwrap_or_default();
+                        }
+                        __FieldTag::__ncc_gateway => {
+                            if !fields.insert(__FieldTag::__ncc_gateway) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for ncc_gateway",
+                                ));
+                            }
+                            result.ncc_gateway =
+                                map.next_value::<std::option::Option<std::string::String>>()?;
                         }
                         __FieldTag::__network => {
                             if !fields.insert(__FieldTag::__network) {
@@ -168742,6 +169454,97 @@ impl<'de> serde::de::Deserialize<'de> for super::TestPermissionsResponse {
     }
 }
 
+#[cfg(any(feature = "region-zones", feature = "zones",))]
+#[doc(hidden)]
+impl<'de> serde::de::Deserialize<'de> for super::TimeZone {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[allow(non_camel_case_types)]
+        #[doc(hidden)]
+        #[derive(PartialEq, Eq, Hash)]
+        enum __FieldTag {
+            __id,
+            __version,
+            Unknown(std::string::String),
+        }
+        impl<'de> serde::de::Deserialize<'de> for __FieldTag {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct Visitor;
+                impl<'de> serde::de::Visitor<'de> for Visitor {
+                    type Value = __FieldTag;
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                        formatter.write_str("a field name for TimeZone")
+                    }
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<Self::Value, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        use std::result::Result::Ok;
+                        use std::string::ToString;
+                        match value {
+                            "id" => Ok(__FieldTag::__id),
+                            "version" => Ok(__FieldTag::__version),
+                            _ => Ok(__FieldTag::Unknown(value.to_string())),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(Visitor)
+            }
+        }
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = super::TimeZone;
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct TimeZone")
+            }
+            fn visit_map<A>(self, mut map: A) -> std::result::Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                #[allow(unused_imports)]
+                use serde::de::Error;
+                use std::option::Option::Some;
+                let mut fields = std::collections::HashSet::new();
+                let mut result = Self::Value::new();
+                while let Some(tag) = map.next_key::<__FieldTag>()? {
+                    #[allow(clippy::match_single_binding)]
+                    match tag {
+                        __FieldTag::__id => {
+                            if !fields.insert(__FieldTag::__id) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for id",
+                                ));
+                            }
+                            result.id =
+                                map.next_value::<std::option::Option<std::string::String>>()?;
+                        }
+                        __FieldTag::__version => {
+                            if !fields.insert(__FieldTag::__version) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for version",
+                                ));
+                            }
+                            result.version =
+                                map.next_value::<std::option::Option<std::string::String>>()?;
+                        }
+                        __FieldTag::Unknown(key) => {
+                            let value = map.next_value::<serde_json::Value>()?;
+                            result._unknown_fields.insert(key, value);
+                        }
+                    }
+                }
+                std::result::Result::Ok(result)
+            }
+        }
+        deserializer.deserialize_any(Visitor)
+    }
+}
+
 #[cfg(any(feature = "service-attachments", feature = "subnetworks",))]
 #[doc(hidden)]
 impl<'de> serde::de::Deserialize<'de> for super::Uint128 {
@@ -179825,6 +180628,7 @@ impl<'de> serde::de::Deserialize<'de> for super::Zone {
             __kind,
             __name,
             __region,
+            __resource_status,
             __self_link,
             __status,
             __supports_pzs,
@@ -179856,6 +180660,7 @@ impl<'de> serde::de::Deserialize<'de> for super::Zone {
                             "kind" => Ok(__FieldTag::__kind),
                             "name" => Ok(__FieldTag::__name),
                             "region" => Ok(__FieldTag::__region),
+                            "resourceStatus" => Ok(__FieldTag::__resource_status),
                             "selfLink" => Ok(__FieldTag::__self_link),
                             "status" => Ok(__FieldTag::__status),
                             "supportsPzs" => Ok(__FieldTag::__supports_pzs),
@@ -179965,6 +180770,15 @@ impl<'de> serde::de::Deserialize<'de> for super::Zone {
                             }
                             result.region =
                                 map.next_value::<std::option::Option<std::string::String>>()?;
+                        }
+                        __FieldTag::__resource_status => {
+                            if !fields.insert(__FieldTag::__resource_status) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for resource_status",
+                                ));
+                            }
+                            result.resource_status = map.next_value::<std::option::Option<crate::model::ZoneResourceStatus>>()?
+                                ;
                         }
                         __FieldTag::__self_link => {
                             if !fields.insert(__FieldTag::__self_link) {
@@ -180321,6 +181135,89 @@ impl<'de> serde::de::Deserialize<'de> for super::zone_list::warning::Data {
                             }
                             result.value =
                                 map.next_value::<std::option::Option<std::string::String>>()?;
+                        }
+                        __FieldTag::Unknown(key) => {
+                            let value = map.next_value::<serde_json::Value>()?;
+                            result._unknown_fields.insert(key, value);
+                        }
+                    }
+                }
+                std::result::Result::Ok(result)
+            }
+        }
+        deserializer.deserialize_any(Visitor)
+    }
+}
+
+#[cfg(any(feature = "region-zones", feature = "zones",))]
+#[doc(hidden)]
+impl<'de> serde::de::Deserialize<'de> for super::ZoneResourceStatus {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[allow(non_camel_case_types)]
+        #[doc(hidden)]
+        #[derive(PartialEq, Eq, Hash)]
+        enum __FieldTag {
+            __upcoming_maintenances,
+            Unknown(std::string::String),
+        }
+        impl<'de> serde::de::Deserialize<'de> for __FieldTag {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct Visitor;
+                impl<'de> serde::de::Visitor<'de> for Visitor {
+                    type Value = __FieldTag;
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                        formatter.write_str("a field name for ZoneResourceStatus")
+                    }
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<Self::Value, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        use std::result::Result::Ok;
+                        use std::string::ToString;
+                        match value {
+                            "upcomingMaintenances" => Ok(__FieldTag::__upcoming_maintenances),
+                            _ => Ok(__FieldTag::Unknown(value.to_string())),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(Visitor)
+            }
+        }
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = super::ZoneResourceStatus;
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct ZoneResourceStatus")
+            }
+            fn visit_map<A>(self, mut map: A) -> std::result::Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                #[allow(unused_imports)]
+                use serde::de::Error;
+                use std::option::Option::Some;
+                let mut fields = std::collections::HashSet::new();
+                let mut result = Self::Value::new();
+                while let Some(tag) = map.next_key::<__FieldTag>()? {
+                    #[allow(clippy::match_single_binding)]
+                    match tag {
+                        __FieldTag::__upcoming_maintenances => {
+                            if !fields.insert(__FieldTag::__upcoming_maintenances) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for upcoming_maintenances",
+                                ));
+                            }
+                            result.upcoming_maintenances = map
+                                .next_value::<std::option::Option<
+                                    std::vec::Vec<crate::model::PeriodicPartialMaintenanceSchedule>,
+                                >>()?
+                                .unwrap_or_default();
                         }
                         __FieldTag::Unknown(key) => {
                             let value = map.next_value::<serde_json::Value>()?;

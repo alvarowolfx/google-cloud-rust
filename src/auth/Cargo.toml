@@ -18,7 +18,7 @@ name = "google-cloud-auth"
 #     version of all downstream dependencies. For details see:
 #         https://github.com/googleapis/google-cloud-rust/issues/3237
 #         https://github.com/googleapis/google-cloud-rust/issues/3265
-version     = "1.11.0"
+version     = "1.13.0"
 description = "Google Cloud Client Libraries for Rust - Authentication"
 build       = "build.rs"
 # Inherit other attributes from the workspace.
@@ -62,6 +62,7 @@ google-cloud-gax.workspace = true
 [dev-dependencies]
 anyhow.workspace      = true
 httptest.workspace    = true
+hyper.workspace       = true
 mockall.workspace     = true
 regex.workspace       = true
 rsa                   = { workspace = true, features = ["pem", "sha2"] }

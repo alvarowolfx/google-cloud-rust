@@ -18,6 +18,7 @@ use google_cloud_auth::credentials::Credentials;
 use google_cloud_gax::client_builder::Result;
 
 /// A builder for creating and configuring a BigQuery client instance.
+#[derive(Clone, Debug)]
 pub struct ClientBuilder {
     pub(crate) config: ClientConfig,
     pub(crate) storage_endpoint: Option<String>,
@@ -38,7 +39,9 @@ impl ClientBuilder {
         }
     }
 
-    /// Sets the BigQuery v2 endpoint.
+    /// Sets the [BigQuery v2] API endpoint.
+    ///
+    /// [BigQuery v2]: https://docs.cloud.google.com/bigquery/docs/reference/rest
     pub fn with_endpoint<V: Into<String>>(mut self, v: V) -> Self {
         self.config.endpoint = Some(v.into());
         self
@@ -74,5 +77,44 @@ impl ClientBuilder {
     /// Builds the `BigQuery` client instance.
     pub async fn build(self) -> Result<BigQuery> {
         BigQuery::new(self).await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use google_cloud_auth::credentials::anonymous::Builder as Anonymous;
+
+    #[test]
+    fn defaults() -> anyhow::Result<()> {
+        let builder = ClientBuilder::new();
+        assert!(builder.config.endpoint.is_none(), "{builder:?}");
+        assert!(builder.config.universe_domain.is_none(), "{builder:?}");
+        assert!(builder.config.cred.is_none(), "{builder:?}");
+        assert!(!builder.config.tracing);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn setters() -> anyhow::Result<()> {
+        let builder = ClientBuilder::new()
+            .with_endpoint("test-endpoint.com")
+            .with_universe_domain("test-universe.com")
+            .with_credentials(Anonymous::new().build())
+            .with_tracing();
+
+        assert_eq!(
+            builder.config.endpoint,
+            Some("test-endpoint.com".to_string())
+        );
+        assert_eq!(
+            builder.config.universe_domain,
+            Some("test-universe.com".to_string())
+        );
+        assert!(builder.config.cred.is_some(), "{builder:?}");
+        assert!(builder.config.tracing);
+
+        Ok(())
     }
 }

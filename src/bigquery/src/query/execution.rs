@@ -30,15 +30,11 @@ impl PostQueryExecutor {
             .query()
             .with_request(self.request)
             .send()
-            .await?;
+            .await
+            .map_err(|e| QueryError::Rpc { source: e })?;
 
-        let errors = res.errors.clone();
-        if let Some(first_err) = errors.first() {
-            return Err(QueryError::JobFailed {
-                reason: first_err.reason.clone(),
-                message: first_err.message.clone(),
-                errors: res.errors,
-            });
+        if !res.errors.is_empty() {
+            return Err(QueryError::JobFailed { errors: res.errors });
         }
 
         let completed = res.job_complete.unwrap_or(false);
@@ -57,44 +53,34 @@ impl PostQueryExecutor {
 
 pub(crate) struct InsertJobExecutor {
     pub(crate) job_service: Arc<JobService>,
-    pub(crate) job: Job,
-    pub(crate) project_id: String,
+    pub(crate) request: InsertJobRequest,
 }
 
 impl InsertJobExecutor {
     pub(crate) async fn execute(self) -> Result<Query> {
         let is_query = self
+            .request
             .job
-            .configuration
             .as_ref()
+            .and_then(|job| job.configuration.as_ref())
             .and_then(|c| c.query.as_ref())
             .is_some();
         if !is_query {
             return Err(QueryError::UnsupportedJobType);
         }
 
-        let insert_req = InsertJobRequest::new()
-            .set_project_id(self.project_id.clone())
-            .set_job(self.job);
-
         let res = self
             .job_service
             .insert_job()
-            .with_request(insert_req)
+            .with_request(self.request)
             .send()
-            .await?;
+            .await
+            .map_err(|e| QueryError::Rpc { source: e })?;
 
-        if let Some(err) = res.status.as_ref().and_then(|s| s.error_result.as_ref()) {
-            let errors = res
-                .status
-                .as_ref()
-                .map(|s| s.errors.clone())
-                .unwrap_or_default();
-            return Err(QueryError::JobFailed {
-                reason: err.reason.clone(),
-                message: err.message.clone(),
-                errors,
-            });
+        let job_status = res.status.as_ref();
+        if let Some(_) = job_status.and_then(|s| s.error_result.as_ref()) {
+            let errors = job_status.map(|s| s.errors.clone()).unwrap_or_default();
+            return Err(QueryError::JobFailed { errors });
         }
 
         let job_ref = res
