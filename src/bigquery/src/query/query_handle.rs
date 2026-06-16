@@ -22,8 +22,8 @@ use google_cloud_bigquery_v2::model::{
 use std::collections::VecDeque;
 use std::sync::Arc;
 
-/// A handle representing a running query job or stateless query execution.
-#[derive(Debug, Clone)]
+/// A handle representing a running query.
+#[derive(Clone, Debug)]
 pub struct Query {
     pub(crate) job_service: Arc<JobService>,
     pub(crate) job_ref: Option<JobReference>,

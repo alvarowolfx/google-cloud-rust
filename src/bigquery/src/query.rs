@@ -35,3 +35,34 @@ pub(crate) use query_handle::{CompleteQuery, Query};
 pub(crate) use row::Row;
 pub use run_query::{RunQuery, RunQueryRequest};
 pub(crate) use schema::Schema;
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use google_cloud_bigquery_v2::Result;
+    use google_cloud_bigquery_v2::client::JobService;
+    use google_cloud_bigquery_v2::model::{InsertJobRequest, Job, PostQueryRequest, QueryResponse};
+    use google_cloud_gax::options::RequestOptions;
+    use google_cloud_gax::response::Response;
+    use std::sync::Arc;
+
+    mockall::mock! {
+        #[derive(Debug)]
+        pub JobService {}
+        impl google_cloud_bigquery_v2::stub::JobService for JobService {
+            async fn insert_job(
+                &self,
+                req: InsertJobRequest,
+                options: RequestOptions,
+            ) -> Result<Response<Job>>;
+            async fn query(
+                &self,
+                req: PostQueryRequest,
+                options: RequestOptions,
+            ) -> Result<Response<QueryResponse>>;
+        }
+    }
+
+    pub(crate) fn create_job_service(mock: MockJobService) -> Arc<JobService> {
+        Arc::new(JobService::from_stub::<MockJobService>(Arc::new(mock)))
+    }
+}
