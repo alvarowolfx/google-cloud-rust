@@ -46,7 +46,6 @@ impl PostQueryExecutor {
             completed,
             initial_response: Some(res),
             initial_job: None,
-            is_job_path: false,
         })
     }
 }
@@ -93,7 +92,6 @@ impl InsertJobExecutor {
             completed: false,
             initial_response: None,
             initial_job: Some(res),
-            is_job_path: true,
         })
     }
 }

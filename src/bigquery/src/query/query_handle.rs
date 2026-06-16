@@ -30,7 +30,6 @@ pub struct Query {
     pub(crate) completed: bool,
     pub(crate) initial_response: Option<QueryResponse>,
     pub(crate) initial_job: Option<Job>,
-    pub(crate) is_job_path: bool,
 }
 
 impl Query {

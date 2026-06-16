@@ -88,7 +88,6 @@ impl BigQuery {
             completed: false,
             initial_response: None,
             initial_job: Some(job),
-            is_job_path: true,
         })
     }
 }
