@@ -62,7 +62,7 @@ impl Query {
 }
 
 /// A handle representing a successfully completed query ready for reading.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct CompleteQuery {
     pub(crate) job_service: Arc<JobService>,
     pub(crate) job_ref: Option<JobReference>,
@@ -78,7 +78,7 @@ impl CompleteQuery {
             .schema
             .clone()
             .expect("complete query should have schema");
-        let schema = Arc::new(schema);
+        let schema = Arc::new(Schema::new(schema));
         let page_token = if res.page_token.is_empty() {
             None
         } else {
@@ -100,7 +100,7 @@ impl CompleteQuery {
             .schema
             .clone()
             .expect("complete query should have schema");
-        let schema = Arc::new(schema);
+        let schema = Arc::new(Schema::new(schema));
         let page_token = if res.page_token.is_empty() {
             None
         } else {
