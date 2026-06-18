@@ -18,7 +18,6 @@
 pub(crate) mod execution;
 pub(crate) mod from_sql;
 mod iterator;
-mod metadata;
 mod query_handle;
 mod row;
 mod run_query;
@@ -30,10 +29,9 @@ pub type Result<T> = std::result::Result<T, crate::error::QueryError>;
 
 pub use from_sql::{FromSql, Interval, Range, deserialize};
 pub(crate) use iterator::RowIterator;
-pub(crate) use metadata::QueryMetadata;
 pub(crate) use query_handle::{CompleteQuery, Query};
 pub(crate) use row::Row;
-pub use run_query::{RunQuery, RunQueryRequest};
+pub use run_query::RunQuery;
 pub(crate) use schema::Schema;
 
 #[cfg(test)]

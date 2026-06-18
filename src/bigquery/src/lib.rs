@@ -38,13 +38,15 @@ pub mod error;
 /// High-level BigQuery client and execution entrypoints.
 pub mod client;
 mod client_builder;
+pub(crate) mod generated;
 pub(crate) mod query;
 
 pub(crate) use google_cloud_gax::client_builder::Result as ClientBuilderResult;
 
 pub mod model {
     //! Re-exports for the Google Cloud BigQuery v2 API types.
-    pub use crate::query::{RunQuery, RunQueryRequest};
+    pub use crate::generated::{QueryMetadata, RunQueryRequest};
+    pub use crate::query::RunQuery;
     pub use google_cloud_bigquery_v2::model::*;
 }
 
@@ -53,6 +55,7 @@ pub mod builder {
     pub mod bigquery {
         //! Builder for [BigQuery][crate::client::BigQuery].
         pub use crate::client_builder::ClientBuilder;
-        pub use crate::query::{RunQuery, RunQueryRequest};
+        pub use crate::generated::{QueryMetadata, RunQueryRequest};
+        pub use crate::query::RunQuery;
     }
 }

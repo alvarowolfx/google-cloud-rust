@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::error::QueryError;
-use crate::query::metadata::QueryMetadata;
+use crate::model::{QueryMetadata, RunQueryRequest};
 use crate::query::{Result, RowIterator, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{
