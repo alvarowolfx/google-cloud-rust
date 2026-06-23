@@ -39,7 +39,7 @@ impl Schema {
     }
 
     pub(crate) fn get_field_by_index(&self, index: usize) -> Option<&TableFieldSchema> {
-        self.schema.fields.iter().nth(index)
+        self.schema.fields.get(index)
     }
 
     pub(crate) fn len(&self) -> usize {

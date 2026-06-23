@@ -51,7 +51,7 @@ impl ColumnIndex for usize {
 
 impl ColumnIndex for &str {
     fn index(&self, row: &Row) -> Option<usize> {
-        row.schema.get_field_index_by_name(*self)
+        row.schema.get_field_index_by_name(self)
     }
 }
 
