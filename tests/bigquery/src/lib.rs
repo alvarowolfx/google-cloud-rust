@@ -429,18 +429,25 @@ pub async fn query_client_row_parsing() -> Result<()> {
     Ok(())
 }
 
-#[derive(serde::Deserialize, Debug, PartialEq)]
+#[derive(google_cloud_bigquery::FromSql, Debug, PartialEq)]
 struct UserRecord {
     name: String,
     age: i64,
 }
 
-#[derive(serde::Deserialize, Debug, PartialEq)]
+#[derive(google_cloud_bigquery::FromSql, Debug, PartialEq)]
 struct UserProfile {
     name: String,
     age: i64,
-    #[serde(deserialize_with = "google_cloud_bigquery::deserialize")]
     birth_date: google_cloud_type::model::Date,
+}
+
+#[derive(google_cloud_bigquery::FromRow, Debug, PartialEq)]
+struct RowData {
+    user: UserRecord,
+    numbers: Vec<i64>,
+    users: Vec<UserRecord>,
+    profile: UserProfile,
 }
 
 pub async fn query_client_nested_types() -> Result<()> {
@@ -470,30 +477,29 @@ pub async fn query_client_nested_types() -> Result<()> {
     if let Some(row) = rows.next().await {
         let row = row?;
 
-        // 1. Verify nested struct parsed into user-defined struct
-        let user: UserRecord = serde_json::from_value(row.get::<wkt::Value, _>("user"))?;
-        assert_eq!(user.name, "Alice");
-        assert_eq!(user.age, 25);
+        // Deserialize the entire row using TryInto implemented by our FromRow derive macro!
+        let data: RowData = row.try_into()?;
 
-        // 2. Verify repeated basic type (ARRAY)
-        let numbers: Vec<i64> = row.get("numbers");
-        assert_eq!(numbers, vec![1, 2, 3]);
+        // verify nested struct
+        assert_eq!(data.user.name, "Alice");
+        assert_eq!(data.user.age, 25);
 
-        // 3. Verify repeated struct parsed into user-defined structs
-        let users: Vec<UserRecord> = serde_json::from_value(row.get::<wkt::Value, _>("users"))?;
-        assert_eq!(users.len(), 2);
-        assert_eq!(users[0].name, "Bob");
-        assert_eq!(users[0].age, 28);
-        assert_eq!(users[1].name, "Charlie");
-        assert_eq!(users[1].age, 31);
+        // verify repeated basic type (ARRAY)
+        assert_eq!(data.numbers, vec![1, 2, 3]);
 
-        // 4. Verify user-defined struct with BQ-specific date field using the deserialize helper
-        let profile: UserProfile = serde_json::from_value(row.get::<wkt::Value, _>("profile"))?;
-        assert_eq!(profile.name, "Dave");
-        assert_eq!(profile.age, 40);
-        assert_eq!(profile.birth_date.year, 1986);
-        assert_eq!(profile.birth_date.month, 5);
-        assert_eq!(profile.birth_date.day, 28);
+        // verify repeated struct
+        assert_eq!(data.users.len(), 2);
+        assert_eq!(data.users[0].name, "Bob");
+        assert_eq!(data.users[0].age, 28);
+        assert_eq!(data.users[1].name, "Charlie");
+        assert_eq!(data.users[1].age, 31);
+
+        // verify user-defined struct with BQ-specific date field
+        assert_eq!(data.profile.name, "Dave");
+        assert_eq!(data.profile.age, 40);
+        assert_eq!(data.profile.birth_date.year, 1986);
+        assert_eq!(data.profile.birth_date.month, 5);
+        assert_eq!(data.profile.birth_date.day, 28);
     } else {
         panic!("expected at least one row");
     }

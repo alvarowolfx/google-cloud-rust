@@ -61,6 +61,12 @@ impl ColumnIndex for String {
     }
 }
 
+/// A trait for types that can be created from a BigQuery [`Row`].
+pub trait FromRow: Sized {
+    /// Creates an instance of this type from the given [`Row`].
+    fn from_row(row: &Row) -> Result<Self>;
+}
+
 impl Row {
     /// Retrieves a value from the row by column name or zero-based index.
     pub fn try_get<T: FromSql, I: ColumnIndex>(&self, index: I) -> Result<T> {

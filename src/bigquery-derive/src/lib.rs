@@ -1,0 +1,183 @@
+// Copyright 2026 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+extern crate proc_macro;
+
+use proc_macro::TokenStream;
+use quote::quote;
+use syn::{Data, DeriveInput, Fields, parse_macro_input};
+
+#[proc_macro_derive(FromRow, attributes(bigquery))]
+pub fn derive_from_row(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = input.ident;
+
+    let fields = match input.data {
+        Data::Struct(data) => match data.fields {
+            Fields::Named(fields) => fields.named,
+            _ => {
+                return syn::Error::new_spanned(
+                    name,
+                    "FromRow can only be derived for structs with named fields",
+                )
+                .to_compile_error()
+                .into();
+            }
+        },
+        _ => {
+            return syn::Error::new_spanned(name, "FromRow can only be derived for structs")
+                .to_compile_error()
+                .into();
+        }
+    };
+
+    let field_mappings = fields.iter().map(|f| {
+        let field_name = f.ident.as_ref().expect("named field must have identifier");
+        let db_column_name = get_field_name(f);
+        quote! {
+            #field_name: row.try_get(#db_column_name)?
+        }
+    });
+
+    let expanded = quote! {
+        impl google_cloud_bigquery::FromRow for #name {
+            fn from_row(row: &google_cloud_bigquery::Row) -> std::result::Result<Self, google_cloud_bigquery::RowError> {
+                std::result::Result::Ok(Self {
+                    #( #field_mappings, )*
+                })
+            }
+        }
+
+        impl std::convert::TryFrom<google_cloud_bigquery::Row> for #name {
+            type Error = google_cloud_bigquery::RowError;
+
+            fn try_from(row: google_cloud_bigquery::Row) -> std::result::Result<Self, Self::Error> {
+                google_cloud_bigquery::FromRow::from_row(&row)
+            }
+        }
+
+        impl<'a> std::convert::TryFrom<&'a google_cloud_bigquery::Row> for #name {
+            type Error = google_cloud_bigquery::RowError;
+
+            fn try_from(row: &'a google_cloud_bigquery::Row) -> std::result::Result<Self, Self::Error> {
+                google_cloud_bigquery::FromRow::from_row(row)
+            }
+        }
+    };
+
+    expanded.into()
+}
+
+#[proc_macro_derive(FromSql, attributes(bigquery))]
+pub fn derive_from_sql(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = input.ident;
+
+    let fields = match input.data {
+        Data::Struct(data) => match data.fields {
+            Fields::Named(fields) => fields.named,
+            _ => {
+                return syn::Error::new_spanned(
+                    name,
+                    "FromSql can only be derived for structs with named fields",
+                )
+                .to_compile_error()
+                .into();
+            }
+        },
+        _ => {
+            return syn::Error::new_spanned(name, "FromSql can only be derived for structs")
+                .to_compile_error()
+                .into();
+        }
+    };
+
+    let field_idents_array = fields
+        .iter()
+        .map(|f| f.ident.as_ref().expect("named field must have identifier"));
+    let field_idents_struct_array = fields
+        .iter()
+        .map(|f| f.ident.as_ref().expect("named field must have identifier"));
+    let field_idents_struct_obj = fields
+        .iter()
+        .map(|f| f.ident.as_ref().expect("named field must have identifier"));
+
+    let field_extractions = fields.iter().map(|f| {
+        let field_name = f.ident.as_ref().expect("named field must have identifier");
+        let db_column_name = get_field_name(f);
+        quote! {
+            let #field_name = obj.remove(#db_column_name)
+                .unwrap_or(wkt::Value::Null);
+            let #field_name = google_cloud_bigquery::FromSql::from_sql(#field_name)?;
+        }
+    });
+
+    let expanded = quote! {
+        impl google_cloud_bigquery::FromSql for #name {
+            fn from_sql(value: wkt::Value) -> std::result::Result<Self, google_cloud_bigquery::ConvertError> {
+                match value {
+                    wkt::Value::Array(arr) => {
+                        let mut iter = arr.into_iter();
+                        #(
+                            let #field_idents_array = iter.next()
+                                .unwrap_or(wkt::Value::Null);
+                            let #field_idents_array = google_cloud_bigquery::FromSql::from_sql(#field_idents_array)?;
+                        )*
+                        std::result::Result::Ok(Self {
+                            #( #field_idents_struct_array, )*
+                        })
+                    }
+                    wkt::Value::Object(mut obj) => {
+                        #( #field_extractions )*
+                        std::result::Result::Ok(Self {
+                            #( #field_idents_struct_obj, )*
+                        })
+                    }
+                    other => std::result::Result::Err(google_cloud_bigquery::ConvertError::TypeMismatch {
+                        expected: "array or object",
+                        got: other,
+                    }),
+                }
+            }
+        }
+    };
+
+    expanded.into()
+}
+
+fn get_field_name(field: &syn::Field) -> String {
+    for attr in &field.attrs {
+        if attr.path().is_ident("bigquery") {
+            let mut renamed = None;
+            let _ = attr.parse_nested_meta(|meta| {
+                if meta.path.is_ident("rename") {
+                    let value = meta.value()?;
+                    let lit: syn::LitStr = value.parse()?;
+                    renamed = Some(lit.value());
+                    Ok(())
+                } else {
+                    Err(meta.error("unsupported bigquery attribute"))
+                }
+            });
+            if let Some(name) = renamed {
+                return name;
+            }
+        }
+    }
+    field
+        .ident
+        .as_ref()
+        .expect("named field must have identifier")
+        .to_string()
+}
