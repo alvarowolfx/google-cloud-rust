@@ -93,6 +93,7 @@ impl RunQuery {
 }
 
 include!("../generated/run_query_builder.rs");
+
 #[cfg(test)]
 mod tests {
     use super::*;

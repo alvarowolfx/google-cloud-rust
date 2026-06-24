@@ -53,7 +53,7 @@ gaxi                       = { workspace = true, features = ["_internal-common",
 anyhow.workspace    = true
 mockall.workspace   = true
 test-case.workspace = true
-tokio               = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tokio               = { workspace = true, features = ["macros", "rt-multi-thread", "test-util"] }
 
 [features]
 default = ["default-rustls-provider"]

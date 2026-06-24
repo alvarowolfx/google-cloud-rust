@@ -14,6 +14,7 @@
 
 use anyhow::Result;
 use futures::stream::StreamExt;
+use google_cloud_bigquery::model::QueryReference;
 use google_cloud_bigquery_v2::client::{DatasetService, JobService};
 use google_cloud_bigquery_v2::model::query_request::JobCreationMode;
 use google_cloud_bigquery_v2::model::{
@@ -236,7 +237,10 @@ pub async fn query_client() -> Result<()> {
         .run()
         .await?;
 
-    assert!(query.query_id().is_some());
+    assert!(matches!(
+        query.query_reference(),
+        QueryReference::Stateless { .. }
+    ));
 
     let complete_query = query.until_done().await?;
 

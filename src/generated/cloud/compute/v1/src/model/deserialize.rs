@@ -55863,6 +55863,7 @@ impl<'de> serde::de::Deserialize<'de> for super::InstanceGroupManagerInstanceLif
             __default_action_on_failure,
             __force_update_on_repair,
             __on_failed_health_check,
+            __on_repair,
             Unknown(std::string::String),
         }
         impl<'de> serde::de::Deserialize<'de> for __FieldTag {
@@ -55888,6 +55889,7 @@ impl<'de> serde::de::Deserialize<'de> for super::InstanceGroupManagerInstanceLif
                             "defaultActionOnFailure" => Ok(__FieldTag::__default_action_on_failure),
                             "forceUpdateOnRepair" => Ok(__FieldTag::__force_update_on_repair),
                             "onFailedHealthCheck" => Ok(__FieldTag::__on_failed_health_check),
+                            "onRepair" => Ok(__FieldTag::__on_repair),
                             _ => Ok(__FieldTag::Unknown(value.to_string())),
                         }
                     }
@@ -55938,6 +55940,103 @@ impl<'de> serde::de::Deserialize<'de> for super::InstanceGroupManagerInstanceLif
                                 ));
                             }
                             result.on_failed_health_check = map.next_value::<std::option::Option<crate::model::instance_group_manager_instance_lifecycle_policy::OnFailedHealthCheck>>()?
+                                ;
+                        }
+                        __FieldTag::__on_repair => {
+                            if !fields.insert(__FieldTag::__on_repair) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for on_repair",
+                                ));
+                            }
+                            result.on_repair = map.next_value::<std::option::Option<
+                                crate::model::InstanceGroupManagerInstanceLifecyclePolicyOnRepair,
+                            >>()?;
+                        }
+                        __FieldTag::Unknown(key) => {
+                            let value = map.next_value::<serde_json::Value>()?;
+                            result._unknown_fields.insert(key, value);
+                        }
+                    }
+                }
+                std::result::Result::Ok(result)
+            }
+        }
+        deserializer.deserialize_any(Visitor)
+    }
+}
+
+#[cfg(any(
+    feature = "instance-group-managers",
+    feature = "region-instance-group-managers",
+))]
+#[doc(hidden)]
+impl<'de> serde::de::Deserialize<'de>
+    for super::InstanceGroupManagerInstanceLifecyclePolicyOnRepair
+{
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[allow(non_camel_case_types)]
+        #[doc(hidden)]
+        #[derive(PartialEq, Eq, Hash)]
+        enum __FieldTag {
+            __allow_changing_zone,
+            Unknown(std::string::String),
+        }
+        impl<'de> serde::de::Deserialize<'de> for __FieldTag {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct Visitor;
+                impl<'de> serde::de::Visitor<'de> for Visitor {
+                    type Value = __FieldTag;
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                        formatter.write_str(
+                            "a field name for InstanceGroupManagerInstanceLifecyclePolicyOnRepair",
+                        )
+                    }
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<Self::Value, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        use std::result::Result::Ok;
+                        use std::string::ToString;
+                        match value {
+                            "allowChangingZone" => Ok(__FieldTag::__allow_changing_zone),
+                            _ => Ok(__FieldTag::Unknown(value.to_string())),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(Visitor)
+            }
+        }
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = super::InstanceGroupManagerInstanceLifecyclePolicyOnRepair;
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct InstanceGroupManagerInstanceLifecyclePolicyOnRepair")
+            }
+            fn visit_map<A>(self, mut map: A) -> std::result::Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                #[allow(unused_imports)]
+                use serde::de::Error;
+                use std::option::Option::Some;
+                let mut fields = std::collections::HashSet::new();
+                let mut result = Self::Value::new();
+                while let Some(tag) = map.next_key::<__FieldTag>()? {
+                    #[allow(clippy::match_single_binding)]
+                    match tag {
+                        __FieldTag::__allow_changing_zone => {
+                            if !fields.insert(__FieldTag::__allow_changing_zone) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for allow_changing_zone",
+                                ));
+                            }
+                            result.allow_changing_zone = map.next_value::<std::option::Option<crate::model::instance_group_manager_instance_lifecycle_policy_on_repair::AllowChangingZone>>()?
                                 ;
                         }
                         __FieldTag::Unknown(key) => {
@@ -70208,6 +70307,7 @@ impl<'de> serde::de::Deserialize<'de> for super::Interconnect {
             __creation_timestamp,
             __customer_name,
             __description,
+            __effective_location,
             __expected_outages,
             __google_ip_address,
             __google_reference_id,
@@ -70266,6 +70366,7 @@ impl<'de> serde::de::Deserialize<'de> for super::Interconnect {
                             "creationTimestamp" => Ok(__FieldTag::__creation_timestamp),
                             "customerName" => Ok(__FieldTag::__customer_name),
                             "description" => Ok(__FieldTag::__description),
+                            "effectiveLocation" => Ok(__FieldTag::__effective_location),
                             "expectedOutages" => Ok(__FieldTag::__expected_outages),
                             "googleIpAddress" => Ok(__FieldTag::__google_ip_address),
                             "googleReferenceId" => Ok(__FieldTag::__google_reference_id),
@@ -70395,6 +70496,15 @@ impl<'de> serde::de::Deserialize<'de> for super::Interconnect {
                                 ));
                             }
                             result.description =
+                                map.next_value::<std::option::Option<std::string::String>>()?;
+                        }
+                        __FieldTag::__effective_location => {
+                            if !fields.insert(__FieldTag::__effective_location) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for effective_location",
+                                ));
+                            }
+                            result.effective_location =
                                 map.next_value::<std::option::Option<std::string::String>>()?;
                         }
                         __FieldTag::__expected_outages => {
@@ -93244,6 +93354,7 @@ impl<'de> serde::de::Deserialize<'de> for super::NetworkInterface {
         enum __FieldTag {
             __access_configs,
             __alias_ip_ranges,
+            __alias_ipv_6_ranges,
             __enable_vpc_scoped_dns,
             __fingerprint,
             __igmp_query,
@@ -93285,6 +93396,7 @@ impl<'de> serde::de::Deserialize<'de> for super::NetworkInterface {
                         match value {
                             "accessConfigs" => Ok(__FieldTag::__access_configs),
                             "aliasIpRanges" => Ok(__FieldTag::__alias_ip_ranges),
+                            "aliasIpv6Ranges" => Ok(__FieldTag::__alias_ipv_6_ranges),
                             "enableVpcScopedDns" => Ok(__FieldTag::__enable_vpc_scoped_dns),
                             "fingerprint" => Ok(__FieldTag::__fingerprint),
                             "igmpQuery" => Ok(__FieldTag::__igmp_query),
@@ -93346,6 +93458,14 @@ impl<'de> serde::de::Deserialize<'de> for super::NetworkInterface {
                                 ));
                             }
                             result.alias_ip_ranges = map.next_value::<std::option::Option<std::vec::Vec<crate::model::AliasIpRange>>>()?.unwrap_or_default();
+                        }
+                        __FieldTag::__alias_ipv_6_ranges => {
+                            if !fields.insert(__FieldTag::__alias_ipv_6_ranges) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for alias_ipv_6_ranges",
+                                ));
+                            }
+                            result.alias_ipv_6_ranges = map.next_value::<std::option::Option<std::vec::Vec<crate::model::AliasIpRange>>>()?.unwrap_or_default();
                         }
                         __FieldTag::__enable_vpc_scoped_dns => {
                             if !fields.insert(__FieldTag::__enable_vpc_scoped_dns) {
@@ -166813,6 +166933,7 @@ impl<'de> serde::de::Deserialize<'de> for super::TargetTcpProxy {
             __description,
             __id,
             __kind,
+            __load_balancing_scheme,
             __name,
             __proxy_bind,
             __proxy_header,
@@ -166843,6 +166964,7 @@ impl<'de> serde::de::Deserialize<'de> for super::TargetTcpProxy {
                             "description" => Ok(__FieldTag::__description),
                             "id" => Ok(__FieldTag::__id),
                             "kind" => Ok(__FieldTag::__kind),
+                            "loadBalancingScheme" => Ok(__FieldTag::__load_balancing_scheme),
                             "name" => Ok(__FieldTag::__name),
                             "proxyBind" => Ok(__FieldTag::__proxy_bind),
                             "proxyHeader" => Ok(__FieldTag::__proxy_header),
@@ -166919,6 +167041,16 @@ impl<'de> serde::de::Deserialize<'de> for super::TargetTcpProxy {
                             }
                             result.kind =
                                 map.next_value::<std::option::Option<std::string::String>>()?;
+                        }
+                        __FieldTag::__load_balancing_scheme => {
+                            if !fields.insert(__FieldTag::__load_balancing_scheme) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for load_balancing_scheme",
+                                ));
+                            }
+                            result.load_balancing_scheme = map.next_value::<std::option::Option<
+                                crate::model::target_tcp_proxy::LoadBalancingScheme,
+                            >>()?;
                         }
                         __FieldTag::__name => {
                             if !fields.insert(__FieldTag::__name) {

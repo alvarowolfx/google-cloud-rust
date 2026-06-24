@@ -121,6 +121,14 @@ mod spanner {
                 db_client,
             )
             .await?;
+            integration_tests_spanner::read_write_transaction::read_write_transaction_last_statement(
+                db_client,
+            )
+            .await?;
+            integration_tests_spanner::read_write_transaction::read_write_transaction_batch_last_statements(
+                db_client,
+            )
+            .await?;
             integration_tests_spanner::read_write_transaction::rolled_back_read_write_transaction(
                 db_client,
             )
@@ -144,6 +152,7 @@ mod spanner {
             integration_tests_spanner::dml_returning::dml_then_return_execute_query(db_client).await?;
             integration_tests_spanner::dml_returning::dml_then_return_execute_update(db_client).await?;
             integration_tests_spanner::dml_returning::dml_then_return_unconsumed_query(db_client).await?;
+            integration_tests_spanner::dml_returning::dml_then_return_multiple_execute_queries(db_client).await?;
             integration_tests_spanner::read_write_transaction::consecutive_reads(db_client).await?;
             integration_tests_spanner::read_write_transaction::mixed_reads_and_queries(db_client)
                 .await?;
@@ -172,6 +181,14 @@ mod spanner {
             )
             .await?;
             integration_tests_spanner::read_write_transaction::continue_after_initial_query_error(
+                db_client,
+            )
+            .await?;
+            integration_tests_spanner::read_write_transaction::continue_after_initial_dml_error(
+                db_client,
+            )
+            .await?;
+            integration_tests_spanner::read_write_transaction::continue_after_initial_batch_dml_error(
                 db_client,
             )
             .await?;

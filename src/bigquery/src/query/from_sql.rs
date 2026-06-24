@@ -20,7 +20,7 @@ use std::str::FromStr;
 
 type BoxedError = Box<dyn std::error::Error + Send + Sync>;
 
-/// Converts BigQuery [wkt::Value] to Rust types.
+/// Converts BigQuery internal [wkt::Value] to Rust types.
 pub trait FromSql: Sized {
     /// Converts a BigQuery `wkt::Value` into the implementing type.
     fn from_sql(value: wkt::Value) -> Result<Self, ConvertError>;
@@ -496,4 +496,82 @@ where
 {
     let value = serde_json::Value::deserialize(deserializer)?;
     T::from_sql(value).map_err(|e| serde::de::Error::custom(e.to_string()))
+}
+
+// TODO(#5592): implement for more Rust
+//  types: f32, i32, Vec<T>, Decimal,
+//  wkt::Timestamp, wkt::Struct, etc.
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_case::test_case;
+
+    // Test-only representation of `ConvertError` that implements `PartialEq`.
+    // This allows testing error outcomes using `test_case` assertions without
+    // implementing `PartialEq` on the production `ConvertError`.
+    #[derive(Debug, PartialEq)]
+    enum TestConvertError {
+        NotNull,
+        TypeMismatch(&'static str),
+        Convert(String),
+    }
+
+    impl From<ConvertError> for TestConvertError {
+        fn from(err: ConvertError) -> Self {
+            match err {
+                ConvertError::NotNull => Self::NotNull,
+                ConvertError::TypeMismatch { expected, .. } => Self::TypeMismatch(expected),
+                ConvertError::Convert(e) => Self::Convert(e.to_string()),
+            }
+        }
+    }
+
+    #[test_case(wkt::Value::String("hello".to_string()) => Ok(wkt::Value::String("hello".to_string())) ; "value string")]
+    fn test_from_sql_value(value: wkt::Value) -> Result<wkt::Value, TestConvertError> {
+        FromSql::from_sql(value).map_err(TestConvertError::from)
+    }
+
+    #[test_case(wkt::Value::String("hello".to_string()) => Ok("hello".to_string()) ; "string")]
+    #[test_case(wkt::Value::Null => Err(TestConvertError::NotNull) ; "null string")]
+    #[test_case(wkt::Value::Number(123.into()) => Err(TestConvertError::TypeMismatch("string")) ; "type mismatch string")]
+    fn test_from_sql_string(value: wkt::Value) -> Result<String, TestConvertError> {
+        FromSql::from_sql(value).map_err(TestConvertError::from)
+    }
+
+    #[test_case(wkt::Value::Number(123.into()) => Ok(123) ; "i64 from number")]
+    #[test_case(wkt::Value::String("123".to_string()) => Ok(123) ; "i64 from string")]
+    #[test_case(wkt::Value::Null => Err(TestConvertError::NotNull) ; "null i64")]
+    #[test_case(wkt::Value::Bool(true) => Err(TestConvertError::TypeMismatch("number or string")) ; "try bool as i64")]
+    #[test_case(wkt::Value::String("hello".to_string()) => Err(TestConvertError::Convert("invalid digit found in string".to_string())) ; "invalid string as i64")]
+    fn test_from_sql_i64(value: wkt::Value) -> Result<i64, TestConvertError> {
+        FromSql::from_sql(value).map_err(TestConvertError::from)
+    }
+
+    #[test_case(wkt::Value::Number(serde_json::Number::from_f64(123.45).unwrap()) => Ok(123.45) ; "f64 from number")]
+    #[test_case(wkt::Value::String("123.45".to_string()) => Ok(123.45) ; "f64 from string")]
+    #[test_case(wkt::Value::Null => Err(TestConvertError::NotNull) ; "null f64")]
+    #[test_case(wkt::Value::Bool(true) => Err(TestConvertError::TypeMismatch("number or string")) ; "try bool as f64")]
+    #[test_case(wkt::Value::String("hello".to_string()) => Err(TestConvertError::Convert("invalid float literal".to_string())) ; "invalid string as f64")]
+    fn test_from_sql_f64(value: wkt::Value) -> Result<f64, TestConvertError> {
+        FromSql::from_sql(value).map_err(TestConvertError::from)
+    }
+
+    #[test_case(wkt::Value::Bool(true) => Ok(true) ; "bool true")]
+    #[test_case(wkt::Value::Bool(false) => Ok(false) ; "bool false")]
+    #[test_case(wkt::Value::String("true".to_string()) => Ok(true) ; "bool from string true")]
+    #[test_case(wkt::Value::String("false".to_string()) => Ok(false) ; "bool from string false")]
+    #[test_case(wkt::Value::Null => Err(TestConvertError::NotNull) ; "null bool")]
+    #[test_case(wkt::Value::Number(1.into()) => Err(TestConvertError::TypeMismatch("bool or string")) ; "try number as bool")]
+    #[test_case(wkt::Value::String("hello".to_string()) => Err(TestConvertError::Convert("provided string was not `true` or `false`".to_string())) ; "invalid string as bool")]
+    fn test_from_sql_bool(value: wkt::Value) -> Result<bool, TestConvertError> {
+        FromSql::from_sql(value).map_err(TestConvertError::from)
+    }
+
+    #[test_case(wkt::Value::Null => Ok(None) ; "option null")]
+    #[test_case(wkt::Value::Number(123.into()) => Ok(Some(123)) ; "option some i64")]
+    #[test_case(wkt::Value::String("hello".to_string()) => Err(TestConvertError::Convert("invalid digit found in string".to_string())) ; "option error i64")]
+    fn test_from_sql_option(value: wkt::Value) -> Result<Option<i64>, TestConvertError> {
+        FromSql::from_sql(value).map_err(TestConvertError::from)
+    }
 }
