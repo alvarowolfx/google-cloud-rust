@@ -42,19 +42,25 @@ pub fn derive_from_row(input: TokenStream) -> TokenStream {
         }
     };
 
-    let field_mappings = fields.iter().map(|f| {
+    let value_extractions = fields.iter().map(|f| {
         let field_name = f.ident.as_ref().expect("named field must have identifier");
         let db_column_name = get_field_name(f);
         quote! {
-            #field_name: row.try_get(#db_column_name)?
+            let #field_name = drainer.take(#db_column_name)?;
         }
     });
 
+    let field_idents = fields.iter().map(|f| f.ident.as_ref().expect("named field must have identifier"));
+
     let expanded = quote! {
         impl google_cloud_bigquery::FromRow for #name {
-            fn from_row(row: &google_cloud_bigquery::Row) -> std::result::Result<Self, google_cloud_bigquery::RowError> {
+            fn from_row(row: google_cloud_bigquery::Row) -> std::result::Result<Self, google_cloud_bigquery::RowError> {
+                let mut drainer = row.into_drainer();
+
+                #( #value_extractions )*
+
                 std::result::Result::Ok(Self {
-                    #( #field_mappings, )*
+                    #( #field_idents, )*
                 })
             }
         }
@@ -63,7 +69,7 @@ pub fn derive_from_row(input: TokenStream) -> TokenStream {
             type Error = google_cloud_bigquery::RowError;
 
             fn try_from(row: google_cloud_bigquery::Row) -> std::result::Result<Self, Self::Error> {
-                google_cloud_bigquery::FromRow::from_row(&row)
+                google_cloud_bigquery::FromRow::from_row(row)
             }
         }
 
@@ -71,7 +77,7 @@ pub fn derive_from_row(input: TokenStream) -> TokenStream {
             type Error = google_cloud_bigquery::RowError;
 
             fn try_from(row: &'a google_cloud_bigquery::Row) -> std::result::Result<Self, Self::Error> {
-                google_cloud_bigquery::FromRow::from_row(row)
+                google_cloud_bigquery::FromRow::from_row(row.clone())
             }
         }
     };

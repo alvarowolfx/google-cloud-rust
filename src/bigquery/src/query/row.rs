@@ -63,8 +63,8 @@ impl ColumnIndex for String {
 
 /// A trait for types that can be created from a BigQuery [`Row`].
 pub trait FromRow: Sized {
-    /// Creates an instance of this type from the given [`Row`].
-    fn from_row(row: &Row) -> Result<Self>;
+    /// Creates an instance of this type by consuming the given [`Row`].
+    fn from_row(row: Row) -> Result<Self>;
 }
 
 impl Row {
@@ -98,6 +98,11 @@ impl Row {
     /// Retrieves a value from the row by column name or zero-based index, panicking on error.
     pub fn get<T: FromSql, I: ColumnIndex>(&self, index: I) -> T {
         self.try_get(index).unwrap()
+    }
+
+    /// Converts the row into a drainer that can extract owned values.
+    pub fn into_drainer(self) -> RowDrainer {
+        RowDrainer { row: self }
     }
 }
 
@@ -225,5 +230,49 @@ fn convert_basic_type(value: String, field_type: String) -> Result<Value> {
             "unknown field type: {}",
             field_type
         ))),
+    }
+}
+
+/// A drainer that consumes a [`Row`] to extract its values with zero clones and zero allocations.
+pub struct RowDrainer {
+    row: Row,
+}
+
+impl RowDrainer {
+    /// Takes ownership of a value from the row by column name or zero-based index.
+    /// The value in the row is replaced with `Value::Null` in-place.
+    pub fn take<T: FromSql, I: ColumnIndex>(&mut self, index: I) -> Result<T> {
+        let idx = index
+            .index(&self.row)
+            .ok_or_else(|| RowError::ColumnNotFound(format!("{:?}", index)))?;
+
+        let arr = match &mut self.row.values {
+            Value::Array(arr) => arr,
+            _ => {
+                return Err(RowError::InvalidRowFormat(
+                    "row values must be an array".into(),
+                ));
+            }
+        };
+
+        let val = arr.get_mut(idx).ok_or_else(|| RowError::IndexOutOfRange {
+            index: idx,
+            len: self.row.schema.len(),
+        })?;
+
+        // swap out the value in-place to avoid clones
+        let owned_val = std::mem::replace(val, Value::Null);
+        T::from_sql(owned_val).map_err(|e| {
+            let field_name = self
+                .row
+                .schema
+                .get_field_by_index(idx)
+                .map(|f| f.name.clone())
+                .unwrap_or_else(|| idx.to_string());
+            RowError::TypeConversion {
+                column: field_name,
+                source: e,
+            }
+        })
     }
 }
