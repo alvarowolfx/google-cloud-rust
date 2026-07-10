@@ -35,10 +35,94 @@ mod compute {
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
     async fn run_compute_lro_errors() -> anyhow::Result<()> {
-        let _guard = enable_tracing();
+        let _guard = google_cloud_test_utils::test_layer::TestLayer::initialize();
+
         integration_tests_discovery::lro_errors()
             .await
-            .inspect_err(anydump)
+            .inspect_err(anydump)?;
+
+        {
+            let spans = google_cloud_test_utils::test_layer::TestLayer::capture(&_guard);
+
+            // 1. Assert on the "LRO Wait" (T2) span
+            let lro_wait_span = spans
+                .iter()
+                .find(|s| s.name == "LRO Wait")
+                .ok_or_else(|| anyhow::anyhow!("missing LRO Wait span in {spans:#?}"))?;
+
+            assert_eq!(
+                attribute_value_str(lro_wait_span, "otel.status_code"),
+                Some("ERROR".to_string())
+            );
+            let lro_status_desc =
+                attribute_value_str(lro_wait_span, "otel.status_description").unwrap_or_default();
+            assert!(
+                !lro_status_desc.is_empty(),
+                "otel.status_description should be populated from the LRO error, got: {lro_status_desc}"
+            );
+            let lro_error_type =
+                attribute_value_str(lro_wait_span, "error.type").unwrap_or_default();
+            assert!(
+                lro_error_type == "RESOURCE_EXHAUSTED" || lro_error_type == "UNAVAILABLE",
+                "error.type should be RESOURCE_EXHAUSTED or UNAVAILABLE, got: {lro_error_type}"
+            );
+
+            // 2. Assert on the "client_request" (T3) span for get_operation
+            let get_op_span = spans
+                .iter()
+                .rfind(|s| {
+                    s.name == "client_request"
+                        && attribute_value_str(s, "rpc.method")
+                            == Some(
+                                "google.cloud.compute.v1.zoneOperations/getOperation".to_string(),
+                            )
+                })
+                .ok_or_else(|| {
+                    anyhow::anyhow!("missing getOperation client_request span in {spans:#?}")
+                })?;
+
+            assert_eq!(
+                attribute_value_str(get_op_span, "gcp.longrunning.done"),
+                Some("true".to_string())
+            );
+            let get_op_status_code =
+                attribute_value_str(get_op_span, "gcp.longrunning.status_code").unwrap_or_default();
+            assert!(
+                get_op_status_code == "8" || get_op_status_code == "14",
+                "gcp.longrunning.status_code should be 8 (RESOURCE_EXHAUSTED) or 14 (UNAVAILABLE), got: {get_op_status_code}"
+            );
+            assert_eq!(
+                attribute_value_str(get_op_span, "otel.status_code"),
+                Some("ERROR".to_string())
+            );
+            let get_op_status_desc =
+                attribute_value_str(get_op_span, "otel.status_description").unwrap_or_default();
+            assert!(
+                !get_op_status_desc.is_empty(),
+                "otel.status_description should be populated, got: {get_op_status_desc}"
+            );
+            let get_op_error_type =
+                attribute_value_str(get_op_span, "error.type").unwrap_or_default();
+            assert!(
+                get_op_error_type == "RESOURCE_EXHAUSTED" || get_op_error_type == "UNAVAILABLE",
+                "error.type should be RESOURCE_EXHAUSTED or UNAVAILABLE, got: {get_op_error_type}"
+            );
+        }
+        Ok(())
+    }
+
+    fn attribute_value_str(
+        span: &google_cloud_test_utils::test_layer::CapturedSpan,
+        key: &str,
+    ) -> Option<String> {
+        use google_cloud_test_utils::test_layer::AttributeValue;
+        span.attributes.get(key).map(|v| match v {
+            AttributeValue::String(s) => s.to_string(),
+            AttributeValue::Boolean(b) => b.to_string(),
+            AttributeValue::Int64(i) => i.to_string(),
+            AttributeValue::UInt64(u) => u.to_string(),
+            AttributeValue::Double(d) => d.to_string(),
+        })
     }
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 1)]

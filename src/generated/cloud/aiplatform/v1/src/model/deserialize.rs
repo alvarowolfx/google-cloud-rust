@@ -106076,6 +106076,7 @@ impl<'de> serde::de::Deserialize<'de> for super::ReasoningEngineSpec {
             __deployment_spec,
             __class_methods,
             __agent_framework,
+            __identity_type,
             Unknown(std::string::String),
         }
         impl<'de> serde::de::Deserialize<'de> for __FieldTag {
@@ -106110,6 +106111,8 @@ impl<'de> serde::de::Deserialize<'de> for super::ReasoningEngineSpec {
                             "class_methods" => Ok(__FieldTag::__class_methods),
                             "agentFramework" => Ok(__FieldTag::__agent_framework),
                             "agent_framework" => Ok(__FieldTag::__agent_framework),
+                            "identityType" => Ok(__FieldTag::__identity_type),
+                            "identity_type" => Ok(__FieldTag::__identity_type),
                             _ => Ok(__FieldTag::Unknown(value.to_string())),
                         }
                     }
@@ -106216,6 +106219,18 @@ impl<'de> serde::de::Deserialize<'de> for super::ReasoningEngineSpec {
                             }
                             result.agent_framework = map
                                 .next_value::<std::option::Option<std::string::String>>()?
+                                .unwrap_or_default();
+                        }
+                        __FieldTag::__identity_type => {
+                            if !fields.insert(__FieldTag::__identity_type) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for identity_type",
+                                ));
+                            }
+                            result.identity_type = map
+                                .next_value::<std::option::Option<
+                                    crate::model::reasoning_engine_spec::IdentityType,
+                                >>()?
                                 .unwrap_or_default();
                         }
                         __FieldTag::Unknown(key) => {

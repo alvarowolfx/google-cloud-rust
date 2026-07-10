@@ -357,7 +357,23 @@ where
             info: *info::INSTRUMENTATION_CLIENT_INFO,
             method: "client::ManagedZones::get_operation",
             self.inner.get_operation(req, options));
-        pending.await
+        google_cloud_lro::record_polling_attributes!(&_span);
+        let result = pending.await;
+        {
+            if google_cloud_lro::LroRecorder::current().is_some() {
+                match &result {
+                    Ok(response) => {
+                        let op = response.body();
+                        google_cloud_lro::record_discovery_polling_result!(&_span, op);
+                    }
+                    Err(e) => {
+                        _span.record("otel.status_code", "ERROR");
+                        _span.record("otel.status_description", e.to_string());
+                    }
+                }
+            }
+        }
+        result
     }
 
     fn get_polling_error_policy(
@@ -372,6 +388,17 @@ where
         options: &crate::RequestOptions,
     ) -> std::sync::Arc<dyn google_cloud_gax::polling_backoff_policy::PollingBackoffPolicy> {
         self.inner.get_polling_backoff_policy(options)
+    }
+
+    #[doc(hidden)]
+    fn get_poller_options(
+        &self,
+        options: &crate::RequestOptions,
+    ) -> google_cloud_lro::PollerOptions {
+        let mut opts = self.inner.get_poller_options(options);
+        let details = google_cloud_lro::TracingDetails::default();
+        opts.tracing = Some(details);
+        opts
     }
 }
 

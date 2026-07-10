@@ -55,6 +55,9 @@ pub(crate) use google_cloud_gax::options::RequestOptions;
 pub(crate) use google_cloud_gax::options::internal::RequestBuilder;
 pub(crate) use google_cloud_gax::response::Response;
 
+#[cfg(google_cloud_unstable_storage_bidi)]
+#[cfg_attr(docsrs, doc(cfg(feature = "unstable-stream")))]
+pub mod appendable_object_writer;
 pub mod backoff_policy;
 pub mod object_descriptor;
 pub mod read_object;
@@ -95,6 +98,7 @@ pub mod builder {
         //! Request builders for [Storage][crate::client::Storage].
         pub use crate::storage::client::ClientBuilder;
         pub use crate::storage::open_object::OpenObject;
+        pub use crate::storage::post_policy::{PostPolicyV4Builder, PostPolicyV4Result};
         pub use crate::storage::read_object::ReadObject;
         pub use crate::storage::signed_url::SignedUrlBuilder;
         pub use crate::storage::write_object::WriteObject;

@@ -19651,6 +19651,10 @@ impl std::fmt::Debug for super::RouterNat {
         debug_struct.field("auto_network_tier", &self.auto_network_tier);
         debug_struct.field("drain_nat_ips", &self.drain_nat_ips);
         debug_struct.field(
+            "effective_tcp_time_wait_timeout_sec",
+            &self.effective_tcp_time_wait_timeout_sec,
+        );
+        debug_struct.field(
             "enable_dynamic_port_allocation",
             &self.enable_dynamic_port_allocation,
         );
@@ -20546,6 +20550,11 @@ impl std::fmt::Debug for super::SecurityPolicyAssociation {
 impl std::fmt::Debug for super::SecurityPolicyDdosProtectionConfig {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut debug_struct = f.debug_struct("SecurityPolicyDdosProtectionConfig");
+        debug_struct.field("ddos_adaptive_protection", &self.ddos_adaptive_protection);
+        debug_struct.field(
+            "ddos_impacted_baseline_threshold",
+            &self.ddos_impacted_baseline_threshold,
+        );
         debug_struct.field("ddos_protection", &self.ddos_protection);
         if !self._unknown_fields.is_empty() {
             debug_struct.field("_unknown_fields", &self._unknown_fields);
@@ -21050,6 +21059,7 @@ impl std::fmt::Debug for super::ServiceAttachment {
         debug_struct.field("kind", &self.kind);
         debug_struct.field("metadata", &self.metadata);
         debug_struct.field("name", &self.name);
+        debug_struct.field("nat_ips_per_endpoint", &self.nat_ips_per_endpoint);
         debug_struct.field("nat_subnets", &self.nat_subnets);
         debug_struct.field("producer_forwarding_rule", &self.producer_forwarding_rule);
         debug_struct.field(

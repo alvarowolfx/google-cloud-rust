@@ -2474,9 +2474,7 @@ pub mod vector_search_service {
             >;
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_vectorsearch_v1::client::VectorSearchService::create_collection::until_done";
             }
@@ -2502,21 +2500,7 @@ pub mod vector_search_service {
                 Ok(Operation::new(op))
             };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                {
-                    google_cloud_lro::internal::new_poller(
-                        polling_error_policy,
-                        polling_backoff_policy,
-                        start,
-                        query,
-                    )
-                }
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             {
                 google_cloud_lro::internal::new_poller(
                     polling_error_policy,
@@ -2525,6 +2509,7 @@ pub mod vector_search_service {
                     query,
                 )
             }
+            .with_options(poller_options)
         }
 
         /// Sets the value of [parent][crate::model::CreateCollectionRequest::parent].
@@ -2645,9 +2630,7 @@ pub mod vector_search_service {
             >;
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_vectorsearch_v1::client::VectorSearchService::update_collection::until_done";
             }
@@ -2673,21 +2656,7 @@ pub mod vector_search_service {
                 Ok(Operation::new(op))
             };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                {
-                    google_cloud_lro::internal::new_poller(
-                        polling_error_policy,
-                        polling_backoff_policy,
-                        start,
-                        query,
-                    )
-                }
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             {
                 google_cloud_lro::internal::new_poller(
                     polling_error_policy,
@@ -2696,6 +2665,7 @@ pub mod vector_search_service {
                     query,
                 )
             }
+            .with_options(poller_options)
         }
 
         /// Sets the value of [update_mask][crate::model::UpdateCollectionRequest::update_mask].
@@ -2813,9 +2783,7 @@ pub mod vector_search_service {
                 google_cloud_lro::internal::Operation<wkt::Empty, crate::model::OperationMetadata>;
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_vectorsearch_v1::client::VectorSearchService::delete_collection::until_done";
             }
@@ -2841,21 +2809,7 @@ pub mod vector_search_service {
                 Ok(Operation::new(op))
             };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                {
-                    google_cloud_lro::internal::new_unit_response_poller(
-                        polling_error_policy,
-                        polling_backoff_policy,
-                        start,
-                        query,
-                    )
-                }
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             {
                 google_cloud_lro::internal::new_unit_response_poller(
                     polling_error_policy,
@@ -2864,6 +2818,7 @@ pub mod vector_search_service {
                     query,
                 )
             }
+            .with_options(poller_options)
         }
 
         /// Sets the value of [name][crate::model::DeleteCollectionRequest::name].
@@ -2877,6 +2832,12 @@ pub mod vector_search_service {
         /// Sets the value of [request_id][crate::model::DeleteCollectionRequest::request_id].
         pub fn set_request_id<T: Into<std::string::String>>(mut self, v: T) -> Self {
             self.0.request.request_id = v.into();
+            self
+        }
+
+        /// Sets the value of [force][crate::model::DeleteCollectionRequest::force].
+        pub fn set_force<T: Into<bool>>(mut self, v: T) -> Self {
+            self.0.request.force = v.into();
             self
         }
     }
@@ -3129,9 +3090,7 @@ pub mod vector_search_service {
             >;
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_vectorsearch_v1::client::VectorSearchService::create_index::until_done";
             }
@@ -3157,21 +3116,7 @@ pub mod vector_search_service {
                 Ok(Operation::new(op))
             };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                {
-                    google_cloud_lro::internal::new_poller(
-                        polling_error_policy,
-                        polling_backoff_policy,
-                        start,
-                        query,
-                    )
-                }
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             {
                 google_cloud_lro::internal::new_poller(
                     polling_error_policy,
@@ -3180,6 +3125,7 @@ pub mod vector_search_service {
                     query,
                 )
             }
+            .with_options(poller_options)
         }
 
         /// Sets the value of [parent][crate::model::CreateIndexRequest::parent].
@@ -3297,9 +3243,7 @@ pub mod vector_search_service {
             >;
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_vectorsearch_v1::client::VectorSearchService::update_index::until_done";
             }
@@ -3325,21 +3269,7 @@ pub mod vector_search_service {
                 Ok(Operation::new(op))
             };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                {
-                    google_cloud_lro::internal::new_poller(
-                        polling_error_policy,
-                        polling_backoff_policy,
-                        start,
-                        query,
-                    )
-                }
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             {
                 google_cloud_lro::internal::new_poller(
                     polling_error_policy,
@@ -3348,6 +3278,7 @@ pub mod vector_search_service {
                     query,
                 )
             }
+            .with_options(poller_options)
         }
 
         /// Sets the value of [index][crate::model::UpdateIndexRequest::index].
@@ -3462,9 +3393,7 @@ pub mod vector_search_service {
                 google_cloud_lro::internal::Operation<wkt::Empty, crate::model::OperationMetadata>;
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_vectorsearch_v1::client::VectorSearchService::delete_index::until_done";
             }
@@ -3490,21 +3419,7 @@ pub mod vector_search_service {
                 Ok(Operation::new(op))
             };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                {
-                    google_cloud_lro::internal::new_unit_response_poller(
-                        polling_error_policy,
-                        polling_backoff_policy,
-                        start,
-                        query,
-                    )
-                }
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             {
                 google_cloud_lro::internal::new_unit_response_poller(
                     polling_error_policy,
@@ -3513,6 +3428,7 @@ pub mod vector_search_service {
                     query,
                 )
             }
+            .with_options(poller_options)
         }
 
         /// Sets the value of [name][crate::model::DeleteIndexRequest::name].
@@ -3605,9 +3521,7 @@ pub mod vector_search_service {
             >;
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_vectorsearch_v1::client::VectorSearchService::import_data_objects::until_done";
             }
@@ -3633,21 +3547,7 @@ pub mod vector_search_service {
                 Ok(Operation::new(op))
             };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                {
-                    google_cloud_lro::internal::new_poller(
-                        polling_error_policy,
-                        polling_backoff_policy,
-                        start,
-                        query,
-                    )
-                }
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             {
                 google_cloud_lro::internal::new_poller(
                     polling_error_policy,
@@ -3656,6 +3556,7 @@ pub mod vector_search_service {
                     query,
                 )
             }
+            .with_options(poller_options)
         }
 
         /// Sets the value of [name][crate::model::ImportDataObjectsRequest::name].
@@ -3771,9 +3672,7 @@ pub mod vector_search_service {
             >;
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_vectorsearch_v1::client::VectorSearchService::export_data_objects::until_done";
             }
@@ -3799,21 +3698,7 @@ pub mod vector_search_service {
                 Ok(Operation::new(op))
             };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                {
-                    google_cloud_lro::internal::new_poller(
-                        polling_error_policy,
-                        polling_backoff_policy,
-                        start,
-                        query,
-                    )
-                }
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             {
                 google_cloud_lro::internal::new_poller(
                     polling_error_policy,
@@ -3822,6 +3707,7 @@ pub mod vector_search_service {
                     query,
                 )
             }
+            .with_options(poller_options)
         }
 
         /// Sets the value of [name][crate::model::ExportDataObjectsRequest::name].
@@ -3829,6 +3715,24 @@ pub mod vector_search_service {
         /// This is a **required** field for requests.
         pub fn set_name<T: Into<std::string::String>>(mut self, v: T) -> Self {
             self.0.request.name = v.into();
+            self
+        }
+
+        /// Sets the value of [field_filter][crate::model::ExportDataObjectsRequest::field_filter].
+        pub fn set_field_filter<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<crate::model::export_data_objects_request::FieldFilter>,
+        {
+            self.0.request.field_filter = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [field_filter][crate::model::ExportDataObjectsRequest::field_filter].
+        pub fn set_or_clear_field_filter<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<crate::model::export_data_objects_request::FieldFilter>,
+        {
+            self.0.request.field_filter = v.map(|x| x.into());
             self
         }
 

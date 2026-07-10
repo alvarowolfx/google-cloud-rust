@@ -34,10 +34,12 @@
 //! * [DataTableService](client/struct.DataTableService.html)
 //! * [EntityService](client/struct.EntityService.html)
 //! * [FeaturedContentNativeDashboardService](client/struct.FeaturedContentNativeDashboardService.html)
+//! * [FindingsRefinementService](client/struct.FindingsRefinementService.html)
 //! * [InstanceService](client/struct.InstanceService.html)
 //! * [NativeDashboardService](client/struct.NativeDashboardService.html)
 //! * [ReferenceListService](client/struct.ReferenceListService.html)
 //! * [RuleService](client/struct.RuleService.html)
+//! * [RuleExecutionErrorService](client/struct.RuleExecutionErrorService.html)
 //!
 //! # Features
 //!

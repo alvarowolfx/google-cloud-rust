@@ -895,9 +895,7 @@ pub mod addresses {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Addresses::delete::until_done";
@@ -926,25 +924,14 @@ pub mod addresses {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [address][crate::model::addresses::DeleteRequest::address].
@@ -1119,9 +1106,7 @@ pub mod addresses {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Addresses::insert::until_done";
@@ -1150,25 +1135,14 @@ pub mod addresses {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::addresses::InsertRequest::project].
@@ -1464,9 +1438,7 @@ pub mod addresses {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Addresses::r#move::until_done";
@@ -1495,25 +1467,14 @@ pub mod addresses {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [address][crate::model::addresses::MoveRequest::address].
@@ -1634,9 +1595,7 @@ pub mod addresses {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Addresses::set_labels::until_done";
@@ -1665,25 +1624,14 @@ pub mod addresses {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::addresses::SetLabelsRequest::project].
@@ -2398,9 +2346,7 @@ pub mod autoscalers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Autoscalers::delete::until_done";
@@ -2429,25 +2375,14 @@ pub mod autoscalers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [autoscaler][crate::model::autoscalers::DeleteRequest::autoscaler].
@@ -2625,9 +2560,7 @@ pub mod autoscalers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Autoscalers::insert::until_done";
@@ -2656,25 +2589,14 @@ pub mod autoscalers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::autoscalers::InsertRequest::project].
@@ -2976,9 +2898,7 @@ pub mod autoscalers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Autoscalers::patch::until_done";
@@ -3007,25 +2927,14 @@ pub mod autoscalers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [autoscaler][crate::model::autoscalers::PatchRequest::autoscaler].
@@ -3253,9 +3162,7 @@ pub mod autoscalers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Autoscalers::update::until_done";
@@ -3284,25 +3191,14 @@ pub mod autoscalers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [autoscaler][crate::model::autoscalers::UpdateRequest::autoscaler].
@@ -3572,9 +3468,7 @@ pub mod backend_buckets {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::BackendBuckets::add_signed_url_key::until_done";
             }
@@ -3599,25 +3493,14 @@ pub mod backend_buckets {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_bucket][crate::model::backend_buckets::AddSignedUrlKeyRequest::backend_bucket].
@@ -3953,9 +3836,7 @@ pub mod backend_buckets {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::BackendBuckets::delete::until_done";
@@ -3981,25 +3862,14 @@ pub mod backend_buckets {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_bucket][crate::model::backend_buckets::DeleteRequest::backend_bucket].
@@ -4098,9 +3968,7 @@ pub mod backend_buckets {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::BackendBuckets::delete_signed_url_key::until_done";
             }
@@ -4125,25 +3993,14 @@ pub mod backend_buckets {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_bucket][crate::model::backend_buckets::DeleteSignedUrlKeyRequest::backend_bucket].
@@ -4405,9 +4262,7 @@ pub mod backend_buckets {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::BackendBuckets::insert::until_done";
@@ -4433,25 +4288,14 @@ pub mod backend_buckets {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::backend_buckets::InsertRequest::project].
@@ -4926,9 +4770,7 @@ pub mod backend_buckets {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::BackendBuckets::patch::until_done";
@@ -4954,25 +4796,14 @@ pub mod backend_buckets {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_bucket][crate::model::backend_buckets::PatchRequest::backend_bucket].
@@ -5091,9 +4922,7 @@ pub mod backend_buckets {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::BackendBuckets::set_edge_security_policy::until_done";
             }
@@ -5118,25 +4947,14 @@ pub mod backend_buckets {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_bucket][crate::model::backend_buckets::SetEdgeSecurityPolicyRequest::backend_bucket].
@@ -5427,9 +5245,7 @@ pub mod backend_buckets {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::BackendBuckets::update::until_done";
@@ -5455,25 +5271,14 @@ pub mod backend_buckets {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_bucket][crate::model::backend_buckets::UpdateRequest::backend_bucket].
@@ -5719,9 +5524,7 @@ pub mod backend_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::BackendServices::add_signed_url_key::until_done";
             }
@@ -5746,25 +5549,14 @@ pub mod backend_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_service][crate::model::backend_services::AddSignedUrlKeyRequest::backend_service].
@@ -6102,9 +5894,7 @@ pub mod backend_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::BackendServices::delete::until_done";
@@ -6130,25 +5920,14 @@ pub mod backend_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_service][crate::model::backend_services::DeleteRequest::backend_service].
@@ -6247,9 +6026,7 @@ pub mod backend_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::BackendServices::delete_signed_url_key::until_done";
             }
@@ -6274,25 +6051,14 @@ pub mod backend_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_service][crate::model::backend_services::DeleteSignedUrlKeyRequest::backend_service].
@@ -6714,9 +6480,7 @@ pub mod backend_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::BackendServices::insert::until_done";
@@ -6742,25 +6506,14 @@ pub mod backend_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::backend_services::InsertRequest::project].
@@ -7237,9 +6990,7 @@ pub mod backend_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::BackendServices::patch::until_done";
@@ -7265,25 +7016,14 @@ pub mod backend_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_service][crate::model::backend_services::PatchRequest::backend_service].
@@ -7402,9 +7142,7 @@ pub mod backend_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::BackendServices::set_edge_security_policy::until_done";
             }
@@ -7429,25 +7167,14 @@ pub mod backend_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_service][crate::model::backend_services::SetEdgeSecurityPolicyRequest::backend_service].
@@ -7651,9 +7378,7 @@ pub mod backend_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::BackendServices::set_security_policy::until_done";
             }
@@ -7678,25 +7403,14 @@ pub mod backend_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_service][crate::model::backend_services::SetSecurityPolicyRequest::backend_service].
@@ -7900,9 +7614,7 @@ pub mod backend_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::BackendServices::update::until_done";
@@ -7928,25 +7640,14 @@ pub mod backend_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_service][crate::model::backend_services::UpdateRequest::backend_service].
@@ -8190,9 +7891,7 @@ pub mod cross_site_networks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::CrossSiteNetworks::delete::until_done";
@@ -8218,25 +7917,14 @@ pub mod cross_site_networks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [cross_site_network][crate::model::cross_site_networks::DeleteRequest::cross_site_network].
@@ -8402,9 +8090,7 @@ pub mod cross_site_networks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::CrossSiteNetworks::insert::until_done";
@@ -8430,25 +8116,14 @@ pub mod cross_site_networks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::cross_site_networks::InsertRequest::project].
@@ -8758,9 +8433,7 @@ pub mod cross_site_networks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::CrossSiteNetworks::patch::until_done";
@@ -8786,25 +8459,14 @@ pub mod cross_site_networks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [cross_site_network][crate::model::cross_site_networks::PatchRequest::cross_site_network].
@@ -9620,9 +9282,7 @@ pub mod disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Disks::add_resource_policies::until_done";
@@ -9651,25 +9311,14 @@ pub mod disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::disks::AddResourcePoliciesRequest::disk].
@@ -10005,9 +9654,7 @@ pub mod disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Disks::bulk_insert::until_done";
@@ -10036,25 +9683,14 @@ pub mod disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::disks::BulkInsertRequest::project].
@@ -10167,9 +9803,7 @@ pub mod disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Disks::bulk_set_labels::until_done";
@@ -10198,25 +9832,14 @@ pub mod disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::disks::BulkSetLabelsRequest::project].
@@ -10347,9 +9970,7 @@ pub mod disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Disks::create_snapshot::until_done";
@@ -10378,25 +9999,14 @@ pub mod disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::disks::CreateSnapshotRequest::disk].
@@ -10530,9 +10140,7 @@ pub mod disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Disks::delete::until_done";
             }
@@ -10560,25 +10168,14 @@ pub mod disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::disks::DeleteRequest::disk].
@@ -10840,9 +10437,7 @@ pub mod disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Disks::insert::until_done";
             }
@@ -10870,25 +10465,14 @@ pub mod disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::disks::InsertRequest::project].
@@ -11203,9 +10787,7 @@ pub mod disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Disks::remove_resource_policies::until_done";
@@ -11234,25 +10816,14 @@ pub mod disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::disks::RemoveResourcePoliciesRequest::disk].
@@ -11368,9 +10939,7 @@ pub mod disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Disks::resize::until_done";
             }
@@ -11398,25 +10967,14 @@ pub mod disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::disks::ResizeRequest::disk].
@@ -11626,9 +11184,7 @@ pub mod disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Disks::set_labels::until_done";
@@ -11657,25 +11213,14 @@ pub mod disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::disks::SetLabelsRequest::project].
@@ -11796,9 +11341,7 @@ pub mod disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Disks::start_async_replication::until_done";
@@ -11827,25 +11370,14 @@ pub mod disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::disks::StartAsyncReplicationRequest::disk].
@@ -11966,9 +11498,7 @@ pub mod disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Disks::stop_async_replication::until_done";
@@ -11997,25 +11527,14 @@ pub mod disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::disks::StopAsyncReplicationRequest::disk].
@@ -12118,9 +11637,7 @@ pub mod disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Disks::stop_group_async_replication::until_done";
             }
@@ -12148,25 +11665,14 @@ pub mod disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::disks::StopGroupAsyncReplicationRequest::project].
@@ -12367,9 +11873,7 @@ pub mod disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Disks::update::until_done";
             }
@@ -12397,25 +11901,14 @@ pub mod disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::disks::UpdateRequest::disk].
@@ -12570,9 +12063,7 @@ pub mod disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Disks::update_kms_key::until_done";
@@ -12601,25 +12092,14 @@ pub mod disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::disks::UpdateKmsKeyRequest::disk].
@@ -12873,9 +12353,7 @@ pub mod external_vpn_gateways {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ExternalVpnGateways::delete::until_done";
@@ -12901,25 +12379,14 @@ pub mod external_vpn_gateways {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [external_vpn_gateway][crate::model::external_vpn_gateways::DeleteRequest::external_vpn_gateway].
@@ -13085,9 +12552,7 @@ pub mod external_vpn_gateways {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ExternalVpnGateways::insert::until_done";
@@ -13113,25 +12578,14 @@ pub mod external_vpn_gateways {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::external_vpn_gateways::InsertRequest::project].
@@ -13425,9 +12879,7 @@ pub mod external_vpn_gateways {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ExternalVpnGateways::set_labels::until_done";
@@ -13453,25 +12905,14 @@ pub mod external_vpn_gateways {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::external_vpn_gateways::SetLabelsRequest::project].
@@ -13790,9 +13231,7 @@ pub mod firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::FirewallPolicies::add_association::until_done";
             }
@@ -13814,25 +13253,14 @@ pub mod firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::firewall_policies::AddAssociationRequest::firewall_policy].
@@ -13962,9 +13390,7 @@ pub mod firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::FirewallPolicies::add_rule::until_done";
@@ -13987,25 +13413,14 @@ pub mod firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::firewall_policies::AddRuleRequest::firewall_policy].
@@ -14114,9 +13529,7 @@ pub mod firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::FirewallPolicies::clone_rules::until_done";
@@ -14139,25 +13552,14 @@ pub mod firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::firewall_policies::CloneRulesRequest::firewall_policy].
@@ -14266,9 +13668,7 @@ pub mod firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::FirewallPolicies::delete::until_done";
@@ -14291,25 +13691,14 @@ pub mod firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::firewall_policies::DeleteRequest::firewall_policy].
@@ -14711,9 +14100,7 @@ pub mod firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::FirewallPolicies::insert::until_done";
@@ -14736,25 +14123,14 @@ pub mod firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [parent_id][crate::model::firewall_policies::InsertRequest::parent_id].
@@ -15168,9 +14544,7 @@ pub mod firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::FirewallPolicies::r#move::until_done";
@@ -15193,25 +14567,14 @@ pub mod firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::firewall_policies::MoveRequest::firewall_policy].
@@ -15320,9 +14683,7 @@ pub mod firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::FirewallPolicies::patch::until_done";
@@ -15345,25 +14706,14 @@ pub mod firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::firewall_policies::PatchRequest::firewall_policy].
@@ -15472,9 +14822,7 @@ pub mod firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::FirewallPolicies::patch_rule::until_done";
@@ -15497,25 +14845,14 @@ pub mod firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::firewall_policies::PatchRuleRequest::firewall_policy].
@@ -15644,9 +14981,7 @@ pub mod firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::FirewallPolicies::remove_association::until_done";
             }
@@ -15668,25 +15003,14 @@ pub mod firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::firewall_policies::RemoveAssociationRequest::firewall_policy].
@@ -15795,9 +15119,7 @@ pub mod firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::FirewallPolicies::remove_rule::until_done";
@@ -15820,25 +15142,14 @@ pub mod firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::firewall_policies::RemoveRuleRequest::firewall_policy].
@@ -16254,9 +15565,7 @@ pub mod firewalls {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Firewalls::delete::until_done";
@@ -16282,25 +15591,14 @@ pub mod firewalls {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall][crate::model::firewalls::DeleteRequest::firewall].
@@ -16463,9 +15761,7 @@ pub mod firewalls {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Firewalls::insert::until_done";
@@ -16491,25 +15787,14 @@ pub mod firewalls {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::firewalls::InsertRequest::project].
@@ -16796,9 +16081,7 @@ pub mod firewalls {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Firewalls::patch::until_done";
@@ -16824,25 +16107,14 @@ pub mod firewalls {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall][crate::model::firewalls::PatchRequest::firewall].
@@ -17046,9 +16318,7 @@ pub mod firewalls {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Firewalls::update::until_done";
@@ -17074,25 +16344,14 @@ pub mod firewalls {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall][crate::model::firewalls::UpdateRequest::firewall].
@@ -17559,9 +16818,7 @@ pub mod forwarding_rules {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ForwardingRules::delete::until_done";
@@ -17590,25 +16847,14 @@ pub mod forwarding_rules {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [forwarding_rule][crate::model::forwarding_rules::DeleteRequest::forwarding_rule].
@@ -17804,9 +17050,7 @@ pub mod forwarding_rules {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ForwardingRules::insert::until_done";
@@ -17835,25 +17079,14 @@ pub mod forwarding_rules {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::forwarding_rules::InsertRequest::project].
@@ -18157,9 +17390,7 @@ pub mod forwarding_rules {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ForwardingRules::patch::until_done";
@@ -18188,25 +17419,14 @@ pub mod forwarding_rules {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [forwarding_rule][crate::model::forwarding_rules::PatchRequest::forwarding_rule].
@@ -18327,9 +17547,7 @@ pub mod forwarding_rules {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ForwardingRules::set_labels::until_done";
@@ -18358,25 +17576,14 @@ pub mod forwarding_rules {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::forwarding_rules::SetLabelsRequest::project].
@@ -18497,9 +17704,7 @@ pub mod forwarding_rules {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ForwardingRules::set_target::until_done";
@@ -18528,25 +17733,14 @@ pub mod forwarding_rules {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [forwarding_rule][crate::model::forwarding_rules::SetTargetRequest::forwarding_rule].
@@ -19025,9 +18219,7 @@ pub mod future_reservations {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::FutureReservations::cancel::until_done";
@@ -19056,25 +18248,14 @@ pub mod future_reservations {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [future_reservation][crate::model::future_reservations::CancelRequest::future_reservation].
@@ -19177,9 +18358,7 @@ pub mod future_reservations {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::FutureReservations::delete::until_done";
@@ -19208,25 +18387,14 @@ pub mod future_reservations {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [future_reservation][crate::model::future_reservations::DeleteRequest::future_reservation].
@@ -19404,9 +18572,7 @@ pub mod future_reservations {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::FutureReservations::insert::until_done";
@@ -19435,25 +18601,14 @@ pub mod future_reservations {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::future_reservations::InsertRequest::project].
@@ -19759,9 +18914,7 @@ pub mod future_reservations {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::FutureReservations::update::until_done";
@@ -19790,25 +18943,14 @@ pub mod future_reservations {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [future_reservation][crate::model::future_reservations::UpdateRequest::future_reservation].
@@ -20082,9 +19224,7 @@ pub mod global_addresses {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::GlobalAddresses::delete::until_done";
@@ -20110,25 +19250,14 @@ pub mod global_addresses {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [address][crate::model::global_addresses::DeleteRequest::address].
@@ -20294,9 +19423,7 @@ pub mod global_addresses {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::GlobalAddresses::insert::until_done";
@@ -20322,25 +19449,14 @@ pub mod global_addresses {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::global_addresses::InsertRequest::project].
@@ -20630,9 +19746,7 @@ pub mod global_addresses {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::GlobalAddresses::r#move::until_done";
@@ -20658,25 +19772,14 @@ pub mod global_addresses {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [address][crate::model::global_addresses::MoveRequest::address].
@@ -20791,9 +19894,7 @@ pub mod global_addresses {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::GlobalAddresses::set_labels::until_done";
@@ -20819,25 +19920,14 @@ pub mod global_addresses {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::global_addresses::SetLabelsRequest::project].
@@ -21152,9 +20242,7 @@ pub mod global_forwarding_rules {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::GlobalForwardingRules::delete::until_done";
@@ -21180,25 +20268,14 @@ pub mod global_forwarding_rules {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [forwarding_rule][crate::model::global_forwarding_rules::DeleteRequest::forwarding_rule].
@@ -21382,9 +20459,7 @@ pub mod global_forwarding_rules {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::GlobalForwardingRules::insert::until_done";
@@ -21410,25 +20485,14 @@ pub mod global_forwarding_rules {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::global_forwarding_rules::InsertRequest::project].
@@ -21720,9 +20784,7 @@ pub mod global_forwarding_rules {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::GlobalForwardingRules::patch::until_done";
@@ -21748,25 +20810,14 @@ pub mod global_forwarding_rules {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [forwarding_rule][crate::model::global_forwarding_rules::PatchRequest::forwarding_rule].
@@ -21881,9 +20932,7 @@ pub mod global_forwarding_rules {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::GlobalForwardingRules::set_labels::until_done";
             }
@@ -21908,25 +20957,14 @@ pub mod global_forwarding_rules {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::global_forwarding_rules::SetLabelsRequest::project].
@@ -22023,9 +21061,7 @@ pub mod global_forwarding_rules {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::GlobalForwardingRules::set_target::until_done";
             }
@@ -22050,25 +21086,14 @@ pub mod global_forwarding_rules {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [forwarding_rule][crate::model::global_forwarding_rules::SetTargetRequest::forwarding_rule].
@@ -22316,9 +21341,7 @@ pub mod global_network_endpoint_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::GlobalNetworkEndpointGroups::attach_network_endpoints::until_done";
             }
@@ -22343,25 +21366,14 @@ pub mod global_network_endpoint_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network_endpoint_group][crate::model::global_network_endpoint_groups::AttachNetworkEndpointsRequest::network_endpoint_group].
@@ -22478,9 +21490,7 @@ pub mod global_network_endpoint_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::GlobalNetworkEndpointGroups::delete::until_done";
             }
@@ -22505,25 +21515,14 @@ pub mod global_network_endpoint_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network_endpoint_group][crate::model::global_network_endpoint_groups::DeleteRequest::network_endpoint_group].
@@ -22624,9 +21623,7 @@ pub mod global_network_endpoint_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::GlobalNetworkEndpointGroups::detach_network_endpoints::until_done";
             }
@@ -22651,25 +21648,14 @@ pub mod global_network_endpoint_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network_endpoint_group][crate::model::global_network_endpoint_groups::DetachNetworkEndpointsRequest::network_endpoint_group].
@@ -22855,9 +21841,7 @@ pub mod global_network_endpoint_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::GlobalNetworkEndpointGroups::insert::until_done";
             }
@@ -22882,25 +21866,14 @@ pub mod global_network_endpoint_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::global_network_endpoint_groups::InsertRequest::project].
@@ -24610,9 +23583,7 @@ pub mod global_public_delegated_prefixes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::GlobalPublicDelegatedPrefixes::delete::until_done";
             }
@@ -24637,25 +23608,14 @@ pub mod global_public_delegated_prefixes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::global_public_delegated_prefixes::DeleteRequest::project].
@@ -24825,9 +23785,7 @@ pub mod global_public_delegated_prefixes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::GlobalPublicDelegatedPrefixes::insert::until_done";
             }
@@ -24852,25 +23810,14 @@ pub mod global_public_delegated_prefixes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::global_public_delegated_prefixes::InsertRequest::project].
@@ -25168,9 +24115,7 @@ pub mod global_public_delegated_prefixes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::GlobalPublicDelegatedPrefixes::patch::until_done";
             }
@@ -25195,25 +24140,14 @@ pub mod global_public_delegated_prefixes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::global_public_delegated_prefixes::PatchRequest::project].
@@ -25682,9 +24616,7 @@ pub mod global_vm_extension_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::GlobalVmExtensionPolicies::delete::until_done";
             }
@@ -25709,25 +24641,14 @@ pub mod global_vm_extension_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [global_vm_extension_policy][crate::model::global_vm_extension_policies::DeleteRequest::global_vm_extension_policy].
@@ -25921,9 +24842,7 @@ pub mod global_vm_extension_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::GlobalVmExtensionPolicies::insert::until_done";
             }
@@ -25948,25 +24867,14 @@ pub mod global_vm_extension_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::global_vm_extension_policies::InsertRequest::project].
@@ -26260,9 +25168,7 @@ pub mod global_vm_extension_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::GlobalVmExtensionPolicies::update::until_done";
             }
@@ -26287,25 +25193,14 @@ pub mod global_vm_extension_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [global_vm_extension_policy][crate::model::global_vm_extension_policies::UpdateRequest::global_vm_extension_policy].
@@ -26773,9 +25668,7 @@ pub mod health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::HealthChecks::delete::until_done";
@@ -26801,25 +25694,14 @@ pub mod health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [health_check][crate::model::health_checks::DeleteRequest::health_check].
@@ -26985,9 +25867,7 @@ pub mod health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::HealthChecks::insert::until_done";
@@ -27013,25 +25893,14 @@ pub mod health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::health_checks::InsertRequest::project].
@@ -27321,9 +26190,7 @@ pub mod health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::HealthChecks::patch::until_done";
@@ -27349,25 +26216,14 @@ pub mod health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [health_check][crate::model::health_checks::PatchRequest::health_check].
@@ -27571,9 +26427,7 @@ pub mod health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::HealthChecks::update::until_done";
@@ -27599,25 +26453,14 @@ pub mod health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [health_check][crate::model::health_checks::UpdateRequest::health_check].
@@ -27861,9 +26704,7 @@ pub mod http_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::HttpHealthChecks::delete::until_done";
@@ -27889,25 +26730,14 @@ pub mod http_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [http_health_check][crate::model::http_health_checks::DeleteRequest::http_health_check].
@@ -28073,9 +26903,7 @@ pub mod http_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::HttpHealthChecks::insert::until_done";
@@ -28101,25 +26929,14 @@ pub mod http_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::http_health_checks::InsertRequest::project].
@@ -28411,9 +27228,7 @@ pub mod http_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::HttpHealthChecks::patch::until_done";
@@ -28439,25 +27254,14 @@ pub mod http_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [http_health_check][crate::model::http_health_checks::PatchRequest::http_health_check].
@@ -28663,9 +27467,7 @@ pub mod http_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::HttpHealthChecks::update::until_done";
@@ -28691,25 +27493,14 @@ pub mod http_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [http_health_check][crate::model::http_health_checks::UpdateRequest::http_health_check].
@@ -28953,9 +27744,7 @@ pub mod https_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::HttpsHealthChecks::delete::until_done";
@@ -28981,25 +27770,14 @@ pub mod https_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [https_health_check][crate::model::https_health_checks::DeleteRequest::https_health_check].
@@ -29165,9 +27943,7 @@ pub mod https_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::HttpsHealthChecks::insert::until_done";
@@ -29193,25 +27969,14 @@ pub mod https_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::https_health_checks::InsertRequest::project].
@@ -29503,9 +28268,7 @@ pub mod https_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::HttpsHealthChecks::patch::until_done";
@@ -29531,25 +28294,14 @@ pub mod https_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [https_health_check][crate::model::https_health_checks::PatchRequest::https_health_check].
@@ -29755,9 +28507,7 @@ pub mod https_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::HttpsHealthChecks::update::until_done";
@@ -29783,25 +28533,14 @@ pub mod https_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [https_health_check][crate::model::https_health_checks::UpdateRequest::https_health_check].
@@ -30173,9 +28912,7 @@ pub mod images {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Images::delete::until_done";
             }
@@ -30200,25 +28937,14 @@ pub mod images {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [image][crate::model::images::DeleteRequest::image].
@@ -30313,9 +29039,7 @@ pub mod images {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Images::deprecate::until_done";
@@ -30341,25 +29065,14 @@ pub mod images {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [image][crate::model::images::DeprecateRequest::image].
@@ -30688,9 +29401,7 @@ pub mod images {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Images::insert::until_done";
             }
@@ -30715,25 +29426,14 @@ pub mod images {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [force_create][crate::model::images::InsertRequest::force_create].
@@ -31031,9 +29731,7 @@ pub mod images {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Images::patch::until_done";
             }
@@ -31058,25 +29756,14 @@ pub mod images {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [image][crate::model::images::PatchRequest::image].
@@ -31274,9 +29961,7 @@ pub mod images {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Images::set_labels::until_done";
@@ -31302,25 +29987,14 @@ pub mod images {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::images::SetLabelsRequest::project].
@@ -31637,9 +30311,7 @@ pub mod instance_group_manager_resize_requests {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagerResizeRequests::cancel::until_done";
             }
@@ -31667,25 +30339,14 @@ pub mod instance_group_manager_resize_requests {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_manager_resize_requests::CancelRequest::instance_group_manager].
@@ -31800,9 +30461,7 @@ pub mod instance_group_manager_resize_requests {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagerResizeRequests::delete::until_done";
             }
@@ -31830,25 +30489,14 @@ pub mod instance_group_manager_resize_requests {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_manager_resize_requests::DeleteRequest::instance_group_manager].
@@ -32050,9 +30698,7 @@ pub mod instance_group_manager_resize_requests {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagerResizeRequests::insert::until_done";
             }
@@ -32080,25 +30726,14 @@ pub mod instance_group_manager_resize_requests {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_manager_resize_requests::InsertRequest::instance_group_manager].
@@ -32565,9 +31200,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagers::abandon_instances::until_done";
             }
@@ -32595,25 +31228,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::AbandonInstancesRequest::instance_group_manager].
@@ -32963,9 +31585,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagers::apply_updates_to_instances::until_done";
             }
@@ -32993,25 +31613,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::ApplyUpdatesToInstancesRequest::instance_group_manager].
@@ -33118,9 +31727,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagers::create_instances::until_done";
             }
@@ -33148,25 +31755,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::CreateInstancesRequest::instance_group_manager].
@@ -33287,9 +31883,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstanceGroupManagers::delete::until_done";
@@ -33318,25 +31912,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::DeleteRequest::instance_group_manager].
@@ -33443,9 +32026,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagers::delete_instances::until_done";
             }
@@ -33473,25 +32054,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::DeleteInstancesRequest::instance_group_manager].
@@ -33616,9 +32186,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagers::delete_per_instance_configs::until_done";
             }
@@ -33646,25 +32214,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::DeletePerInstanceConfigsRequest::instance_group_manager].
@@ -33842,9 +32399,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstanceGroupManagers::insert::until_done";
@@ -33873,25 +32428,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::instance_group_managers::InsertRequest::project].
@@ -34800,9 +33344,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstanceGroupManagers::patch::until_done";
@@ -34831,25 +33373,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::PatchRequest::instance_group_manager].
@@ -34974,9 +33505,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagers::patch_per_instance_configs::until_done";
             }
@@ -35004,25 +33533,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::PatchPerInstanceConfigsRequest::instance_group_manager].
@@ -35147,9 +33665,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagers::recreate_instances::until_done";
             }
@@ -35177,25 +33693,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::RecreateInstancesRequest::instance_group_manager].
@@ -35316,9 +33821,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstanceGroupManagers::resize::until_done";
@@ -35347,25 +33850,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::ResizeRequest::instance_group_manager].
@@ -35478,9 +33970,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagers::resume_instances::until_done";
             }
@@ -35508,25 +33998,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::ResumeInstancesRequest::instance_group_manager].
@@ -35651,9 +34130,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagers::set_instance_template::until_done";
             }
@@ -35681,25 +34158,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::SetInstanceTemplateRequest::instance_group_manager].
@@ -35824,9 +34290,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagers::set_target_pools::until_done";
             }
@@ -35854,25 +34318,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::SetTargetPoolsRequest::instance_group_manager].
@@ -35997,9 +34450,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagers::start_instances::until_done";
             }
@@ -36027,25 +34478,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::StartInstancesRequest::instance_group_manager].
@@ -36170,9 +34610,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagers::stop_instances::until_done";
             }
@@ -36200,25 +34638,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::StopInstancesRequest::instance_group_manager].
@@ -36343,9 +34770,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagers::suspend_instances::until_done";
             }
@@ -36373,25 +34798,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::SuspendInstancesRequest::instance_group_manager].
@@ -36516,9 +34930,7 @@ pub mod instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InstanceGroupManagers::update_per_instance_configs::until_done";
             }
@@ -36546,25 +34958,14 @@ pub mod instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::UpdatePerInstanceConfigsRequest::instance_group_manager].
@@ -36820,9 +35221,7 @@ pub mod instance_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstanceGroups::add_instances::until_done";
@@ -36851,25 +35250,14 @@ pub mod instance_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group][crate::model::instance_groups::AddInstancesRequest::instance_group].
@@ -37211,9 +35599,7 @@ pub mod instance_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstanceGroups::delete::until_done";
@@ -37242,25 +35628,14 @@ pub mod instance_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group][crate::model::instance_groups::DeleteRequest::instance_group].
@@ -37438,9 +35813,7 @@ pub mod instance_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstanceGroups::insert::until_done";
@@ -37469,25 +35842,14 @@ pub mod instance_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::instance_groups::InsertRequest::project].
@@ -38006,9 +36368,7 @@ pub mod instance_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstanceGroups::remove_instances::until_done";
@@ -38037,25 +36397,14 @@ pub mod instance_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group][crate::model::instance_groups::RemoveInstancesRequest::instance_group].
@@ -38176,9 +36525,7 @@ pub mod instance_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstanceGroups::set_named_ports::until_done";
@@ -38207,25 +36554,14 @@ pub mod instance_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group][crate::model::instance_groups::SetNamedPortsRequest::instance_group].
@@ -38645,9 +36981,7 @@ pub mod instance_settings {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstanceSettings::patch::until_done";
@@ -38676,25 +37010,14 @@ pub mod instance_settings {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::instance_settings::PatchRequest::project].
@@ -39185,9 +37508,7 @@ pub mod instance_templates {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstanceTemplates::delete::until_done";
@@ -39213,25 +37534,14 @@ pub mod instance_templates {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_template][crate::model::instance_templates::DeleteRequest::instance_template].
@@ -39487,9 +37797,7 @@ pub mod instance_templates {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstanceTemplates::insert::until_done";
@@ -39515,25 +37823,14 @@ pub mod instance_templates {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::instance_templates::InsertRequest::project].
@@ -40132,9 +38429,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::add_access_config::until_done";
@@ -40163,25 +38458,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::AddAccessConfigRequest::instance].
@@ -40310,9 +38594,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::add_network_interface::until_done";
@@ -40341,25 +38623,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::AddNetworkInterfaceRequest::instance].
@@ -40482,9 +38753,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::add_resource_policies::until_done";
@@ -40513,25 +38782,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::AddResourcePoliciesRequest::instance].
@@ -40873,9 +39131,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::attach_disk::until_done";
@@ -40904,25 +39160,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [force_attach][crate::model::instances::AttachDiskRequest::force_attach].
@@ -41061,9 +39306,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::bulk_insert::until_done";
@@ -41092,25 +39335,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::instances::BulkInsertRequest::project].
@@ -41225,9 +39457,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::delete::until_done";
@@ -41256,25 +39486,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::DeleteRequest::instance].
@@ -41379,9 +39598,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::delete_access_config::until_done";
@@ -41410,25 +39627,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [access_config][crate::model::instances::DeleteAccessConfigRequest::access_config].
@@ -41545,9 +39751,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Instances::delete_network_interface::until_done";
             }
@@ -41575,25 +39779,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::DeleteNetworkInterfaceRequest::instance].
@@ -41702,9 +39895,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::detach_disk::until_done";
@@ -41733,25 +39924,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [device_name][crate::model::instances::DetachDiskRequest::device_name].
@@ -42491,9 +40671,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::insert::until_done";
@@ -42522,25 +40700,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::instances::InsertRequest::project].
@@ -43072,9 +41239,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::perform_maintenance::until_done";
@@ -43103,25 +41268,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::PerformMaintenanceRequest::instance].
@@ -43226,9 +41380,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Instances::remove_resource_policies::until_done";
             }
@@ -43256,25 +41408,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::RemoveResourcePoliciesRequest::instance].
@@ -43397,9 +41538,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::report_host_as_faulty::until_done";
@@ -43428,25 +41567,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::ReportHostAsFaultyRequest::instance].
@@ -43567,9 +41695,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::reset::until_done";
@@ -43598,25 +41724,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::ResetRequest::instance].
@@ -43719,9 +41834,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::resume::until_done";
@@ -43750,25 +41863,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::ResumeRequest::instance].
@@ -43950,9 +42052,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Instances::set_deletion_protection::until_done";
             }
@@ -43980,25 +42080,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [deletion_protection][crate::model::instances::SetDeletionProtectionRequest::deletion_protection].
@@ -44119,9 +42208,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::set_disk_auto_delete::until_done";
@@ -44150,25 +42237,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [auto_delete][crate::model::instances::SetDiskAutoDeleteRequest::auto_delete].
@@ -44376,9 +42452,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::set_labels::until_done";
@@ -44407,25 +42481,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::SetLabelsRequest::instance].
@@ -44548,9 +42611,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::set_machine_resources::until_done";
@@ -44579,25 +42640,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::SetMachineResourcesRequest::instance].
@@ -44718,9 +42768,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::set_machine_type::until_done";
@@ -44749,25 +42797,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::SetMachineTypeRequest::instance].
@@ -44888,9 +42925,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::set_metadata::until_done";
@@ -44919,25 +42954,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::SetMetadataRequest::instance].
@@ -45058,9 +43082,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::set_min_cpu_platform::until_done";
@@ -45089,25 +43111,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::SetMinCpuPlatformRequest::instance].
@@ -45228,9 +43239,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::set_name::until_done";
@@ -45259,25 +43268,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::SetNameRequest::instance].
@@ -45398,9 +43396,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::set_scheduling::until_done";
@@ -45429,25 +43425,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::SetSchedulingRequest::instance].
@@ -45568,9 +43553,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::set_security_policy::until_done";
@@ -45599,25 +43582,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::SetSecurityPolicyRequest::instance].
@@ -45738,9 +43710,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::set_service_account::until_done";
@@ -45769,25 +43739,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::SetServiceAccountRequest::instance].
@@ -45912,9 +43871,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Instances::set_shielded_instance_integrity_policy::until_done";
             }
@@ -45942,25 +43899,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::SetShieldedInstanceIntegrityPolicyRequest::instance].
@@ -46081,9 +44027,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::set_tags::until_done";
@@ -46112,25 +44056,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::SetTagsRequest::instance].
@@ -46253,9 +44186,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Instances::simulate_maintenance_event::until_done";
             }
@@ -46283,25 +44214,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::SimulateMaintenanceEventRequest::instance].
@@ -46425,9 +44345,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::start::until_done";
@@ -46456,25 +44374,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::StartRequest::instance].
@@ -46579,9 +44486,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Instances::start_with_encryption_key::until_done";
             }
@@ -46609,25 +44514,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::StartWithEncryptionKeyRequest::instance].
@@ -46745,9 +44639,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::stop::until_done";
@@ -46776,25 +44668,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [discard_local_ssd][crate::model::instances::StopRequest::discard_local_ssd].
@@ -46915,9 +44796,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::suspend::until_done";
@@ -46946,25 +44825,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [discard_local_ssd][crate::model::instances::SuspendRequest::discard_local_ssd].
@@ -47180,9 +45048,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::update::until_done";
@@ -47211,25 +45077,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [discard_local_ssd][crate::model::instances::UpdateRequest::discard_local_ssd].
@@ -47413,9 +45268,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::update_access_config::until_done";
@@ -47444,25 +45297,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::UpdateAccessConfigRequest::instance].
@@ -47591,9 +45433,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Instances::update_display_device::until_done";
@@ -47622,25 +45462,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::UpdateDisplayDeviceRequest::instance].
@@ -47763,9 +45592,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Instances::update_network_interface::until_done";
             }
@@ -47793,25 +45620,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::UpdateNetworkInterfaceRequest::instance].
@@ -47942,9 +45758,7 @@ pub mod instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Instances::update_shielded_instance_config::until_done";
             }
@@ -47972,25 +45786,14 @@ pub mod instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance][crate::model::instances::UpdateShieldedInstanceConfigRequest::instance].
@@ -48246,9 +46049,7 @@ pub mod instant_snapshot_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstantSnapshotGroups::delete::until_done";
@@ -48277,25 +46078,14 @@ pub mod instant_snapshot_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instant_snapshot_group][crate::model::instant_snapshot_groups::DeleteRequest::instant_snapshot_group].
@@ -48571,9 +46361,7 @@ pub mod instant_snapshot_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstantSnapshotGroups::insert::until_done";
@@ -48602,25 +46390,14 @@ pub mod instant_snapshot_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::instant_snapshot_groups::InsertRequest::project].
@@ -49494,9 +47271,7 @@ pub mod instant_snapshots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstantSnapshots::delete::until_done";
@@ -49525,25 +47300,14 @@ pub mod instant_snapshots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instant_snapshot][crate::model::instant_snapshots::DeleteRequest::instant_snapshot].
@@ -49817,9 +47581,7 @@ pub mod instant_snapshots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstantSnapshots::insert::until_done";
@@ -49848,25 +47610,14 @@ pub mod instant_snapshots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::instant_snapshots::InsertRequest::project].
@@ -50263,9 +48014,7 @@ pub mod instant_snapshots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InstantSnapshots::set_labels::until_done";
@@ -50294,25 +48043,14 @@ pub mod instant_snapshots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::instant_snapshots::SetLabelsRequest::project].
@@ -50665,9 +48403,7 @@ pub mod interconnect_attachment_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InterconnectAttachmentGroups::delete::until_done";
             }
@@ -50692,25 +48428,14 @@ pub mod interconnect_attachment_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [interconnect_attachment_group][crate::model::interconnect_attachment_groups::DeleteRequest::interconnect_attachment_group].
@@ -51057,9 +48782,7 @@ pub mod interconnect_attachment_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InterconnectAttachmentGroups::insert::until_done";
             }
@@ -51084,25 +48807,14 @@ pub mod interconnect_attachment_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::interconnect_attachment_groups::InsertRequest::project].
@@ -51396,9 +49108,7 @@ pub mod interconnect_attachment_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InterconnectAttachmentGroups::patch::until_done";
             }
@@ -51423,25 +49133,14 @@ pub mod interconnect_attachment_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [interconnect_attachment_group][crate::model::interconnect_attachment_groups::PatchRequest::interconnect_attachment_group].
@@ -52113,9 +49812,7 @@ pub mod interconnect_attachments {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InterconnectAttachments::delete::until_done";
@@ -52144,25 +49841,14 @@ pub mod interconnect_attachments {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [interconnect_attachment][crate::model::interconnect_attachments::DeleteRequest::interconnect_attachment].
@@ -52340,9 +50026,7 @@ pub mod interconnect_attachments {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InterconnectAttachments::insert::until_done";
@@ -52371,25 +50055,14 @@ pub mod interconnect_attachments {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::interconnect_attachments::InsertRequest::project].
@@ -52713,9 +50386,7 @@ pub mod interconnect_attachments {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InterconnectAttachments::patch::until_done";
@@ -52744,25 +50415,14 @@ pub mod interconnect_attachments {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [interconnect_attachment][crate::model::interconnect_attachments::PatchRequest::interconnect_attachment].
@@ -52883,9 +50543,7 @@ pub mod interconnect_attachments {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InterconnectAttachments::set_labels::until_done";
             }
@@ -52913,25 +50571,14 @@ pub mod interconnect_attachments {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::interconnect_attachments::SetLabelsRequest::project].
@@ -53189,9 +50836,7 @@ pub mod interconnect_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::InterconnectGroups::create_members::until_done";
             }
@@ -53216,25 +50861,14 @@ pub mod interconnect_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [interconnect_group][crate::model::interconnect_groups::CreateMembersRequest::interconnect_group].
@@ -53331,9 +50965,7 @@ pub mod interconnect_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InterconnectGroups::delete::until_done";
@@ -53359,25 +50991,14 @@ pub mod interconnect_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [interconnect_group][crate::model::interconnect_groups::DeleteRequest::interconnect_group].
@@ -53708,9 +51329,7 @@ pub mod interconnect_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InterconnectGroups::insert::until_done";
@@ -53736,25 +51355,14 @@ pub mod interconnect_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::interconnect_groups::InsertRequest::project].
@@ -54048,9 +51656,7 @@ pub mod interconnect_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::InterconnectGroups::patch::until_done";
@@ -54076,25 +51682,14 @@ pub mod interconnect_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [interconnect_group][crate::model::interconnect_groups::PatchRequest::interconnect_group].
@@ -55165,9 +52760,7 @@ pub mod interconnects {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Interconnects::delete::until_done";
@@ -55193,25 +52786,14 @@ pub mod interconnects {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [interconnect][crate::model::interconnects::DeleteRequest::interconnect].
@@ -55515,9 +53097,7 @@ pub mod interconnects {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Interconnects::insert::until_done";
@@ -55543,25 +53123,14 @@ pub mod interconnects {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::interconnects::InsertRequest::project].
@@ -55851,9 +53420,7 @@ pub mod interconnects {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Interconnects::patch::until_done";
@@ -55879,25 +53446,14 @@ pub mod interconnects {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [interconnect][crate::model::interconnects::PatchRequest::interconnect].
@@ -56012,9 +53568,7 @@ pub mod interconnects {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Interconnects::set_labels::until_done";
@@ -56040,25 +53594,14 @@ pub mod interconnects {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::interconnects::SetLabelsRequest::project].
@@ -56675,9 +54218,7 @@ pub mod licenses {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Licenses::delete::until_done";
@@ -56703,25 +54244,14 @@ pub mod licenses {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [license][crate::model::licenses::DeleteRequest::license].
@@ -56968,9 +54498,7 @@ pub mod licenses {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Licenses::insert::until_done";
@@ -56996,25 +54524,14 @@ pub mod licenses {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::licenses::InsertRequest::project].
@@ -57471,9 +54988,7 @@ pub mod licenses {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Licenses::update::until_done";
@@ -57499,25 +55014,14 @@ pub mod licenses {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [license][crate::model::licenses::UpdateRequest::license].
@@ -57777,9 +55281,7 @@ pub mod machine_images {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::MachineImages::delete::until_done";
@@ -57805,25 +55307,14 @@ pub mod machine_images {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [machine_image][crate::model::machine_images::DeleteRequest::machine_image].
@@ -58079,9 +55570,7 @@ pub mod machine_images {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::MachineImages::insert::until_done";
@@ -58107,25 +55596,14 @@ pub mod machine_images {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::machine_images::InsertRequest::project].
@@ -58520,9 +55998,7 @@ pub mod machine_images {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::MachineImages::set_labels::until_done";
@@ -58548,25 +56024,14 @@ pub mod machine_images {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::machine_images::SetLabelsRequest::project].
@@ -59647,9 +57112,7 @@ pub mod network_attachments {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NetworkAttachments::delete::until_done";
@@ -59678,25 +57141,14 @@ pub mod network_attachments {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network_attachment][crate::model::network_attachments::DeleteRequest::network_attachment].
@@ -59970,9 +57422,7 @@ pub mod network_attachments {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NetworkAttachments::insert::until_done";
@@ -60001,25 +57451,14 @@ pub mod network_attachments {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::network_attachments::InsertRequest::project].
@@ -60323,9 +57762,7 @@ pub mod network_attachments {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NetworkAttachments::patch::until_done";
@@ -60354,25 +57791,14 @@ pub mod network_attachments {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network_attachment][crate::model::network_attachments::PatchRequest::network_attachment].
@@ -61045,9 +58471,7 @@ pub mod network_edge_security_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NetworkEdgeSecurityServices::delete::until_done";
             }
@@ -61075,25 +58499,14 @@ pub mod network_edge_security_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network_edge_security_service][crate::model::network_edge_security_services::DeleteRequest::network_edge_security_service].
@@ -61279,9 +58692,7 @@ pub mod network_edge_security_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NetworkEdgeSecurityServices::insert::until_done";
             }
@@ -61309,25 +58720,14 @@ pub mod network_edge_security_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::network_edge_security_services::InsertRequest::project].
@@ -61460,9 +58860,7 @@ pub mod network_edge_security_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NetworkEdgeSecurityServices::patch::until_done";
             }
@@ -61490,25 +58888,14 @@ pub mod network_edge_security_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network_edge_security_service][crate::model::network_edge_security_services::PatchRequest::network_edge_security_service].
@@ -62032,9 +59419,7 @@ pub mod network_endpoint_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NetworkEndpointGroups::attach_network_endpoints::until_done";
             }
@@ -62062,25 +59447,14 @@ pub mod network_endpoint_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network_endpoint_group][crate::model::network_endpoint_groups::AttachNetworkEndpointsRequest::network_endpoint_group].
@@ -62201,9 +59575,7 @@ pub mod network_endpoint_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NetworkEndpointGroups::delete::until_done";
@@ -62232,25 +59604,14 @@ pub mod network_endpoint_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network_endpoint_group][crate::model::network_endpoint_groups::DeleteRequest::network_endpoint_group].
@@ -62357,9 +59718,7 @@ pub mod network_endpoint_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NetworkEndpointGroups::detach_network_endpoints::until_done";
             }
@@ -62387,25 +59746,14 @@ pub mod network_endpoint_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network_endpoint_group][crate::model::network_endpoint_groups::DetachNetworkEndpointsRequest::network_endpoint_group].
@@ -62601,9 +59949,7 @@ pub mod network_endpoint_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NetworkEndpointGroups::insert::until_done";
@@ -62632,25 +59978,14 @@ pub mod network_endpoint_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::network_endpoint_groups::InsertRequest::project].
@@ -63411,9 +60746,7 @@ pub mod network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NetworkFirewallPolicies::add_association::until_done";
             }
@@ -63438,25 +60771,14 @@ pub mod network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::network_firewall_policies::AddAssociationRequest::firewall_policy].
@@ -63596,9 +60918,7 @@ pub mod network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NetworkFirewallPolicies::add_packet_mirroring_rule::until_done";
             }
@@ -63623,25 +60943,14 @@ pub mod network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::network_firewall_policies::AddPacketMirroringRuleRequest::firewall_policy].
@@ -63792,9 +61101,7 @@ pub mod network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NetworkFirewallPolicies::add_rule::until_done";
             }
@@ -63819,25 +61126,14 @@ pub mod network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::network_firewall_policies::AddRuleRequest::firewall_policy].
@@ -64215,9 +61511,7 @@ pub mod network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NetworkFirewallPolicies::clone_rules::until_done";
             }
@@ -64242,25 +61536,14 @@ pub mod network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::network_firewall_policies::CloneRulesRequest::firewall_policy].
@@ -64375,9 +61658,7 @@ pub mod network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NetworkFirewallPolicies::delete::until_done";
@@ -64403,25 +61684,14 @@ pub mod network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::network_firewall_policies::DeleteRequest::firewall_policy].
@@ -64950,9 +62220,7 @@ pub mod network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NetworkFirewallPolicies::insert::until_done";
@@ -64978,25 +62246,14 @@ pub mod network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::network_firewall_policies::InsertRequest::project].
@@ -65288,9 +62545,7 @@ pub mod network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NetworkFirewallPolicies::patch::until_done";
@@ -65316,25 +62571,14 @@ pub mod network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::network_firewall_policies::PatchRequest::firewall_policy].
@@ -65453,9 +62697,7 @@ pub mod network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NetworkFirewallPolicies::patch_packet_mirroring_rule::until_done";
             }
@@ -65480,25 +62722,14 @@ pub mod network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::network_firewall_policies::PatchPacketMirroringRuleRequest::firewall_policy].
@@ -65631,9 +62862,7 @@ pub mod network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NetworkFirewallPolicies::patch_rule::until_done";
             }
@@ -65658,25 +62887,14 @@ pub mod network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::network_firewall_policies::PatchRuleRequest::firewall_policy].
@@ -65813,9 +63031,7 @@ pub mod network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NetworkFirewallPolicies::remove_association::until_done";
             }
@@ -65840,25 +63056,14 @@ pub mod network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::network_firewall_policies::RemoveAssociationRequest::firewall_policy].
@@ -65977,9 +63182,7 @@ pub mod network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NetworkFirewallPolicies::remove_packet_mirroring_rule::until_done";
             }
@@ -66004,25 +63207,14 @@ pub mod network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::network_firewall_policies::RemovePacketMirroringRuleRequest::firewall_policy].
@@ -66139,9 +63331,7 @@ pub mod network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NetworkFirewallPolicies::remove_rule::until_done";
             }
@@ -66166,25 +63356,14 @@ pub mod network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::network_firewall_policies::RemoveRuleRequest::firewall_policy].
@@ -66920,9 +64099,7 @@ pub mod networks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Networks::add_peering::until_done";
@@ -66948,25 +64125,14 @@ pub mod networks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network][crate::model::networks::AddPeeringRequest::network].
@@ -67081,9 +64247,7 @@ pub mod networks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Networks::cancel_request_remove_peering::until_done";
             }
@@ -67108,25 +64272,14 @@ pub mod networks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network][crate::model::networks::CancelRequestRemovePeeringRequest::network].
@@ -67239,9 +64392,7 @@ pub mod networks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Networks::delete::until_done";
@@ -67267,25 +64418,14 @@ pub mod networks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network][crate::model::networks::DeleteRequest::network].
@@ -67513,9 +64653,7 @@ pub mod networks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Networks::insert::until_done";
@@ -67541,25 +64679,14 @@ pub mod networks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::networks::InsertRequest::project].
@@ -68082,9 +65209,7 @@ pub mod networks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Networks::patch::until_done";
@@ -68110,25 +65235,14 @@ pub mod networks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network][crate::model::networks::PatchRequest::network].
@@ -68241,9 +65355,7 @@ pub mod networks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Networks::remove_peering::until_done";
@@ -68269,25 +65381,14 @@ pub mod networks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network][crate::model::networks::RemovePeeringRequest::network].
@@ -68402,9 +65503,7 @@ pub mod networks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Networks::request_remove_peering::until_done";
@@ -68430,25 +65529,14 @@ pub mod networks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network][crate::model::networks::RequestRemovePeeringRequest::network].
@@ -68563,9 +65651,7 @@ pub mod networks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Networks::switch_to_custom_mode::until_done";
@@ -68591,25 +65677,14 @@ pub mod networks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network][crate::model::networks::SwitchToCustomModeRequest::network].
@@ -68704,9 +65779,7 @@ pub mod networks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Networks::update_peering::until_done";
@@ -68732,25 +65805,14 @@ pub mod networks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network][crate::model::networks::UpdatePeeringRequest::network].
@@ -68992,9 +66054,7 @@ pub mod node_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NodeGroups::add_nodes::until_done";
@@ -69023,25 +66083,14 @@ pub mod node_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [node_group][crate::model::node_groups::AddNodesRequest::node_group].
@@ -69383,9 +66432,7 @@ pub mod node_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NodeGroups::delete::until_done";
@@ -69414,25 +66461,14 @@ pub mod node_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [node_group][crate::model::node_groups::DeleteRequest::node_group].
@@ -69535,9 +66571,7 @@ pub mod node_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NodeGroups::delete_nodes::until_done";
@@ -69566,25 +66600,14 @@ pub mod node_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [node_group][crate::model::node_groups::DeleteNodesRequest::node_group].
@@ -69876,9 +66899,7 @@ pub mod node_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NodeGroups::insert::until_done";
@@ -69907,25 +66928,14 @@ pub mod node_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [initial_node_count][crate::model::node_groups::InsertRequest::initial_node_count].
@@ -70428,9 +67438,7 @@ pub mod node_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NodeGroups::patch::until_done";
@@ -70459,25 +67467,14 @@ pub mod node_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [node_group][crate::model::node_groups::PatchRequest::node_group].
@@ -70600,9 +67597,7 @@ pub mod node_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NodeGroups::perform_maintenance::until_done";
@@ -70631,25 +67626,14 @@ pub mod node_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [node_group][crate::model::node_groups::PerformMaintenanceRequest::node_group].
@@ -70863,9 +67847,7 @@ pub mod node_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NodeGroups::set_node_template::until_done";
@@ -70894,25 +67876,14 @@ pub mod node_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [node_group][crate::model::node_groups::SetNodeTemplateRequest::node_group].
@@ -71035,9 +68006,7 @@ pub mod node_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::NodeGroups::simulate_maintenance_event::until_done";
             }
@@ -71065,25 +68034,14 @@ pub mod node_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [node_group][crate::model::node_groups::SimulateMaintenanceEventRequest::node_group].
@@ -71655,9 +68613,7 @@ pub mod node_templates {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NodeTemplates::delete::until_done";
@@ -71686,25 +68642,14 @@ pub mod node_templates {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [node_template][crate::model::node_templates::DeleteRequest::node_template].
@@ -71978,9 +68923,7 @@ pub mod node_templates {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::NodeTemplates::insert::until_done";
@@ -72009,25 +68952,14 @@ pub mod node_templates {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::node_templates::InsertRequest::project].
@@ -73196,9 +70128,7 @@ pub mod organization_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::OrganizationSecurityPolicies::add_association::until_done";
             }
@@ -73220,25 +70150,14 @@ pub mod organization_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [replace_existing_association][crate::model::organization_security_policies::AddAssociationRequest::replace_existing_association].
@@ -73372,9 +70291,7 @@ pub mod organization_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::OrganizationSecurityPolicies::add_rule::until_done";
             }
@@ -73396,25 +70313,14 @@ pub mod organization_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [request_id][crate::model::organization_security_policies::AddRuleRequest::request_id].
@@ -73527,9 +70433,7 @@ pub mod organization_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::OrganizationSecurityPolicies::copy_rules::until_done";
             }
@@ -73551,25 +70455,14 @@ pub mod organization_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [request_id][crate::model::organization_security_policies::CopyRulesRequest::request_id].
@@ -73680,9 +70573,7 @@ pub mod organization_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::OrganizationSecurityPolicies::delete::until_done";
             }
@@ -73704,25 +70595,14 @@ pub mod organization_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [request_id][crate::model::organization_security_policies::DeleteRequest::request_id].
@@ -74048,9 +70928,7 @@ pub mod organization_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::OrganizationSecurityPolicies::insert::until_done";
             }
@@ -74072,25 +70950,14 @@ pub mod organization_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [parent_id][crate::model::organization_security_policies::InsertRequest::parent_id].
@@ -74655,9 +71522,7 @@ pub mod organization_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::OrganizationSecurityPolicies::r#move::until_done";
             }
@@ -74679,25 +71544,14 @@ pub mod organization_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [parent_id][crate::model::organization_security_policies::MoveRequest::parent_id].
@@ -74806,9 +71660,7 @@ pub mod organization_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::OrganizationSecurityPolicies::patch::until_done";
             }
@@ -74830,25 +71682,14 @@ pub mod organization_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [request_id][crate::model::organization_security_policies::PatchRequest::request_id].
@@ -74961,9 +71802,7 @@ pub mod organization_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::OrganizationSecurityPolicies::patch_rule::until_done";
             }
@@ -74985,25 +71824,14 @@ pub mod organization_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [priority][crate::model::organization_security_policies::PatchRuleRequest::priority].
@@ -75134,9 +71962,7 @@ pub mod organization_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::OrganizationSecurityPolicies::remove_association::until_done";
             }
@@ -75158,25 +71984,14 @@ pub mod organization_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [name][crate::model::organization_security_policies::RemoveAssociationRequest::name].
@@ -75289,9 +72104,7 @@ pub mod organization_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::OrganizationSecurityPolicies::remove_rule::until_done";
             }
@@ -75313,25 +72126,14 @@ pub mod organization_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [priority][crate::model::organization_security_policies::RemoveRuleRequest::priority].
@@ -75806,9 +72608,7 @@ pub mod packet_mirrorings {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::PacketMirrorings::delete::until_done";
@@ -75837,25 +72637,14 @@ pub mod packet_mirrorings {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [packet_mirroring][crate::model::packet_mirrorings::DeleteRequest::packet_mirroring].
@@ -76033,9 +72822,7 @@ pub mod packet_mirrorings {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::PacketMirrorings::insert::until_done";
@@ -76064,25 +72851,14 @@ pub mod packet_mirrorings {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::packet_mirrorings::InsertRequest::project].
@@ -76386,9 +73162,7 @@ pub mod packet_mirrorings {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::PacketMirrorings::patch::until_done";
@@ -76417,25 +73191,14 @@ pub mod packet_mirrorings {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [packet_mirroring][crate::model::packet_mirrorings::PatchRequest::packet_mirroring].
@@ -77038,9 +73801,7 @@ pub mod preview_features {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::PreviewFeatures::update::until_done";
@@ -77066,25 +73827,14 @@ pub mod preview_features {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [preview_feature][crate::model::preview_features::UpdateRequest::preview_feature].
@@ -77324,9 +74074,7 @@ pub mod projects {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Projects::disable_xpn_host::until_done";
@@ -77352,25 +74100,14 @@ pub mod projects {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::projects::DisableXpnHostRequest::project].
@@ -77461,9 +74198,7 @@ pub mod projects {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Projects::disable_xpn_resource::until_done";
@@ -77489,25 +74224,14 @@ pub mod projects {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::projects::DisableXpnResourceRequest::project].
@@ -77614,9 +74338,7 @@ pub mod projects {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Projects::enable_xpn_host::until_done";
@@ -77642,25 +74364,14 @@ pub mod projects {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::projects::EnableXpnHostRequest::project].
@@ -77749,9 +74460,7 @@ pub mod projects {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Projects::enable_xpn_resource::until_done";
@@ -77777,25 +74486,14 @@ pub mod projects {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::projects::EnableXpnResourceRequest::project].
@@ -78401,9 +75099,7 @@ pub mod projects {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Projects::move_disk::until_done";
@@ -78429,25 +75125,14 @@ pub mod projects {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::projects::MoveDiskRequest::project].
@@ -78554,9 +75239,7 @@ pub mod projects {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Projects::move_instance::until_done";
@@ -78582,25 +75265,14 @@ pub mod projects {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::projects::MoveInstanceRequest::project].
@@ -78707,9 +75379,7 @@ pub mod projects {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Projects::set_cloud_armor_tier::until_done";
@@ -78735,25 +75405,14 @@ pub mod projects {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::projects::SetCloudArmorTierRequest::project].
@@ -78862,9 +75521,7 @@ pub mod projects {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Projects::set_common_instance_metadata::until_done";
             }
@@ -78889,25 +75546,14 @@ pub mod projects {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::projects::SetCommonInstanceMetadataRequest::project].
@@ -79016,9 +75662,7 @@ pub mod projects {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Projects::set_default_network_tier::until_done";
             }
@@ -79043,25 +75687,14 @@ pub mod projects {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::projects::SetDefaultNetworkTierRequest::project].
@@ -79170,9 +75803,7 @@ pub mod projects {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Projects::set_usage_export_bucket::until_done";
             }
@@ -79197,25 +75828,14 @@ pub mod projects {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::projects::SetUsageExportBucketRequest::project].
@@ -79451,9 +76071,7 @@ pub mod public_advertised_prefixes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::PublicAdvertisedPrefixes::announce::until_done";
             }
@@ -79478,25 +76096,14 @@ pub mod public_advertised_prefixes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::public_advertised_prefixes::AnnounceRequest::project].
@@ -79593,9 +76200,7 @@ pub mod public_advertised_prefixes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::PublicAdvertisedPrefixes::delete::until_done";
@@ -79621,25 +76226,14 @@ pub mod public_advertised_prefixes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::public_advertised_prefixes::DeleteRequest::project].
@@ -79805,9 +76399,7 @@ pub mod public_advertised_prefixes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::PublicAdvertisedPrefixes::insert::until_done";
@@ -79833,25 +76425,14 @@ pub mod public_advertised_prefixes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::public_advertised_prefixes::InsertRequest::project].
@@ -80145,9 +76726,7 @@ pub mod public_advertised_prefixes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::PublicAdvertisedPrefixes::patch::until_done";
@@ -80173,25 +76752,14 @@ pub mod public_advertised_prefixes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::public_advertised_prefixes::PatchRequest::project].
@@ -80306,9 +76874,7 @@ pub mod public_advertised_prefixes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::PublicAdvertisedPrefixes::withdraw::until_done";
             }
@@ -80333,25 +76899,14 @@ pub mod public_advertised_prefixes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::public_advertised_prefixes::WithdrawRequest::project].
@@ -80802,9 +77357,7 @@ pub mod public_delegated_prefixes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::PublicDelegatedPrefixes::announce::until_done";
             }
@@ -80832,25 +77385,14 @@ pub mod public_delegated_prefixes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::public_delegated_prefixes::AnnounceRequest::project].
@@ -80953,9 +77495,7 @@ pub mod public_delegated_prefixes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::PublicDelegatedPrefixes::delete::until_done";
@@ -80984,25 +77524,14 @@ pub mod public_delegated_prefixes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::public_delegated_prefixes::DeleteRequest::project].
@@ -81180,9 +77709,7 @@ pub mod public_delegated_prefixes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::PublicDelegatedPrefixes::insert::until_done";
@@ -81211,25 +77738,14 @@ pub mod public_delegated_prefixes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::public_delegated_prefixes::InsertRequest::project].
@@ -81535,9 +78051,7 @@ pub mod public_delegated_prefixes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::PublicDelegatedPrefixes::patch::until_done";
@@ -81566,25 +78080,14 @@ pub mod public_delegated_prefixes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::public_delegated_prefixes::PatchRequest::project].
@@ -81705,9 +78208,7 @@ pub mod public_delegated_prefixes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::PublicDelegatedPrefixes::withdraw::until_done";
             }
@@ -81735,25 +78236,14 @@ pub mod public_delegated_prefixes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::public_delegated_prefixes::WithdrawRequest::project].
@@ -81991,9 +78481,7 @@ pub mod region_autoscalers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionAutoscalers::delete::until_done";
@@ -82022,25 +78510,14 @@ pub mod region_autoscalers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [autoscaler][crate::model::region_autoscalers::DeleteRequest::autoscaler].
@@ -82218,9 +78695,7 @@ pub mod region_autoscalers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionAutoscalers::insert::until_done";
@@ -82249,25 +78724,14 @@ pub mod region_autoscalers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_autoscalers::InsertRequest::project].
@@ -82571,9 +79035,7 @@ pub mod region_autoscalers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionAutoscalers::patch::until_done";
@@ -82602,25 +79064,14 @@ pub mod region_autoscalers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [autoscaler][crate::model::region_autoscalers::PatchRequest::autoscaler].
@@ -82850,9 +79301,7 @@ pub mod region_autoscalers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionAutoscalers::update::until_done";
@@ -82881,25 +79330,14 @@ pub mod region_autoscalers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [autoscaler][crate::model::region_autoscalers::UpdateRequest::autoscaler].
@@ -83167,9 +79605,7 @@ pub mod region_backend_buckets {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionBackendBuckets::delete::until_done";
@@ -83198,25 +79634,14 @@ pub mod region_backend_buckets {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_bucket][crate::model::region_backend_buckets::DeleteRequest::backend_bucket].
@@ -83492,9 +79917,7 @@ pub mod region_backend_buckets {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionBackendBuckets::insert::until_done";
@@ -83523,25 +79946,14 @@ pub mod region_backend_buckets {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_backend_buckets::InsertRequest::project].
@@ -84034,9 +80446,7 @@ pub mod region_backend_buckets {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionBackendBuckets::patch::until_done";
@@ -84065,25 +80475,14 @@ pub mod region_backend_buckets {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_bucket][crate::model::region_backend_buckets::PatchRequest::backend_bucket].
@@ -84531,9 +80930,7 @@ pub mod region_backend_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionBackendServices::delete::until_done";
@@ -84562,25 +80959,14 @@ pub mod region_backend_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_service][crate::model::region_backend_services::DeleteRequest::backend_service].
@@ -84949,9 +81335,7 @@ pub mod region_backend_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionBackendServices::insert::until_done";
@@ -84980,25 +81364,14 @@ pub mod region_backend_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_backend_services::InsertRequest::project].
@@ -85493,9 +81866,7 @@ pub mod region_backend_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionBackendServices::patch::until_done";
@@ -85524,25 +81895,14 @@ pub mod region_backend_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_service][crate::model::region_backend_services::PatchRequest::backend_service].
@@ -85762,9 +82122,7 @@ pub mod region_backend_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionBackendServices::set_security_policy::until_done";
             }
@@ -85792,25 +82150,14 @@ pub mod region_backend_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_service][crate::model::region_backend_services::SetSecurityPolicyRequest::backend_service].
@@ -86028,9 +82375,7 @@ pub mod region_backend_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionBackendServices::update::until_done";
@@ -86059,25 +82404,14 @@ pub mod region_backend_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [backend_service][crate::model::region_backend_services::UpdateRequest::backend_service].
@@ -86631,9 +82965,7 @@ pub mod region_commitments {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionCommitments::insert::until_done";
@@ -86662,25 +82994,14 @@ pub mod region_commitments {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_commitments::InsertRequest::project].
@@ -86982,9 +83303,7 @@ pub mod region_commitments {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionCommitments::update::until_done";
@@ -87013,25 +83332,14 @@ pub mod region_commitments {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [commitment][crate::model::region_commitments::UpdateRequest::commitment].
@@ -87550,9 +83858,7 @@ pub mod region_composite_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionCompositeHealthChecks::delete::until_done";
             }
@@ -87580,25 +83886,14 @@ pub mod region_composite_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [composite_health_check][crate::model::region_composite_health_checks::DeleteRequest::composite_health_check].
@@ -87857,9 +84152,7 @@ pub mod region_composite_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionCompositeHealthChecks::insert::until_done";
             }
@@ -87887,25 +84180,14 @@ pub mod region_composite_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_composite_health_checks::InsertRequest::project].
@@ -88211,9 +84493,7 @@ pub mod region_composite_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionCompositeHealthChecks::patch::until_done";
             }
@@ -88241,25 +84521,14 @@ pub mod region_composite_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [composite_health_check][crate::model::region_composite_health_checks::PatchRequest::composite_health_check].
@@ -88938,9 +85207,7 @@ pub mod region_disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionDisks::add_resource_policies::until_done";
             }
@@ -88968,25 +85235,14 @@ pub mod region_disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::region_disks::AddResourcePoliciesRequest::disk].
@@ -89107,9 +85363,7 @@ pub mod region_disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionDisks::bulk_insert::until_done";
@@ -89138,25 +85392,14 @@ pub mod region_disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_disks::BulkInsertRequest::project].
@@ -89271,9 +85514,7 @@ pub mod region_disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionDisks::create_snapshot::until_done";
@@ -89302,25 +85543,14 @@ pub mod region_disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::region_disks::CreateSnapshotRequest::disk].
@@ -89441,9 +85671,7 @@ pub mod region_disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionDisks::delete::until_done";
@@ -89472,25 +85700,14 @@ pub mod region_disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::region_disks::DeleteRequest::disk].
@@ -89764,9 +85981,7 @@ pub mod region_disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionDisks::insert::until_done";
@@ -89795,25 +86010,14 @@ pub mod region_disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_disks::InsertRequest::project].
@@ -90135,9 +86339,7 @@ pub mod region_disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionDisks::remove_resource_policies::until_done";
             }
@@ -90165,25 +86367,14 @@ pub mod region_disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::region_disks::RemoveResourcePoliciesRequest::disk].
@@ -90304,9 +86495,7 @@ pub mod region_disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionDisks::resize::until_done";
@@ -90335,25 +86524,14 @@ pub mod region_disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::region_disks::ResizeRequest::disk].
@@ -90567,9 +86745,7 @@ pub mod region_disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionDisks::set_labels::until_done";
@@ -90598,25 +86774,14 @@ pub mod region_disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_disks::SetLabelsRequest::project].
@@ -90739,9 +86904,7 @@ pub mod region_disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionDisks::start_async_replication::until_done";
             }
@@ -90769,25 +86932,14 @@ pub mod region_disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::region_disks::StartAsyncReplicationRequest::disk].
@@ -90910,9 +87062,7 @@ pub mod region_disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionDisks::stop_async_replication::until_done";
             }
@@ -90940,25 +87090,14 @@ pub mod region_disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::region_disks::StopAsyncReplicationRequest::disk].
@@ -91065,9 +87204,7 @@ pub mod region_disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionDisks::stop_group_async_replication::until_done";
             }
@@ -91095,25 +87232,14 @@ pub mod region_disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_disks::StopGroupAsyncReplicationRequest::project].
@@ -91323,9 +87449,7 @@ pub mod region_disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionDisks::update::until_done";
@@ -91354,25 +87478,14 @@ pub mod region_disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::region_disks::UpdateRequest::disk].
@@ -91529,9 +87642,7 @@ pub mod region_disks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionDisks::update_kms_key::until_done";
@@ -91560,25 +87671,14 @@ pub mod region_disks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [disk][crate::model::region_disks::UpdateKmsKeyRequest::disk].
@@ -92063,9 +88163,7 @@ pub mod region_health_aggregation_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionHealthAggregationPolicies::delete::until_done";
             }
@@ -92093,25 +88191,14 @@ pub mod region_health_aggregation_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [health_aggregation_policy][crate::model::region_health_aggregation_policies::DeleteRequest::health_aggregation_policy].
@@ -92295,9 +88382,7 @@ pub mod region_health_aggregation_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionHealthAggregationPolicies::insert::until_done";
             }
@@ -92325,25 +88410,14 @@ pub mod region_health_aggregation_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_health_aggregation_policies::InsertRequest::project].
@@ -92655,9 +88729,7 @@ pub mod region_health_aggregation_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionHealthAggregationPolicies::patch::until_done";
             }
@@ -92685,25 +88757,14 @@ pub mod region_health_aggregation_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [health_aggregation_policy][crate::model::region_health_aggregation_policies::PatchRequest::health_aggregation_policy].
@@ -93281,9 +89342,7 @@ pub mod region_health_check_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionHealthCheckServices::delete::until_done";
             }
@@ -93311,25 +89370,14 @@ pub mod region_health_check_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [health_check_service][crate::model::region_health_check_services::DeleteRequest::health_check_service].
@@ -93507,9 +89555,7 @@ pub mod region_health_check_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionHealthCheckServices::insert::until_done";
             }
@@ -93537,25 +89583,14 @@ pub mod region_health_check_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_health_check_services::InsertRequest::project].
@@ -93861,9 +89896,7 @@ pub mod region_health_check_services {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionHealthCheckServices::patch::until_done";
@@ -93892,25 +89925,14 @@ pub mod region_health_check_services {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [health_check_service][crate::model::region_health_check_services::PatchRequest::health_check_service].
@@ -94263,9 +90285,7 @@ pub mod region_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionHealthChecks::delete::until_done";
@@ -94294,25 +90314,14 @@ pub mod region_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [health_check][crate::model::region_health_checks::DeleteRequest::health_check].
@@ -94490,9 +90499,7 @@ pub mod region_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionHealthChecks::insert::until_done";
@@ -94521,25 +90528,14 @@ pub mod region_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_health_checks::InsertRequest::project].
@@ -94841,9 +90837,7 @@ pub mod region_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionHealthChecks::patch::until_done";
@@ -94872,25 +90866,14 @@ pub mod region_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [health_check][crate::model::region_health_checks::PatchRequest::health_check].
@@ -95108,9 +91091,7 @@ pub mod region_health_checks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionHealthChecks::update::until_done";
@@ -95139,25 +91120,14 @@ pub mod region_health_checks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [health_check][crate::model::region_health_checks::UpdateRequest::health_check].
@@ -95636,9 +91606,7 @@ pub mod region_health_sources {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionHealthSources::delete::until_done";
@@ -95667,25 +91635,14 @@ pub mod region_health_sources {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [health_source][crate::model::region_health_sources::DeleteRequest::health_source].
@@ -95938,9 +91895,7 @@ pub mod region_health_sources {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionHealthSources::insert::until_done";
@@ -95969,25 +91924,14 @@ pub mod region_health_sources {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_health_sources::InsertRequest::project].
@@ -96289,9 +92233,7 @@ pub mod region_health_sources {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionHealthSources::patch::until_done";
@@ -96320,25 +92262,14 @@ pub mod region_health_sources {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [health_source][crate::model::region_health_sources::PatchRequest::health_source].
@@ -96704,9 +92635,7 @@ pub mod region_instance_group_manager_resize_requests {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagerResizeRequests::cancel::until_done";
             }
@@ -96734,25 +92663,14 @@ pub mod region_instance_group_manager_resize_requests {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_manager_resize_requests::CancelRequest::instance_group_manager].
@@ -96867,9 +92785,7 @@ pub mod region_instance_group_manager_resize_requests {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagerResizeRequests::delete::until_done";
             }
@@ -96897,25 +92813,14 @@ pub mod region_instance_group_manager_resize_requests {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_manager_resize_requests::DeleteRequest::instance_group_manager].
@@ -97117,9 +93022,7 @@ pub mod region_instance_group_manager_resize_requests {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagerResizeRequests::insert::until_done";
             }
@@ -97147,25 +93050,14 @@ pub mod region_instance_group_manager_resize_requests {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_manager_resize_requests::InsertRequest::instance_group_manager].
@@ -97632,9 +93524,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::abandon_instances::until_done";
             }
@@ -97662,25 +93552,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::AbandonInstancesRequest::instance_group_manager].
@@ -97807,9 +93686,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::apply_updates_to_instances::until_done";
             }
@@ -97837,25 +93714,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::ApplyUpdatesToInstancesRequest::instance_group_manager].
@@ -97962,9 +93828,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::create_instances::until_done";
             }
@@ -97992,25 +93856,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::CreateInstancesRequest::instance_group_manager].
@@ -98133,9 +93986,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::delete::until_done";
             }
@@ -98163,25 +94014,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::DeleteRequest::instance_group_manager].
@@ -98288,9 +94128,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::delete_instances::until_done";
             }
@@ -98318,25 +94156,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::DeleteInstancesRequest::instance_group_manager].
@@ -98463,9 +94290,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::delete_per_instance_configs::until_done";
             }
@@ -98493,25 +94318,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::DeletePerInstanceConfigsRequest::instance_group_manager].
@@ -98691,9 +94505,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::insert::until_done";
             }
@@ -98721,25 +94533,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_instance_group_managers::InsertRequest::project].
@@ -99654,9 +95455,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::patch::until_done";
             }
@@ -99684,25 +95483,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::PatchRequest::instance_group_manager].
@@ -99829,9 +95617,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::patch_per_instance_configs::until_done";
             }
@@ -99859,25 +95645,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::PatchPerInstanceConfigsRequest::instance_group_manager].
@@ -100002,9 +95777,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::recreate_instances::until_done";
             }
@@ -100032,25 +95805,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::RecreateInstancesRequest::instance_group_manager].
@@ -100173,9 +95935,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::resize::until_done";
             }
@@ -100203,25 +95963,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::ResizeRequest::instance_group_manager].
@@ -100334,9 +96083,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::resume_instances::until_done";
             }
@@ -100364,25 +96111,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::ResumeInstancesRequest::instance_group_manager].
@@ -100507,9 +96243,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::set_instance_template::until_done";
             }
@@ -100537,25 +96271,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::SetInstanceTemplateRequest::instance_group_manager].
@@ -100680,9 +96403,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::set_target_pools::until_done";
             }
@@ -100710,25 +96431,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::SetTargetPoolsRequest::instance_group_manager].
@@ -100853,9 +96563,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::start_instances::until_done";
             }
@@ -100883,25 +96591,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::StartInstancesRequest::instance_group_manager].
@@ -101026,9 +96723,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::stop_instances::until_done";
             }
@@ -101056,25 +96751,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::StopInstancesRequest::instance_group_manager].
@@ -101199,9 +96883,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::suspend_instances::until_done";
             }
@@ -101229,25 +96911,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::SuspendInstancesRequest::instance_group_manager].
@@ -101374,9 +97045,7 @@ pub mod region_instance_group_managers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroupManagers::update_per_instance_configs::until_done";
             }
@@ -101404,25 +97073,14 @@ pub mod region_instance_group_managers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::UpdatePerInstanceConfigsRequest::instance_group_manager].
@@ -102163,9 +97821,7 @@ pub mod region_instance_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstanceGroups::set_named_ports::until_done";
             }
@@ -102193,25 +97849,14 @@ pub mod region_instance_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_group][crate::model::region_instance_groups::SetNamedPortsRequest::instance_group].
@@ -102564,9 +98209,7 @@ pub mod region_instance_templates {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionInstanceTemplates::delete::until_done";
@@ -102595,25 +98238,14 @@ pub mod region_instance_templates {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instance_template][crate::model::region_instance_templates::DeleteRequest::instance_template].
@@ -102791,9 +98423,7 @@ pub mod region_instance_templates {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionInstanceTemplates::insert::until_done";
@@ -102822,25 +98452,14 @@ pub mod region_instance_templates {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_instance_templates::InsertRequest::project].
@@ -103279,9 +98898,7 @@ pub mod region_instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionInstances::bulk_insert::until_done";
@@ -103310,25 +98927,14 @@ pub mod region_instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_instances::BulkInsertRequest::project].
@@ -103580,9 +99186,7 @@ pub mod region_instant_snapshot_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstantSnapshotGroups::delete::until_done";
             }
@@ -103610,25 +99214,14 @@ pub mod region_instant_snapshot_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instant_snapshot_group][crate::model::region_instant_snapshot_groups::DeleteRequest::instant_snapshot_group].
@@ -103908,9 +99501,7 @@ pub mod region_instant_snapshot_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstantSnapshotGroups::insert::until_done";
             }
@@ -103938,25 +99529,14 @@ pub mod region_instant_snapshot_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_instant_snapshot_groups::InsertRequest::project].
@@ -104609,9 +100189,7 @@ pub mod region_instant_snapshots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionInstantSnapshots::delete::until_done";
@@ -104640,25 +100218,14 @@ pub mod region_instant_snapshots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [instant_snapshot][crate::model::region_instant_snapshots::DeleteRequest::instant_snapshot].
@@ -104936,9 +100503,7 @@ pub mod region_instant_snapshots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionInstantSnapshots::insert::until_done";
@@ -104967,25 +100532,14 @@ pub mod region_instant_snapshots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_instant_snapshots::InsertRequest::project].
@@ -105386,9 +100940,7 @@ pub mod region_instant_snapshots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionInstantSnapshots::set_labels::until_done";
             }
@@ -105416,25 +100968,14 @@ pub mod region_instant_snapshots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_instant_snapshots::SetLabelsRequest::project].
@@ -105791,9 +101332,7 @@ pub mod region_network_endpoint_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNetworkEndpointGroups::attach_network_endpoints::until_done";
             }
@@ -105821,25 +101360,14 @@ pub mod region_network_endpoint_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network_endpoint_group][crate::model::region_network_endpoint_groups::AttachNetworkEndpointsRequest::network_endpoint_group].
@@ -105962,9 +101490,7 @@ pub mod region_network_endpoint_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNetworkEndpointGroups::delete::until_done";
             }
@@ -105992,25 +101518,14 @@ pub mod region_network_endpoint_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network_endpoint_group][crate::model::region_network_endpoint_groups::DeleteRequest::network_endpoint_group].
@@ -106117,9 +101632,7 @@ pub mod region_network_endpoint_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNetworkEndpointGroups::detach_network_endpoints::until_done";
             }
@@ -106147,25 +101660,14 @@ pub mod region_network_endpoint_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [network_endpoint_group][crate::model::region_network_endpoint_groups::DetachNetworkEndpointsRequest::network_endpoint_group].
@@ -106363,9 +101865,7 @@ pub mod region_network_endpoint_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNetworkEndpointGroups::insert::until_done";
             }
@@ -106393,25 +101893,14 @@ pub mod region_network_endpoint_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_network_endpoint_groups::InsertRequest::project].
@@ -107057,9 +102546,7 @@ pub mod region_network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNetworkFirewallPolicies::add_association::until_done";
             }
@@ -107087,25 +102574,14 @@ pub mod region_network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::region_network_firewall_policies::AddAssociationRequest::firewall_policy].
@@ -107251,9 +102727,7 @@ pub mod region_network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNetworkFirewallPolicies::add_rule::until_done";
             }
@@ -107281,25 +102755,14 @@ pub mod region_network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::region_network_firewall_policies::AddRuleRequest::firewall_policy].
@@ -107460,9 +102923,7 @@ pub mod region_network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNetworkFirewallPolicies::clone_rules::until_done";
             }
@@ -107490,25 +102951,14 @@ pub mod region_network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::region_network_firewall_policies::CloneRulesRequest::firewall_policy].
@@ -107633,9 +103083,7 @@ pub mod region_network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNetworkFirewallPolicies::delete::until_done";
             }
@@ -107663,25 +103111,14 @@ pub mod region_network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::region_network_firewall_policies::DeleteRequest::firewall_policy].
@@ -108241,9 +103678,7 @@ pub mod region_network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNetworkFirewallPolicies::insert::until_done";
             }
@@ -108271,25 +103706,14 @@ pub mod region_network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_network_firewall_policies::InsertRequest::project].
@@ -108597,9 +104021,7 @@ pub mod region_network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNetworkFirewallPolicies::patch::until_done";
             }
@@ -108627,25 +104049,14 @@ pub mod region_network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::region_network_firewall_policies::PatchRequest::firewall_policy].
@@ -108770,9 +104181,7 @@ pub mod region_network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNetworkFirewallPolicies::patch_rule::until_done";
             }
@@ -108800,25 +104209,14 @@ pub mod region_network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::region_network_firewall_policies::PatchRuleRequest::firewall_policy].
@@ -108961,9 +104359,7 @@ pub mod region_network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNetworkFirewallPolicies::remove_association::until_done";
             }
@@ -108991,25 +104387,14 @@ pub mod region_network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::region_network_firewall_policies::RemoveAssociationRequest::firewall_policy].
@@ -109134,9 +104519,7 @@ pub mod region_network_firewall_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNetworkFirewallPolicies::remove_rule::until_done";
             }
@@ -109164,25 +104547,14 @@ pub mod region_network_firewall_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [firewall_policy][crate::model::region_network_firewall_policies::RemoveRuleRequest::firewall_policy].
@@ -109857,9 +105229,7 @@ pub mod region_notification_endpoints {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNotificationEndpoints::delete::until_done";
             }
@@ -109887,25 +105257,14 @@ pub mod region_notification_endpoints {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [notification_endpoint][crate::model::region_notification_endpoints::DeleteRequest::notification_endpoint].
@@ -110083,9 +105442,7 @@ pub mod region_notification_endpoints {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionNotificationEndpoints::insert::until_done";
             }
@@ -110113,25 +105470,14 @@ pub mod region_notification_endpoints {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_notification_endpoints::InsertRequest::project].
@@ -111141,9 +106487,7 @@ pub mod region_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionSecurityPolicies::add_rule::until_done";
@@ -111172,25 +106516,14 @@ pub mod region_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_security_policies::AddRuleRequest::project].
@@ -111311,9 +106644,7 @@ pub mod region_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionSecurityPolicies::delete::until_done";
@@ -111342,25 +106673,14 @@ pub mod region_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_security_policies::DeleteRequest::project].
@@ -111631,9 +106951,7 @@ pub mod region_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionSecurityPolicies::insert::until_done";
@@ -111662,25 +106980,14 @@ pub mod region_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_security_policies::InsertRequest::project].
@@ -112002,9 +107309,7 @@ pub mod region_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionSecurityPolicies::patch::until_done";
@@ -112033,25 +107338,14 @@ pub mod region_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_security_policies::PatchRequest::project].
@@ -112190,9 +107484,7 @@ pub mod region_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionSecurityPolicies::patch_rule::until_done";
             }
@@ -112220,25 +107512,14 @@ pub mod region_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [priority][crate::model::region_security_policies::PatchRuleRequest::priority].
@@ -112397,9 +107678,7 @@ pub mod region_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionSecurityPolicies::remove_rule::until_done";
             }
@@ -112427,25 +107706,14 @@ pub mod region_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [priority][crate::model::region_security_policies::RemoveRuleRequest::priority].
@@ -112548,9 +107816,7 @@ pub mod region_security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionSecurityPolicies::set_labels::until_done";
             }
@@ -112578,25 +107844,14 @@ pub mod region_security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_security_policies::SetLabelsRequest::project].
@@ -112921,9 +108176,7 @@ pub mod region_snapshot_settings {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionSnapshotSettings::patch::until_done";
@@ -112952,25 +108205,14 @@ pub mod region_snapshot_settings {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_snapshot_settings::PatchRequest::project].
@@ -113238,9 +108480,7 @@ pub mod region_snapshots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionSnapshots::delete::until_done";
@@ -113269,25 +108509,14 @@ pub mod region_snapshots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_snapshots::DeleteRequest::project].
@@ -113561,9 +108790,7 @@ pub mod region_snapshots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionSnapshots::insert::until_done";
@@ -113592,25 +108819,14 @@ pub mod region_snapshots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_snapshots::InsertRequest::project].
@@ -114005,9 +109221,7 @@ pub mod region_snapshots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionSnapshots::set_labels::until_done";
@@ -114036,25 +109250,14 @@ pub mod region_snapshots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_snapshots::SetLabelsRequest::project].
@@ -114270,9 +109473,7 @@ pub mod region_snapshots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionSnapshots::update_kms_key::until_done";
@@ -114301,25 +109502,14 @@ pub mod region_snapshots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_snapshots::UpdateKmsKeyRequest::project].
@@ -114575,9 +109765,7 @@ pub mod region_ssl_certificates {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionSslCertificates::delete::until_done";
@@ -114606,25 +109794,14 @@ pub mod region_ssl_certificates {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_ssl_certificates::DeleteRequest::project].
@@ -114802,9 +109979,7 @@ pub mod region_ssl_certificates {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionSslCertificates::insert::until_done";
@@ -114833,25 +110008,14 @@ pub mod region_ssl_certificates {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_ssl_certificates::InsertRequest::project].
@@ -115290,9 +110454,7 @@ pub mod region_ssl_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionSslPolicies::delete::until_done";
@@ -115321,25 +110483,14 @@ pub mod region_ssl_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_ssl_policies::DeleteRequest::project].
@@ -115517,9 +110668,7 @@ pub mod region_ssl_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionSslPolicies::insert::until_done";
@@ -115548,25 +110697,14 @@ pub mod region_ssl_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_ssl_policies::InsertRequest::project].
@@ -116031,9 +111169,7 @@ pub mod region_ssl_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionSslPolicies::patch::until_done";
@@ -116062,25 +111198,14 @@ pub mod region_ssl_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_ssl_policies::PatchRequest::project].
@@ -116336,9 +111461,7 @@ pub mod region_target_http_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionTargetHttpProxies::delete::until_done";
@@ -116367,25 +111490,14 @@ pub mod region_target_http_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_target_http_proxies::DeleteRequest::project].
@@ -116563,9 +111675,7 @@ pub mod region_target_http_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionTargetHttpProxies::insert::until_done";
@@ -116594,25 +111704,14 @@ pub mod region_target_http_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_target_http_proxies::InsertRequest::project].
@@ -116918,9 +112017,7 @@ pub mod region_target_http_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionTargetHttpProxies::set_url_map::until_done";
             }
@@ -116948,25 +112045,14 @@ pub mod region_target_http_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_target_http_proxies::SetUrlMapRequest::project].
@@ -117222,9 +112308,7 @@ pub mod region_target_https_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionTargetHttpsProxies::delete::until_done";
@@ -117253,25 +112337,14 @@ pub mod region_target_https_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_target_https_proxies::DeleteRequest::project].
@@ -117449,9 +112522,7 @@ pub mod region_target_https_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionTargetHttpsProxies::insert::until_done";
@@ -117480,25 +112551,14 @@ pub mod region_target_https_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_target_https_proxies::InsertRequest::project].
@@ -117802,9 +112862,7 @@ pub mod region_target_https_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionTargetHttpsProxies::patch::until_done";
@@ -117833,25 +112891,14 @@ pub mod region_target_https_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_target_https_proxies::PatchRequest::project].
@@ -117976,9 +113023,7 @@ pub mod region_target_https_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionTargetHttpsProxies::set_ssl_certificates::until_done";
             }
@@ -118006,25 +113051,14 @@ pub mod region_target_https_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_target_https_proxies::SetSslCertificatesRequest::project].
@@ -118149,9 +113183,7 @@ pub mod region_target_https_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::RegionTargetHttpsProxies::set_url_map::until_done";
             }
@@ -118179,25 +113211,14 @@ pub mod region_target_https_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_target_https_proxies::SetUrlMapRequest::project].
@@ -118453,9 +113474,7 @@ pub mod region_target_tcp_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionTargetTcpProxies::delete::until_done";
@@ -118484,25 +113503,14 @@ pub mod region_target_tcp_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_target_tcp_proxies::DeleteRequest::project].
@@ -118680,9 +113688,7 @@ pub mod region_target_tcp_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionTargetTcpProxies::insert::until_done";
@@ -118711,25 +113717,14 @@ pub mod region_target_tcp_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_target_tcp_proxies::InsertRequest::project].
@@ -119168,9 +114163,7 @@ pub mod region_url_maps {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionUrlMaps::delete::until_done";
@@ -119199,25 +114192,14 @@ pub mod region_url_maps {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_url_maps::DeleteRequest::project].
@@ -119395,9 +114377,7 @@ pub mod region_url_maps {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionUrlMaps::insert::until_done";
@@ -119426,25 +114406,14 @@ pub mod region_url_maps {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_url_maps::InsertRequest::project].
@@ -119746,9 +114715,7 @@ pub mod region_url_maps {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionUrlMaps::patch::until_done";
@@ -119777,25 +114744,14 @@ pub mod region_url_maps {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_url_maps::PatchRequest::project].
@@ -119916,9 +114872,7 @@ pub mod region_url_maps {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RegionUrlMaps::update::until_done";
@@ -119947,25 +114901,14 @@ pub mod region_url_maps {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::region_url_maps::UpdateRequest::project].
@@ -121261,9 +116204,7 @@ pub mod reservation_blocks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::ReservationBlocks::perform_maintenance::until_done";
             }
@@ -121291,25 +116232,14 @@ pub mod reservation_blocks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::reservation_blocks::PerformMaintenanceRequest::project].
@@ -121854,9 +116784,7 @@ pub mod reservation_slots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ReservationSlots::get_version::until_done";
@@ -121885,25 +116813,14 @@ pub mod reservation_slots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [parent_name][crate::model::reservation_slots::GetVersionRequest::parent_name].
@@ -122227,9 +117144,7 @@ pub mod reservation_slots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ReservationSlots::update::until_done";
@@ -122258,25 +117173,14 @@ pub mod reservation_slots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [parent_name][crate::model::reservation_slots::UpdateRequest::parent_name].
@@ -122741,9 +117645,7 @@ pub mod reservation_sub_blocks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::ReservationSubBlocks::get_version::until_done";
             }
@@ -122771,25 +117673,14 @@ pub mod reservation_sub_blocks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [parent_name][crate::model::reservation_sub_blocks::GetVersionRequest::parent_name].
@@ -123117,9 +118008,7 @@ pub mod reservation_sub_blocks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::ReservationSubBlocks::perform_maintenance::until_done";
             }
@@ -123147,25 +118036,14 @@ pub mod reservation_sub_blocks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [parent_name][crate::model::reservation_sub_blocks::PerformMaintenanceRequest::parent_name].
@@ -123276,9 +118154,7 @@ pub mod reservation_sub_blocks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::ReservationSubBlocks::report_faulty::until_done";
             }
@@ -123306,25 +118182,14 @@ pub mod reservation_sub_blocks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [parent_name][crate::model::reservation_sub_blocks::ReportFaultyRequest::parent_name].
@@ -124011,9 +118876,7 @@ pub mod reservations {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Reservations::delete::until_done";
@@ -124042,25 +118905,14 @@ pub mod reservations {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::reservations::DeleteRequest::project].
@@ -124334,9 +119186,7 @@ pub mod reservations {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Reservations::insert::until_done";
@@ -124365,25 +119215,14 @@ pub mod reservations {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::reservations::InsertRequest::project].
@@ -124687,9 +119526,7 @@ pub mod reservations {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Reservations::perform_maintenance::until_done";
             }
@@ -124717,25 +119554,14 @@ pub mod reservations {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::reservations::PerformMaintenanceRequest::project].
@@ -124856,9 +119682,7 @@ pub mod reservations {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Reservations::resize::until_done";
@@ -124887,25 +119711,14 @@ pub mod reservations {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::reservations::ResizeRequest::project].
@@ -125214,9 +120027,7 @@ pub mod reservations {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Reservations::update::until_done";
@@ -125245,25 +120056,14 @@ pub mod reservations {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [paths][crate::model::reservations::UpdateRequest::paths].
@@ -125778,9 +120578,7 @@ pub mod resource_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ResourcePolicies::delete::until_done";
@@ -125809,25 +120607,14 @@ pub mod resource_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::resource_policies::DeleteRequest::project].
@@ -126101,9 +120888,7 @@ pub mod resource_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ResourcePolicies::insert::until_done";
@@ -126132,25 +120917,14 @@ pub mod resource_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::resource_policies::InsertRequest::project].
@@ -126454,9 +121228,7 @@ pub mod resource_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ResourcePolicies::patch::until_done";
@@ -126485,25 +121257,14 @@ pub mod resource_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::resource_policies::PatchRequest::project].
@@ -126965,9 +121726,7 @@ pub mod rollout_plans {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RolloutPlans::delete::until_done";
@@ -126993,25 +121752,14 @@ pub mod rollout_plans {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::rollout_plans::DeleteRequest::project].
@@ -127177,9 +121925,7 @@ pub mod rollout_plans {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::RolloutPlans::insert::until_done";
@@ -127205,25 +121951,14 @@ pub mod rollout_plans {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::rollout_plans::InsertRequest::project].
@@ -127642,9 +122377,7 @@ pub mod rollouts {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Rollouts::advance::until_done";
@@ -127670,25 +122403,14 @@ pub mod rollouts {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [current_wave_number][crate::model::rollouts::AdvanceRequest::current_wave_number].
@@ -127801,9 +122523,7 @@ pub mod rollouts {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Rollouts::cancel::until_done";
@@ -127829,25 +122549,14 @@ pub mod rollouts {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::rollouts::CancelRequest::project].
@@ -127960,9 +122669,7 @@ pub mod rollouts {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Rollouts::delete::until_done";
@@ -127988,25 +122695,14 @@ pub mod rollouts {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::rollouts::DeleteRequest::project].
@@ -128340,9 +123036,7 @@ pub mod rollouts {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Rollouts::pause::until_done";
@@ -128368,25 +123062,14 @@ pub mod rollouts {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [etag][crate::model::rollouts::PauseRequest::etag].
@@ -128499,9 +123182,7 @@ pub mod rollouts {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Rollouts::resume::until_done";
@@ -128527,25 +123208,14 @@ pub mod rollouts {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [etag][crate::model::rollouts::ResumeRequest::etag].
@@ -128997,9 +123667,7 @@ pub mod routers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Routers::delete::until_done";
@@ -129028,25 +123696,14 @@ pub mod routers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::routers::DeleteRequest::project].
@@ -129147,9 +123804,7 @@ pub mod routers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Routers::delete_route_policy::until_done";
@@ -129178,25 +123833,14 @@ pub mod routers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [policy][crate::model::routers::DeleteRoutePolicyRequest::policy].
@@ -129850,9 +124494,7 @@ pub mod routers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Routers::insert::until_done";
@@ -129881,25 +124523,14 @@ pub mod routers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::routers::InsertRequest::project].
@@ -130669,9 +125300,7 @@ pub mod routers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Routers::patch::until_done";
             }
@@ -130699,25 +125328,14 @@ pub mod routers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::routers::PatchRequest::project].
@@ -130836,9 +125454,7 @@ pub mod routers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Routers::patch_route_policy::until_done";
@@ -130867,25 +125483,14 @@ pub mod routers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::routers::PatchRoutePolicyRequest::project].
@@ -131092,9 +125697,7 @@ pub mod routers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Routers::update::until_done";
@@ -131123,25 +125726,14 @@ pub mod routers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::routers::UpdateRequest::project].
@@ -131260,9 +125852,7 @@ pub mod routers {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Routers::update_route_policy::until_done";
@@ -131291,25 +125881,14 @@ pub mod routers {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::routers::UpdateRoutePolicyRequest::project].
@@ -131556,9 +126135,7 @@ pub mod routes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Routes::delete::until_done";
             }
@@ -131583,25 +126160,14 @@ pub mod routes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::routes::DeleteRequest::project].
@@ -131757,9 +126323,7 @@ pub mod routes {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Routes::insert::until_done";
             }
@@ -131784,25 +126348,14 @@ pub mod routes {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::routes::InsertRequest::project].
@@ -132299,9 +126852,7 @@ pub mod security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::SecurityPolicies::add_rule::until_done";
@@ -132327,25 +126878,14 @@ pub mod security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::security_policies::AddRuleRequest::project].
@@ -132683,9 +127223,7 @@ pub mod security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::SecurityPolicies::delete::until_done";
@@ -132711,25 +127249,14 @@ pub mod security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::security_policies::DeleteRequest::project].
@@ -132982,9 +127509,7 @@ pub mod security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::SecurityPolicies::insert::until_done";
@@ -133010,25 +127535,14 @@ pub mod security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::security_policies::InsertRequest::project].
@@ -133497,9 +128011,7 @@ pub mod security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::SecurityPolicies::patch::until_done";
@@ -133525,25 +128037,14 @@ pub mod security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::security_policies::PatchRequest::project].
@@ -133676,9 +128177,7 @@ pub mod security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::SecurityPolicies::patch_rule::until_done";
@@ -133704,25 +128203,14 @@ pub mod security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [priority][crate::model::security_policies::PatchRuleRequest::priority].
@@ -133873,9 +128361,7 @@ pub mod security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::SecurityPolicies::remove_rule::until_done";
@@ -133901,25 +128387,14 @@ pub mod security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [priority][crate::model::security_policies::RemoveRuleRequest::priority].
@@ -134016,9 +128491,7 @@ pub mod security_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::SecurityPolicies::set_labels::until_done";
@@ -134044,25 +128517,14 @@ pub mod security_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::security_policies::SetLabelsRequest::project].
@@ -134511,9 +128973,7 @@ pub mod service_attachments {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ServiceAttachments::delete::until_done";
@@ -134542,25 +129002,14 @@ pub mod service_attachments {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::service_attachments::DeleteRequest::project].
@@ -134852,9 +129301,7 @@ pub mod service_attachments {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ServiceAttachments::insert::until_done";
@@ -134883,25 +129330,14 @@ pub mod service_attachments {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::service_attachments::InsertRequest::project].
@@ -135205,9 +129641,7 @@ pub mod service_attachments {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ServiceAttachments::patch::until_done";
@@ -135236,25 +129670,14 @@ pub mod service_attachments {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::service_attachments::PatchRequest::project].
@@ -135763,9 +130186,7 @@ pub mod snapshot_settings {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::SnapshotSettings::patch::until_done";
@@ -135791,25 +130212,14 @@ pub mod snapshot_settings {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::snapshot_settings::PatchRequest::project].
@@ -136065,9 +130475,7 @@ pub mod snapshots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Snapshots::delete::until_done";
@@ -136093,25 +130501,14 @@ pub mod snapshots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::snapshots::DeleteRequest::project].
@@ -136364,9 +130761,7 @@ pub mod snapshots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Snapshots::insert::until_done";
@@ -136392,25 +130787,14 @@ pub mod snapshots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::snapshots::InsertRequest::project].
@@ -136784,9 +131168,7 @@ pub mod snapshots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Snapshots::set_labels::until_done";
@@ -136812,25 +131194,14 @@ pub mod snapshots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::snapshots::SetLabelsRequest::project].
@@ -137016,9 +131387,7 @@ pub mod snapshots {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Snapshots::update_kms_key::until_done";
@@ -137044,25 +131413,14 @@ pub mod snapshots {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::snapshots::UpdateKmsKeyRequest::project].
@@ -137529,9 +131887,7 @@ pub mod ssl_certificates {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::SslCertificates::delete::until_done";
@@ -137557,25 +131913,14 @@ pub mod ssl_certificates {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::ssl_certificates::DeleteRequest::project].
@@ -137741,9 +132086,7 @@ pub mod ssl_certificates {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::SslCertificates::insert::until_done";
@@ -137769,25 +132112,14 @@ pub mod ssl_certificates {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::ssl_certificates::InsertRequest::project].
@@ -138429,9 +132761,7 @@ pub mod ssl_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::SslPolicies::delete::until_done";
@@ -138457,25 +132787,14 @@ pub mod ssl_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::ssl_policies::DeleteRequest::project].
@@ -138641,9 +132960,7 @@ pub mod ssl_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::SslPolicies::insert::until_done";
@@ -138669,25 +132986,14 @@ pub mod ssl_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::ssl_policies::InsertRequest::project].
@@ -139132,9 +133438,7 @@ pub mod ssl_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::SslPolicies::patch::until_done";
@@ -139160,25 +133464,14 @@ pub mod ssl_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::ssl_policies::PatchRequest::project].
@@ -140190,9 +134483,7 @@ pub mod storage_pools {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::StoragePools::delete::until_done";
@@ -140221,25 +134512,14 @@ pub mod storage_pools {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::storage_pools::DeleteRequest::project].
@@ -140513,9 +134793,7 @@ pub mod storage_pools {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::StoragePools::insert::until_done";
@@ -140544,25 +134822,14 @@ pub mod storage_pools {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::storage_pools::InsertRequest::project].
@@ -141247,9 +135514,7 @@ pub mod storage_pools {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::StoragePools::update::until_done";
@@ -141278,25 +135543,14 @@ pub mod storage_pools {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::storage_pools::UpdateRequest::project].
@@ -141809,9 +136063,7 @@ pub mod subnetworks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Subnetworks::delete::until_done";
@@ -141840,25 +136092,14 @@ pub mod subnetworks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::subnetworks::DeleteRequest::project].
@@ -141963,9 +136204,7 @@ pub mod subnetworks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Subnetworks::expand_ip_cidr_range::until_done";
             }
@@ -141993,25 +136232,14 @@ pub mod subnetworks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::subnetworks::ExpandIpCidrRangeRequest::project].
@@ -142321,9 +136549,7 @@ pub mod subnetworks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Subnetworks::insert::until_done";
@@ -142352,25 +136578,14 @@ pub mod subnetworks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::subnetworks::InsertRequest::project].
@@ -142893,9 +137108,7 @@ pub mod subnetworks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::Subnetworks::patch::until_done";
@@ -142924,25 +137137,14 @@ pub mod subnetworks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [drain_timeout_seconds][crate::model::subnetworks::PatchRequest::drain_timeout_seconds].
@@ -143176,9 +137378,7 @@ pub mod subnetworks {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::Subnetworks::set_private_ip_google_access::until_done";
             }
@@ -143206,25 +137406,14 @@ pub mod subnetworks {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::subnetworks::SetPrivateIpGoogleAccessRequest::project].
@@ -143575,9 +137764,7 @@ pub mod target_grpc_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetGrpcProxies::delete::until_done";
@@ -143603,25 +137790,14 @@ pub mod target_grpc_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_grpc_proxies::DeleteRequest::project].
@@ -143787,9 +137963,7 @@ pub mod target_grpc_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetGrpcProxies::insert::until_done";
@@ -143815,25 +137989,14 @@ pub mod target_grpc_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_grpc_proxies::InsertRequest::project].
@@ -144125,9 +138288,7 @@ pub mod target_grpc_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetGrpcProxies::patch::until_done";
@@ -144153,25 +138314,14 @@ pub mod target_grpc_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_grpc_proxies::PatchRequest::project].
@@ -144638,9 +138788,7 @@ pub mod target_http_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetHttpProxies::delete::until_done";
@@ -144666,25 +138814,14 @@ pub mod target_http_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_http_proxies::DeleteRequest::project].
@@ -144850,9 +138987,7 @@ pub mod target_http_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetHttpProxies::insert::until_done";
@@ -144878,25 +139013,14 @@ pub mod target_http_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_http_proxies::InsertRequest::project].
@@ -145188,9 +139312,7 @@ pub mod target_http_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetHttpProxies::patch::until_done";
@@ -145216,25 +139338,14 @@ pub mod target_http_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_http_proxies::PatchRequest::project].
@@ -145349,9 +139460,7 @@ pub mod target_http_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetHttpProxies::set_url_map::until_done";
@@ -145377,25 +139486,14 @@ pub mod target_http_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_http_proxies::SetUrlMapRequest::project].
@@ -145862,9 +139960,7 @@ pub mod target_https_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetHttpsProxies::delete::until_done";
@@ -145890,25 +139986,14 @@ pub mod target_https_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_https_proxies::DeleteRequest::project].
@@ -146074,9 +140159,7 @@ pub mod target_https_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetHttpsProxies::insert::until_done";
@@ -146102,25 +140185,14 @@ pub mod target_https_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_https_proxies::InsertRequest::project].
@@ -146412,9 +140484,7 @@ pub mod target_https_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetHttpsProxies::patch::until_done";
@@ -146440,25 +140510,14 @@ pub mod target_https_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_https_proxies::PatchRequest::project].
@@ -146577,9 +140636,7 @@ pub mod target_https_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::TargetHttpsProxies::set_certificate_map::until_done";
             }
@@ -146604,25 +140661,14 @@ pub mod target_https_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_https_proxies::SetCertificateMapRequest::project].
@@ -146739,9 +140785,7 @@ pub mod target_https_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::TargetHttpsProxies::set_quic_override::until_done";
             }
@@ -146766,25 +140810,14 @@ pub mod target_https_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_https_proxies::SetQuicOverrideRequest::project].
@@ -146903,9 +140936,7 @@ pub mod target_https_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::TargetHttpsProxies::set_ssl_certificates::until_done";
             }
@@ -146930,25 +140961,14 @@ pub mod target_https_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_https_proxies::SetSslCertificatesRequest::project].
@@ -147065,9 +141085,7 @@ pub mod target_https_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::TargetHttpsProxies::set_ssl_policy::until_done";
             }
@@ -147092,25 +141110,14 @@ pub mod target_https_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_https_proxies::SetSslPolicyRequest::project].
@@ -147225,9 +141232,7 @@ pub mod target_https_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetHttpsProxies::set_url_map::until_done";
@@ -147253,25 +141258,14 @@ pub mod target_https_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_https_proxies::SetUrlMapRequest::project].
@@ -147738,9 +141732,7 @@ pub mod target_instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetInstances::delete::until_done";
@@ -147769,25 +141761,14 @@ pub mod target_instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_instances::DeleteRequest::project].
@@ -147965,9 +141946,7 @@ pub mod target_instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetInstances::insert::until_done";
@@ -147996,25 +141975,14 @@ pub mod target_instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_instances::InsertRequest::project].
@@ -148320,9 +142288,7 @@ pub mod target_instances {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::TargetInstances::set_security_policy::until_done";
             }
@@ -148350,25 +142316,14 @@ pub mod target_instances {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_instances::SetSecurityPolicyRequest::project].
@@ -148719,9 +142674,7 @@ pub mod target_pools {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetPools::add_health_check::until_done";
@@ -148750,25 +142703,14 @@ pub mod target_pools {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_pools::AddHealthCheckRequest::project].
@@ -148889,9 +142831,7 @@ pub mod target_pools {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetPools::add_instance::until_done";
@@ -148920,25 +142860,14 @@ pub mod target_pools {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_pools::AddInstanceRequest::project].
@@ -149280,9 +143209,7 @@ pub mod target_pools {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetPools::delete::until_done";
@@ -149311,25 +143238,14 @@ pub mod target_pools {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_pools::DeleteRequest::project].
@@ -149600,9 +143516,7 @@ pub mod target_pools {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetPools::insert::until_done";
@@ -149631,25 +143545,14 @@ pub mod target_pools {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_pools::InsertRequest::project].
@@ -149953,9 +143856,7 @@ pub mod target_pools {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetPools::remove_health_check::until_done";
@@ -149984,25 +143885,14 @@ pub mod target_pools {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_pools::RemoveHealthCheckRequest::project].
@@ -150123,9 +144013,7 @@ pub mod target_pools {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetPools::remove_instance::until_done";
@@ -150154,25 +144042,14 @@ pub mod target_pools {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_pools::RemoveInstanceRequest::project].
@@ -150293,9 +144170,7 @@ pub mod target_pools {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetPools::set_backup::until_done";
@@ -150324,25 +144199,14 @@ pub mod target_pools {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [failover_ratio][crate::model::target_pools::SetBackupRequest::failover_ratio].
@@ -150483,9 +144347,7 @@ pub mod target_pools {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetPools::set_security_policy::until_done";
@@ -150514,25 +144376,14 @@ pub mod target_pools {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_pools::SetSecurityPolicyRequest::project].
@@ -150883,9 +144734,7 @@ pub mod target_ssl_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetSslProxies::delete::until_done";
@@ -150911,25 +144760,14 @@ pub mod target_ssl_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_ssl_proxies::DeleteRequest::project].
@@ -151095,9 +144933,7 @@ pub mod target_ssl_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetSslProxies::insert::until_done";
@@ -151123,25 +144959,14 @@ pub mod target_ssl_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_ssl_proxies::InsertRequest::project].
@@ -151435,9 +145260,7 @@ pub mod target_ssl_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::TargetSslProxies::set_backend_service::until_done";
             }
@@ -151462,25 +145285,14 @@ pub mod target_ssl_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_ssl_proxies::SetBackendServiceRequest::project].
@@ -151597,9 +145409,7 @@ pub mod target_ssl_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::TargetSslProxies::set_certificate_map::until_done";
             }
@@ -151624,25 +145434,14 @@ pub mod target_ssl_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_ssl_proxies::SetCertificateMapRequest::project].
@@ -151759,9 +145558,7 @@ pub mod target_ssl_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::TargetSslProxies::set_proxy_header::until_done";
             }
@@ -151786,25 +145583,14 @@ pub mod target_ssl_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_ssl_proxies::SetProxyHeaderRequest::project].
@@ -151923,9 +145709,7 @@ pub mod target_ssl_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::TargetSslProxies::set_ssl_certificates::until_done";
             }
@@ -151950,25 +145734,14 @@ pub mod target_ssl_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_ssl_proxies::SetSslCertificatesRequest::project].
@@ -152083,9 +145856,7 @@ pub mod target_ssl_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetSslProxies::set_ssl_policy::until_done";
@@ -152111,25 +145882,14 @@ pub mod target_ssl_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_ssl_proxies::SetSslPolicyRequest::project].
@@ -152687,9 +146447,7 @@ pub mod target_tcp_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetTcpProxies::delete::until_done";
@@ -152715,25 +146473,14 @@ pub mod target_tcp_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_tcp_proxies::DeleteRequest::project].
@@ -152899,9 +146646,7 @@ pub mod target_tcp_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetTcpProxies::insert::until_done";
@@ -152927,25 +146672,14 @@ pub mod target_tcp_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_tcp_proxies::InsertRequest::project].
@@ -153239,9 +146973,7 @@ pub mod target_tcp_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::TargetTcpProxies::set_backend_service::until_done";
             }
@@ -153266,25 +146998,14 @@ pub mod target_tcp_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_tcp_proxies::SetBackendServiceRequest::project].
@@ -153401,9 +147122,7 @@ pub mod target_tcp_proxies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::TargetTcpProxies::set_proxy_header::until_done";
             }
@@ -153428,25 +147147,14 @@ pub mod target_tcp_proxies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_tcp_proxies::SetProxyHeaderRequest::project].
@@ -154004,9 +147712,7 @@ pub mod target_vpn_gateways {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetVpnGateways::delete::until_done";
@@ -154035,25 +147741,14 @@ pub mod target_vpn_gateways {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_vpn_gateways::DeleteRequest::project].
@@ -154231,9 +147926,7 @@ pub mod target_vpn_gateways {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetVpnGateways::insert::until_done";
@@ -154262,25 +147955,14 @@ pub mod target_vpn_gateways {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_vpn_gateways::InsertRequest::project].
@@ -154584,9 +148266,7 @@ pub mod target_vpn_gateways {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::TargetVpnGateways::set_labels::until_done";
@@ -154615,25 +148295,14 @@ pub mod target_vpn_gateways {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::target_vpn_gateways::SetLabelsRequest::project].
@@ -155102,9 +148771,7 @@ pub mod url_maps {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::UrlMaps::delete::until_done";
@@ -155130,25 +148797,14 @@ pub mod url_maps {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::url_maps::DeleteRequest::project].
@@ -155307,9 +148963,7 @@ pub mod url_maps {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::UrlMaps::insert::until_done";
@@ -155335,25 +148989,14 @@ pub mod url_maps {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::url_maps::InsertRequest::project].
@@ -155460,9 +149103,7 @@ pub mod url_maps {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::UrlMaps::invalidate_cache::until_done";
@@ -155488,25 +149129,14 @@ pub mod url_maps {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::url_maps::InvalidateCacheRequest::project].
@@ -155792,9 +149422,7 @@ pub mod url_maps {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name = "google_cloud_compute_v1::client::UrlMaps::patch::until_done";
             }
@@ -155819,25 +149447,14 @@ pub mod url_maps {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::url_maps::PatchRequest::project].
@@ -156037,9 +149654,7 @@ pub mod url_maps {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::UrlMaps::update::until_done";
@@ -156065,25 +149680,14 @@ pub mod url_maps {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::url_maps::UpdateRequest::project].
@@ -156631,9 +150235,7 @@ pub mod vpn_gateways {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::VpnGateways::delete::until_done";
@@ -156662,25 +150264,14 @@ pub mod vpn_gateways {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::vpn_gateways::DeleteRequest::project].
@@ -156933,9 +150524,7 @@ pub mod vpn_gateways {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::VpnGateways::insert::until_done";
@@ -156964,25 +150553,14 @@ pub mod vpn_gateways {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::vpn_gateways::InsertRequest::project].
@@ -157284,9 +150862,7 @@ pub mod vpn_gateways {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::VpnGateways::set_labels::until_done";
@@ -157315,25 +150891,14 @@ pub mod vpn_gateways {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::vpn_gateways::SetLabelsRequest::project].
@@ -157905,9 +151470,7 @@ pub mod vpn_tunnels {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::VpnTunnels::delete::until_done";
@@ -157936,25 +151499,14 @@ pub mod vpn_tunnels {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::vpn_tunnels::DeleteRequest::project].
@@ -158132,9 +151684,7 @@ pub mod vpn_tunnels {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::VpnTunnels::insert::until_done";
@@ -158163,25 +151713,14 @@ pub mod vpn_tunnels {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::vpn_tunnels::InsertRequest::project].
@@ -158483,9 +152022,7 @@ pub mod vpn_tunnels {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::VpnTunnels::set_labels::until_done";
@@ -158514,25 +152051,14 @@ pub mod vpn_tunnels {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::vpn_tunnels::SetLabelsRequest::project].
@@ -158788,9 +152314,7 @@ pub mod wire_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::WireGroups::delete::until_done";
@@ -158816,25 +152340,14 @@ pub mod wire_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [cross_site_network][crate::model::wire_groups::DeleteRequest::cross_site_network].
@@ -159012,9 +152525,7 @@ pub mod wire_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::WireGroups::insert::until_done";
@@ -159040,25 +152551,14 @@ pub mod wire_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [cross_site_network][crate::model::wire_groups::InsertRequest::cross_site_network].
@@ -159378,9 +152878,7 @@ pub mod wire_groups {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::WireGroups::patch::until_done";
@@ -159406,25 +152904,14 @@ pub mod wire_groups {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [cross_site_network][crate::model::wire_groups::PatchRequest::cross_site_network].
@@ -160182,9 +153669,7 @@ pub mod zone_vm_extension_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ZoneVmExtensionPolicies::delete::until_done";
@@ -160213,25 +153698,14 @@ pub mod zone_vm_extension_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::zone_vm_extension_policies::DeleteRequest::project].
@@ -160409,9 +153883,7 @@ pub mod zone_vm_extension_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ZoneVmExtensionPolicies::insert::until_done";
@@ -160440,25 +153912,14 @@ pub mod zone_vm_extension_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::zone_vm_extension_policies::InsertRequest::project].
@@ -160762,9 +154223,7 @@ pub mod zone_vm_extension_policies {
         {
             let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
             let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
-            #[cfg(google_cloud_unstable_tracing)]
             if let Some(ref mut details) = poller_options.tracing {
                 details.method_name =
                     "google_cloud_compute_v1::client::ZoneVmExtensionPolicies::update::until_done";
@@ -160793,25 +154252,14 @@ pub mod zone_vm_extension_policies {
 
             let start = move || async { self.send().await };
 
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                use google_cloud_lro::internal::PollerExt;
-                google_cloud_lro::internal::new_discovery_poller(
-                    polling_error_policy,
-                    polling_backoff_policy,
-                    start,
-                    query,
-                )
-                .with_options(poller_options)
-            }
-
-            #[cfg(not(google_cloud_unstable_tracing))]
+            use google_cloud_lro::internal::PollerExt;
             google_cloud_lro::internal::new_discovery_poller(
                 polling_error_policy,
                 polling_backoff_policy,
                 start,
                 query,
             )
+            .with_options(poller_options)
         }
 
         /// Sets the value of [project][crate::model::zone_vm_extension_policies::UpdateRequest::project].

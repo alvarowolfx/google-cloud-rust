@@ -839,6 +839,166 @@ pub trait FeaturedContentNativeDashboardService: std::fmt::Debug + Send + Sync {
     }
 }
 
+/// Defines the trait used to implement [super::client::FindingsRefinementService].
+///
+/// Application developers may need to implement this trait to mock
+/// `client::FindingsRefinementService`.  In other use-cases, application developers only
+/// use `client::FindingsRefinementService` and need not be concerned with this trait or
+/// its implementations.
+///
+/// Services gain new RPCs routinely. Consequently, this trait gains new methods
+/// too. To avoid breaking applications the trait provides a default
+/// implementation of each method. Most of these implementations just return an
+/// error.
+pub trait FindingsRefinementService: std::fmt::Debug + Send + Sync {
+    /// Implements [super::client::FindingsRefinementService::get_findings_refinement].
+    fn get_findings_refinement(
+        &self,
+        _req: crate::model::GetFindingsRefinementRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<crate::Response<crate::model::FindingsRefinement>>,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::FindingsRefinementService::list_findings_refinements].
+    fn list_findings_refinements(
+        &self,
+        _req: crate::model::ListFindingsRefinementsRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<crate::Response<crate::model::ListFindingsRefinementsResponse>>,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::FindingsRefinementService::create_findings_refinement].
+    fn create_findings_refinement(
+        &self,
+        _req: crate::model::CreateFindingsRefinementRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<crate::Response<crate::model::FindingsRefinement>>,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::FindingsRefinementService::update_findings_refinement].
+    fn update_findings_refinement(
+        &self,
+        _req: crate::model::UpdateFindingsRefinementRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<crate::Response<crate::model::FindingsRefinement>>,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::FindingsRefinementService::get_findings_refinement_deployment].
+    fn get_findings_refinement_deployment(
+        &self,
+        _req: crate::model::GetFindingsRefinementDeploymentRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<crate::Response<crate::model::FindingsRefinementDeployment>>,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::FindingsRefinementService::update_findings_refinement_deployment].
+    fn update_findings_refinement_deployment(
+        &self,
+        _req: crate::model::UpdateFindingsRefinementDeploymentRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<crate::Response<crate::model::FindingsRefinementDeployment>>,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::FindingsRefinementService::list_all_findings_refinement_deployments].
+    fn list_all_findings_refinement_deployments(
+        &self,
+        _req: crate::model::ListAllFindingsRefinementDeploymentsRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<
+            crate::Response<crate::model::ListAllFindingsRefinementDeploymentsResponse>,
+        >,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::FindingsRefinementService::compute_findings_refinement_activity].
+    fn compute_findings_refinement_activity(
+        &self,
+        _req: crate::model::ComputeFindingsRefinementActivityRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<
+            crate::Response<crate::model::ComputeFindingsRefinementActivityResponse>,
+        >,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::FindingsRefinementService::compute_all_findings_refinement_activities].
+    fn compute_all_findings_refinement_activities(
+        &self,
+        _req: crate::model::ComputeAllFindingsRefinementActivitiesRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<
+            crate::Response<crate::model::ComputeAllFindingsRefinementActivitiesResponse>,
+        >,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::FindingsRefinementService::list_operations].
+    fn list_operations(
+        &self,
+        _req: google_cloud_longrunning::model::ListOperationsRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<
+            crate::Response<google_cloud_longrunning::model::ListOperationsResponse>,
+        >,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::FindingsRefinementService::get_operation].
+    fn get_operation(
+        &self,
+        _req: google_cloud_longrunning::model::GetOperationRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<crate::Response<google_cloud_longrunning::model::Operation>>,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::FindingsRefinementService::delete_operation].
+    fn delete_operation(
+        &self,
+        _req: google_cloud_longrunning::model::DeleteOperationRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<Output = crate::Result<crate::Response<()>>> + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::FindingsRefinementService::cancel_operation].
+    fn cancel_operation(
+        &self,
+        _req: google_cloud_longrunning::model::CancelOperationRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<Output = crate::Result<crate::Response<()>>> + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+}
+
 /// Defines the trait used to implement [super::client::InstanceService].
 ///
 /// Application developers may need to implement this trait to mock
@@ -1145,6 +1305,17 @@ pub trait ReferenceListService: std::fmt::Debug + Send + Sync {
         gaxi::unimplemented::unimplemented_stub()
     }
 
+    /// Implements [super::client::ReferenceListService::verify_reference_list].
+    fn verify_reference_list(
+        &self,
+        _req: crate::model::VerifyReferenceListRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<crate::Response<crate::model::VerifyReferenceListResponse>>,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
     /// Implements [super::client::ReferenceListService::list_operations].
     fn list_operations(
         &self,
@@ -1247,6 +1418,17 @@ pub trait RuleService: std::fmt::Debug + Send + Sync {
         _req: crate::model::DeleteRuleRequest,
         _options: crate::RequestOptions,
     ) -> impl std::future::Future<Output = crate::Result<crate::Response<()>>> + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::RuleService::verify_rule_text].
+    fn verify_rule_text(
+        &self,
+        _req: crate::model::VerifyRuleTextRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<crate::Response<crate::model::VerifyRuleTextResponse>>,
+    > + Send {
         gaxi::unimplemented::unimplemented_stub()
     }
 
@@ -1390,7 +1572,6 @@ pub trait RuleService: std::fmt::Debug + Send + Sync {
         std::sync::Arc::new(google_cloud_gax::exponential_backoff::ExponentialBackoff::default())
     }
 
-    #[cfg(google_cloud_unstable_tracing)]
     #[doc(hidden)]
     /// Returns the poller options.
     ///
@@ -1401,5 +1582,71 @@ pub trait RuleService: std::fmt::Debug + Send + Sync {
         _options: &crate::RequestOptions,
     ) -> google_cloud_lro::PollerOptions {
         google_cloud_lro::PollerOptions::default()
+    }
+}
+
+/// Defines the trait used to implement [super::client::RuleExecutionErrorService].
+///
+/// Application developers may need to implement this trait to mock
+/// `client::RuleExecutionErrorService`.  In other use-cases, application developers only
+/// use `client::RuleExecutionErrorService` and need not be concerned with this trait or
+/// its implementations.
+///
+/// Services gain new RPCs routinely. Consequently, this trait gains new methods
+/// too. To avoid breaking applications the trait provides a default
+/// implementation of each method. Most of these implementations just return an
+/// error.
+pub trait RuleExecutionErrorService: std::fmt::Debug + Send + Sync {
+    /// Implements [super::client::RuleExecutionErrorService::list_rule_execution_errors].
+    fn list_rule_execution_errors(
+        &self,
+        _req: crate::model::ListRuleExecutionErrorsRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<crate::Response<crate::model::ListRuleExecutionErrorsResponse>>,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::RuleExecutionErrorService::list_operations].
+    fn list_operations(
+        &self,
+        _req: google_cloud_longrunning::model::ListOperationsRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<
+            crate::Response<google_cloud_longrunning::model::ListOperationsResponse>,
+        >,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::RuleExecutionErrorService::get_operation].
+    fn get_operation(
+        &self,
+        _req: google_cloud_longrunning::model::GetOperationRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<crate::Response<google_cloud_longrunning::model::Operation>>,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::RuleExecutionErrorService::delete_operation].
+    fn delete_operation(
+        &self,
+        _req: google_cloud_longrunning::model::DeleteOperationRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<Output = crate::Result<crate::Response<()>>> + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::RuleExecutionErrorService::cancel_operation].
+    fn cancel_operation(
+        &self,
+        _req: google_cloud_longrunning::model::CancelOperationRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<Output = crate::Result<crate::Response<()>>> + Send {
+        gaxi::unimplemented::unimplemented_stub()
     }
 }

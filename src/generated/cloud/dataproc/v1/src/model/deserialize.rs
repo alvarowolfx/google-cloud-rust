@@ -3783,6 +3783,7 @@ impl<'de> serde::de::Deserialize<'de> for super::GceClusterConfig {
             __node_group_affinity,
             __shielded_instance_config,
             __confidential_instance_config,
+            __resource_manager_tags,
             Unknown(std::string::String),
         }
         impl<'de> serde::de::Deserialize<'de> for __FieldTag {
@@ -3837,6 +3838,8 @@ impl<'de> serde::de::Deserialize<'de> for super::GceClusterConfig {
                             "confidential_instance_config" => {
                                 Ok(__FieldTag::__confidential_instance_config)
                             }
+                            "resourceManagerTags" => Ok(__FieldTag::__resource_manager_tags),
+                            "resource_manager_tags" => Ok(__FieldTag::__resource_manager_tags),
                             _ => Ok(__FieldTag::Unknown(value.to_string())),
                         }
                     }
@@ -3990,6 +3993,21 @@ impl<'de> serde::de::Deserialize<'de> for super::GceClusterConfig {
                             }
                             result.confidential_instance_config = map.next_value::<std::option::Option<crate::model::ConfidentialInstanceConfig>>()?
                                 ;
+                        }
+                        __FieldTag::__resource_manager_tags => {
+                            if !fields.insert(__FieldTag::__resource_manager_tags) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for resource_manager_tags",
+                                ));
+                            }
+                            result.resource_manager_tags = map
+                                .next_value::<std::option::Option<
+                                    std::collections::HashMap<
+                                        std::string::String,
+                                        std::string::String,
+                                    >,
+                                >>()?
+                                .unwrap_or_default();
                         }
                         __FieldTag::Unknown(key) => {
                             let value = map.next_value::<serde_json::Value>()?;
@@ -4203,6 +4221,7 @@ impl<'de> serde::de::Deserialize<'de> for super::ConfidentialInstanceConfig {
         #[derive(PartialEq, Eq, Hash)]
         enum __FieldTag {
             __enable_confidential_compute,
+            __confidential_instance_type,
             Unknown(std::string::String),
         }
         impl<'de> serde::de::Deserialize<'de> for __FieldTag {
@@ -4228,6 +4247,12 @@ impl<'de> serde::de::Deserialize<'de> for super::ConfidentialInstanceConfig {
                             }
                             "enable_confidential_compute" => {
                                 Ok(__FieldTag::__enable_confidential_compute)
+                            }
+                            "confidentialInstanceType" => {
+                                Ok(__FieldTag::__confidential_instance_type)
+                            }
+                            "confidential_instance_type" => {
+                                Ok(__FieldTag::__confidential_instance_type)
                             }
                             _ => Ok(__FieldTag::Unknown(value.to_string())),
                         }
@@ -4263,6 +4288,14 @@ impl<'de> serde::de::Deserialize<'de> for super::ConfidentialInstanceConfig {
                             result.enable_confidential_compute = map
                                 .next_value::<std::option::Option<bool>>()?
                                 .unwrap_or_default();
+                        }
+                        __FieldTag::__confidential_instance_type => {
+                            if !fields.insert(__FieldTag::__confidential_instance_type) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for confidential_instance_type",
+                                ));
+                            }
+                            result.confidential_instance_type = map.next_value::<std::option::Option<crate::model::confidential_instance_config::ConfidentialInstanceType>>()?.unwrap_or_default();
                         }
                         __FieldTag::Unknown(key) => {
                             let value = map.next_value::<serde_json::Value>()?;
@@ -5114,6 +5147,7 @@ impl<'de> serde::de::Deserialize<'de> for super::instance_flexibility_policy::In
         enum __FieldTag {
             __machine_types,
             __rank,
+            __disk_config,
             Unknown(std::string::String),
         }
         impl<'de> serde::de::Deserialize<'de> for __FieldTag {
@@ -5137,6 +5171,8 @@ impl<'de> serde::de::Deserialize<'de> for super::instance_flexibility_policy::In
                             "machineTypes" => Ok(__FieldTag::__machine_types),
                             "machine_types" => Ok(__FieldTag::__machine_types),
                             "rank" => Ok(__FieldTag::__rank),
+                            "diskConfig" => Ok(__FieldTag::__disk_config),
+                            "disk_config" => Ok(__FieldTag::__disk_config),
                             _ => Ok(__FieldTag::Unknown(value.to_string())),
                         }
                     }
@@ -5188,6 +5224,15 @@ impl<'de> serde::de::Deserialize<'de> for super::instance_flexibility_policy::In
                                 }
                             }
                             result.rank = map.next_value::<__With>()?.0.unwrap_or_default();
+                        }
+                        __FieldTag::__disk_config => {
+                            if !fields.insert(__FieldTag::__disk_config) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for disk_config",
+                                ));
+                            }
+                            result.disk_config =
+                                map.next_value::<std::option::Option<crate::model::DiskConfig>>()?;
                         }
                         __FieldTag::Unknown(key) => {
                             let value = map.next_value::<serde_json::Value>()?;
@@ -5426,6 +5471,7 @@ impl<'de> serde::de::Deserialize<'de> for super::DiskConfig {
             __local_ssd_interface,
             __boot_disk_provisioned_iops,
             __boot_disk_provisioned_throughput,
+            __attached_disk_configs,
             Unknown(std::string::String),
         }
         impl<'de> serde::de::Deserialize<'de> for __FieldTag {
@@ -5466,6 +5512,8 @@ impl<'de> serde::de::Deserialize<'de> for super::DiskConfig {
                             "boot_disk_provisioned_throughput" => {
                                 Ok(__FieldTag::__boot_disk_provisioned_throughput)
                             }
+                            "attachedDiskConfigs" => Ok(__FieldTag::__attached_disk_configs),
+                            "attached_disk_configs" => Ok(__FieldTag::__attached_disk_configs),
                             _ => Ok(__FieldTag::Unknown(value.to_string())),
                         }
                     }
@@ -5588,6 +5636,167 @@ impl<'de> serde::de::Deserialize<'de> for super::DiskConfig {
                                 }
                             }
                             result.boot_disk_provisioned_throughput = map.next_value::<__With>()?.0;
+                        }
+                        __FieldTag::__attached_disk_configs => {
+                            if !fields.insert(__FieldTag::__attached_disk_configs) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for attached_disk_configs",
+                                ));
+                            }
+                            result.attached_disk_configs = map
+                                .next_value::<std::option::Option<
+                                    std::vec::Vec<crate::model::AttachedDiskConfig>,
+                                >>()?
+                                .unwrap_or_default();
+                        }
+                        __FieldTag::Unknown(key) => {
+                            let value = map.next_value::<serde_json::Value>()?;
+                            result._unknown_fields.insert(key, value);
+                        }
+                    }
+                }
+                std::result::Result::Ok(result)
+            }
+        }
+        deserializer.deserialize_any(Visitor)
+    }
+}
+
+#[doc(hidden)]
+impl<'de> serde::de::Deserialize<'de> for super::AttachedDiskConfig {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[allow(non_camel_case_types)]
+        #[doc(hidden)]
+        #[derive(PartialEq, Eq, Hash)]
+        enum __FieldTag {
+            __disk_type,
+            __disk_size_gb,
+            __provisioned_iops,
+            __provisioned_throughput,
+            Unknown(std::string::String),
+        }
+        impl<'de> serde::de::Deserialize<'de> for __FieldTag {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct Visitor;
+                impl<'de> serde::de::Visitor<'de> for Visitor {
+                    type Value = __FieldTag;
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                        formatter.write_str("a field name for AttachedDiskConfig")
+                    }
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<Self::Value, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        use std::result::Result::Ok;
+                        use std::string::ToString;
+                        match value {
+                            "diskType" => Ok(__FieldTag::__disk_type),
+                            "disk_type" => Ok(__FieldTag::__disk_type),
+                            "diskSizeGb" => Ok(__FieldTag::__disk_size_gb),
+                            "disk_size_gb" => Ok(__FieldTag::__disk_size_gb),
+                            "provisionedIops" => Ok(__FieldTag::__provisioned_iops),
+                            "provisioned_iops" => Ok(__FieldTag::__provisioned_iops),
+                            "provisionedThroughput" => Ok(__FieldTag::__provisioned_throughput),
+                            "provisioned_throughput" => Ok(__FieldTag::__provisioned_throughput),
+                            _ => Ok(__FieldTag::Unknown(value.to_string())),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(Visitor)
+            }
+        }
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = super::AttachedDiskConfig;
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct AttachedDiskConfig")
+            }
+            fn visit_map<A>(self, mut map: A) -> std::result::Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                #[allow(unused_imports)]
+                use serde::de::Error;
+                use std::option::Option::Some;
+                let mut fields = std::collections::HashSet::new();
+                let mut result = Self::Value::new();
+                while let Some(tag) = map.next_key::<__FieldTag>()? {
+                    #[allow(clippy::match_single_binding)]
+                    match tag {
+                        __FieldTag::__disk_type => {
+                            if !fields.insert(__FieldTag::__disk_type) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for disk_type",
+                                ));
+                            }
+                            result.disk_type =
+                                map.next_value::<std::option::Option<
+                                    crate::model::attached_disk_config::DiskType,
+                                >>()?
+                                .unwrap_or_default();
+                        }
+                        __FieldTag::__disk_size_gb => {
+                            if !fields.insert(__FieldTag::__disk_size_gb) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for disk_size_gb",
+                                ));
+                            }
+                            struct __With(std::option::Option<i32>);
+                            impl<'de> serde::de::Deserialize<'de> for __With {
+                                fn deserialize<D>(
+                                    deserializer: D,
+                                ) -> std::result::Result<Self, D::Error>
+                                where
+                                    D: serde::de::Deserializer<'de>,
+                                {
+                                    serde_with::As::< std::option::Option<wkt::internal::I32> >::deserialize(deserializer).map(__With)
+                                }
+                            }
+                            result.disk_size_gb = map.next_value::<__With>()?.0.unwrap_or_default();
+                        }
+                        __FieldTag::__provisioned_iops => {
+                            if !fields.insert(__FieldTag::__provisioned_iops) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for provisioned_iops",
+                                ));
+                            }
+                            struct __With(std::option::Option<i64>);
+                            impl<'de> serde::de::Deserialize<'de> for __With {
+                                fn deserialize<D>(
+                                    deserializer: D,
+                                ) -> std::result::Result<Self, D::Error>
+                                where
+                                    D: serde::de::Deserializer<'de>,
+                                {
+                                    serde_with::As::< std::option::Option<wkt::internal::I64> >::deserialize(deserializer).map(__With)
+                                }
+                            }
+                            result.provisioned_iops = map.next_value::<__With>()?.0;
+                        }
+                        __FieldTag::__provisioned_throughput => {
+                            if !fields.insert(__FieldTag::__provisioned_throughput) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for provisioned_throughput",
+                                ));
+                            }
+                            struct __With(std::option::Option<i64>);
+                            impl<'de> serde::de::Deserialize<'de> for __With {
+                                fn deserialize<D>(
+                                    deserializer: D,
+                                ) -> std::result::Result<Self, D::Error>
+                                where
+                                    D: serde::de::Deserializer<'de>,
+                                {
+                                    serde_with::As::< std::option::Option<wkt::internal::I64> >::deserialize(deserializer).map(__With)
+                                }
+                            }
+                            result.provisioned_throughput = map.next_value::<__With>()?.0;
                         }
                         __FieldTag::Unknown(key) => {
                             let value = map.next_value::<serde_json::Value>()?;

@@ -32,7 +32,6 @@ use google_cloud_gax::polling_state::PollingState;
 use google_cloud_gax::retry_result::RetryResult;
 use std::sync::Arc;
 
-#[cfg(google_cloud_unstable_tracing)]
 use {super::LroRecorder, crate::Error, gaxi::observability::errors::error_type};
 
 /// Defines the trait for an "Operation" type in the discovery poller.
@@ -59,6 +58,20 @@ pub trait DiscoveryOperation {
     /// Returns the error status of the operation, if any.
     fn error(&self) -> Option<Status> {
         None
+    }
+}
+
+impl<T: DiscoveryOperation + ?Sized> DiscoveryOperation for &T {
+    fn done(&self) -> bool {
+        (*self).done()
+    }
+
+    fn name(&self) -> Option<&String> {
+        (*self).name()
+    }
+
+    fn error(&self) -> Option<Status> {
+        (*self).error()
     }
 }
 
@@ -133,7 +146,6 @@ where
     async fn poll(&mut self) -> Option<PollingResult<O, O>> {
         if let Some(start) = self.start.take() {
             let result = start.await;
-            #[cfg(google_cloud_unstable_tracing)]
             if let Ok(ref op) = result {
                 let name = op.name();
                 if let (Some(name), Some(recorder)) = (name, LroRecorder::current()) {
@@ -141,7 +153,6 @@ where
                 }
             }
             let (op, poll) = self::handle_start(result);
-            #[cfg(google_cloud_unstable_tracing)]
             self::maybe_record_completed_error(&poll);
             self.operation = op;
             return Some(poll);
@@ -151,13 +162,10 @@ where
             let result = (self.query)(name.clone()).await;
             let (op, poll) =
                 self::handle_poll(self.error_policy.clone(), &self.state, name, result);
-            #[cfg(google_cloud_unstable_tracing)]
-            {
-                if let (Some(next_name), Some(recorder)) = (&op, LroRecorder::current()) {
-                    recorder.record_destination_id(next_name);
-                }
-                self::maybe_record_completed_error(&poll);
+            if let (Some(next_name), Some(recorder)) = (&op, LroRecorder::current()) {
+                recorder.record_destination_id(next_name);
             }
+            self::maybe_record_completed_error(&poll);
             self.operation = op;
             return Some(poll);
         }
@@ -173,7 +181,6 @@ where
     }
 }
 
-#[cfg(google_cloud_unstable_tracing)]
 fn maybe_record_completed_error<O>(poll: &PollingResult<O, O>)
 where
     O: DiscoveryOperation,
@@ -253,28 +260,8 @@ mod tests {
     use google_cloud_gax::polling_error_policy::{Aip194Strict, AlwaysContinue};
     use std::time::Duration;
 
-    #[cfg(not(google_cloud_unstable_tracing))]
-    pub(crate) struct DummySpan;
-
-    #[cfg(not(google_cloud_unstable_tracing))]
-    fn test_span() -> DummySpan {
-        DummySpan
-    }
-
-    #[cfg(not(google_cloud_unstable_tracing))]
-    pub(crate) trait Instrument: Sized {
-        fn instrument(self, _span: DummySpan) -> Self {
-            self
-        }
-    }
-
-    #[cfg(not(google_cloud_unstable_tracing))]
-    impl<T> Instrument for T {}
-
-    #[cfg(google_cloud_unstable_tracing)]
     use tracing::Instrument;
 
-    #[cfg(google_cloud_unstable_tracing)]
     fn test_span() -> tracing::Span {
         tracing::info_span!(
             "test_span",
@@ -562,6 +549,39 @@ mod tests {
         );
     }
 
+    #[test]
+    fn discovery_operation_blanket_and_default() {
+        struct DefaultOperation {
+            done: bool,
+            name: Option<String>,
+        }
+        impl DiscoveryOperation for DefaultOperation {
+            fn done(&self) -> bool {
+                self.done
+            }
+            fn name(&self) -> Option<&String> {
+                self.name.as_ref()
+            }
+        }
+
+        let op = DefaultOperation {
+            done: true,
+            name: Some("test-default".to_string()),
+        };
+
+        // 1. Default implementation of error()
+        assert!(op.error().is_none());
+
+        // 2. Blanket impl for &T
+        let op_ref = &op;
+        assert!(<&DefaultOperation as DiscoveryOperation>::done(&op_ref));
+        assert_eq!(
+            <&DefaultOperation as DiscoveryOperation>::name(&op_ref),
+            Some(&"test-default".to_string())
+        );
+        assert!(<&DefaultOperation as DiscoveryOperation>::error(&op_ref).is_none());
+    }
+
     fn is_transient(error: &Error) -> bool {
         error.status().is_some_and(|s| s == &transient_status())
     }
@@ -595,6 +615,7 @@ mod tests {
         done: bool,
         name: Option<String>,
         value: Option<i32>,
+        error: Option<Status>,
     }
 
     impl DiscoveryOperation for TestOperation {
@@ -604,9 +625,11 @@ mod tests {
         fn name(&self) -> Option<&String> {
             self.name.as_ref()
         }
+        fn error(&self) -> Option<Status> {
+            self.error.clone()
+        }
     }
 
-    #[cfg(google_cloud_unstable_tracing)]
     #[tokio::test]
     async fn test_discovery_poller_tracing() {
         let guard = google_cloud_test_utils::test_layer::TestLayer::initialize();
@@ -689,6 +712,93 @@ mod tests {
                     .get("gcp.resource.destination.id")
                     .and_then(|v| v.as_string()),
                 Some("discovery-operation-123".to_string())
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn test_discovery_poller_tracing_error() {
+        let guard = google_cloud_test_utils::test_layer::TestLayer::initialize();
+
+        let start = || async move {
+            let op = TestOperation {
+                name: Some("discovery-operation-err".into()),
+                ..TestOperation::default()
+            };
+            Ok(op)
+        };
+
+        let query = |_: String| async move {
+            let status = Status::default()
+                .set_code(Code::AlreadyExists)
+                .set_message("operation-error-message");
+            let op = TestOperation {
+                done: true,
+                error: Some(status),
+                ..TestOperation::default()
+            };
+            Ok(op)
+        };
+
+        let mut poller = new_discovery_poller(
+            Arc::new(AlwaysContinue),
+            Arc::new(test_backoff()),
+            start,
+            query,
+        );
+
+        let make_test_span = |name: &'static str| {
+            tracing::info_span!(
+                "test_span",
+                "otel.name" = name,
+                "gcp.resource.destination.id" = tracing::field::Empty,
+                "otel.status_code" = tracing::field::Empty,
+                "otel.status_description" = tracing::field::Empty,
+                "error.type" = tracing::field::Empty,
+            )
+        };
+
+        let span = make_test_span("test_span_1");
+        let poller_ref = &mut poller;
+        let recorder = crate::internal::LroRecorder::new(span.clone());
+        let _ = recorder
+            .scope(async move { poller_ref.poll().instrument(span).await })
+            .await;
+
+        let span = make_test_span("test_span_2");
+        let poller_ref2 = &mut poller;
+        let recorder2 = crate::internal::LroRecorder::new(span.clone());
+        let _ = recorder2
+            .scope(async move { poller_ref2.poll().instrument(span).await })
+            .await;
+
+        {
+            let captured = google_cloud_test_utils::test_layer::TestLayer::capture(&guard);
+            let got = captured
+                .iter()
+                .find(|s| {
+                    s.attributes
+                        .get("otel.name")
+                        .and_then(|v| v.as_string())
+                        .as_deref()
+                        == Some("test_span_2")
+                })
+                .unwrap_or_else(|| panic!("missing `test_span_2` in captured spans: {captured:?}"));
+            assert_eq!(
+                got.attributes
+                    .get("otel.status_code")
+                    .and_then(|v| v.as_string()),
+                Some("ERROR".to_string())
+            );
+            assert_eq!(
+                got.attributes
+                    .get("otel.status_description")
+                    .and_then(|v| v.as_string()),
+                Some("operation-error-message".to_string())
+            );
+            assert_eq!(
+                got.attributes.get("error.type").and_then(|v| v.as_string()),
+                Some("ALREADY_EXISTS".to_string())
             );
         }
     }

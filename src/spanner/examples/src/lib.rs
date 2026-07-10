@@ -14,6 +14,7 @@
 
 pub mod client;
 pub mod database;
+pub mod dml;
 pub mod mutation;
 pub mod query;
 pub mod read;

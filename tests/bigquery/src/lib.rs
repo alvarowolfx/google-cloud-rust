@@ -14,9 +14,9 @@
 
 use anyhow::Result;
 use futures::stream::StreamExt;
+use google_cloud_bigquery::client::BigQuery;
 use google_cloud_bigquery::model::QueryReference;
 use google_cloud_bigquery_v2::client::{DatasetService, JobService};
-use google_cloud_bigquery_v2::model::query_request::JobCreationMode;
 use google_cloud_bigquery_v2::model::{
     Dataset, DatasetReference, Job, JobConfiguration, JobConfigurationQuery, JobReference,
 };
@@ -224,23 +224,22 @@ pub async fn job_service() -> Result<()> {
 
 pub async fn query_client() -> Result<()> {
     let project_id = project_id()?;
-    let bq = google_cloud_bigquery::client::BigQuery::builder()
-        .build()
-        .await?;
+    let bq = BigQuery::builder().build().await?;
 
-    println!("STARTING HIGH-LEVEL SMOKE TEST QUERY");
     let query = bq
         .query("SELECT 1 as one")
-        .set_job_creation_mode(JobCreationMode::JobCreationOptional)
         .with_project_id(project_id)
         .set_labels(vec![(INSTANCE_LABEL, "true")])
         .run()
         .await?;
 
-    assert!(matches!(
-        query.query_reference(),
-        QueryReference::Stateless { .. }
-    ));
+    // BigQuery client sets JobCreationMode::JobCreationOptional by default
+    let query_ref = query.query_reference();
+    let QueryReference::Stateless { ref query_id } = query_ref else {
+        anyhow::bail!("expected a stateless query reference, got {query_ref:?}");
+    };
+
+    assert!(!query_id.is_empty(), "{query_ref:?}");
 
     let complete_query = query.until_done().await?;
 
@@ -261,11 +260,8 @@ pub async fn query_client() -> Result<()> {
 
 pub async fn query_client_multi_page() -> Result<()> {
     let project_id = project_id()?;
-    let bq = google_cloud_bigquery::client::BigQuery::builder()
-        .build()
-        .await?;
+    let bq = BigQuery::builder().build().await?;
 
-    println!("STARTING HIGH-LEVEL MULTI-PAGE QUERY");
     let query = bq
         .query("SELECT * FROM UNNEST(GENERATE_ARRAY(1, 10000)) AS val")
         .set_use_legacy_sql(false)
@@ -294,16 +290,13 @@ pub async fn query_client_multi_page() -> Result<()> {
 
 pub async fn query_client_job() -> Result<()> {
     let project_id = project_id()?;
-    let bq = google_cloud_bigquery::client::BigQuery::builder()
-        .build()
-        .await?;
+    let bq = BigQuery::builder().build().await?;
 
-    println!("STARTING HIGH-LEVEL QUERY FROM JOB");
     let query = bq
         .query("SELECT 2 as two")
         .set_use_legacy_sql(false)
-        .set_priority("INTERACTIVE")
-        .with_project_id(&project_id)
+        .set_priority("INTERACTIVE") // force job path
+        .with_project_id(project_id)
         .set_labels(vec![(INSTANCE_LABEL, "true")])
         .run()
         .await?;

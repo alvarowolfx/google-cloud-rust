@@ -92,11 +92,8 @@ macro_rules! record_discovery_polling_result {
             if let Some(status) = error {
                 span.record("otel.status_code", "ERROR");
                 span.record("otel.status_description", &status.message);
-                let err = $crate::Error::service(status);
-                span.record(
-                    "error.type",
-                    ::gaxi::observability::errors::error_type(&err),
-                );
+                span.record("rpc.response.status_code", status.code as i32);
+                span.record("error.type", status.code.to_string());
             }
         }
     };
@@ -374,7 +371,6 @@ mod tests {
             .await;
     }
 
-    #[cfg(google_cloud_unstable_tracing)]
     #[tokio::test]
     async fn record_polling_attributes_macro() {
         let guard = TestLayer::initialize();
@@ -413,7 +409,6 @@ mod tests {
         );
     }
 
-    #[cfg(google_cloud_unstable_tracing)]
     #[tokio::test]
     async fn record_polling_attributes_macro_no_recorder() {
         let guard = TestLayer::initialize();
@@ -432,13 +427,13 @@ mod tests {
             .unwrap();
 
         assert!(
+            !got.attributes
+                .contains_key("gcp.longrunning.poll_attempt_count"),
+            "found poll_attempt_count in attributes: {:#?}",
             got.attributes
-                .get("gcp.longrunning.poll_attempt_count")
-                .is_none()
         );
     }
 
-    #[cfg(google_cloud_unstable_tracing)]
     #[tokio::test]
     async fn record_polling_attributes_macro_no_attempt_count() {
         let guard = TestLayer::initialize();
@@ -463,9 +458,10 @@ mod tests {
             .unwrap();
 
         assert!(
+            !got.attributes
+                .contains_key("gcp.longrunning.poll_attempt_count"),
+            "found poll_attempt_count in attributes: {:#?}",
             got.attributes
-                .get("gcp.longrunning.poll_attempt_count")
-                .is_none()
         );
     }
 
@@ -607,7 +603,11 @@ mod tests {
                     .and_then(|v| v.as_bool()),
                 Some(false)
             );
-            assert!(got.attributes.get("gcp.longrunning.status_code").is_none());
+            assert!(
+                !got.attributes.contains_key("gcp.longrunning.status_code"),
+                "found status_code in attributes: {:#?}",
+                got.attributes
+            );
         }
     }
 }

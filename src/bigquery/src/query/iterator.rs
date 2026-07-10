@@ -64,7 +64,7 @@ impl RowIterator {
     /// Fetches the next row from the result set.
     pub async fn next(&mut self) -> Option<Result<Row>> {
         if let Some(raw_row) = self.rows.pop_front() {
-            let row = crate::query::row::convert_row(raw_row, &self.schema);
+            let row = Row::try_new(raw_row, &self.schema);
             return Some(row);
         }
 
@@ -83,9 +83,7 @@ impl RowIterator {
                     }
 
                     // Convert and return the first fetched row
-                    self.rows
-                        .pop_front()
-                        .map(|r| crate::query::row::convert_row(r, &self.schema))
+                    self.rows.pop_front().map(|r| Row::try_new(r, &self.schema))
                 }
                 Err(e) => {
                     self.is_done = true;

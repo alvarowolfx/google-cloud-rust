@@ -135053,6 +135053,7 @@ impl<'de> serde::de::Deserialize<'de> for super::RouterNat {
         enum __FieldTag {
             __auto_network_tier,
             __drain_nat_ips,
+            __effective_tcp_time_wait_timeout_sec,
             __enable_dynamic_port_allocation,
             __enable_endpoint_independent_mapping,
             __endpoint_types,
@@ -135095,6 +135096,9 @@ impl<'de> serde::de::Deserialize<'de> for super::RouterNat {
                         match value {
                             "autoNetworkTier" => Ok(__FieldTag::__auto_network_tier),
                             "drainNatIps" => Ok(__FieldTag::__drain_nat_ips),
+                            "effectiveTcpTimeWaitTimeoutSec" => {
+                                Ok(__FieldTag::__effective_tcp_time_wait_timeout_sec)
+                            }
                             "enableDynamicPortAllocation" => {
                                 Ok(__FieldTag::__enable_dynamic_port_allocation)
                             }
@@ -135168,6 +135172,26 @@ impl<'de> serde::de::Deserialize<'de> for super::RouterNat {
                                 ));
                             }
                             result.drain_nat_ips = map.next_value::<std::option::Option<std::vec::Vec<std::string::String>>>()?.unwrap_or_default();
+                        }
+                        __FieldTag::__effective_tcp_time_wait_timeout_sec => {
+                            if !fields.insert(__FieldTag::__effective_tcp_time_wait_timeout_sec) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for effective_tcp_time_wait_timeout_sec",
+                                ));
+                            }
+                            struct __With(std::option::Option<i32>);
+                            impl<'de> serde::de::Deserialize<'de> for __With {
+                                fn deserialize<D>(
+                                    deserializer: D,
+                                ) -> std::result::Result<Self, D::Error>
+                                where
+                                    D: serde::de::Deserializer<'de>,
+                                {
+                                    serde_with::As::< std::option::Option<wkt::internal::I32> >::deserialize(deserializer).map(__With)
+                                }
+                            }
+                            result.effective_tcp_time_wait_timeout_sec =
+                                map.next_value::<__With>()?.0;
                         }
                         __FieldTag::__enable_dynamic_port_allocation => {
                             if !fields.insert(__FieldTag::__enable_dynamic_port_allocation) {
@@ -141426,6 +141450,8 @@ impl<'de> serde::de::Deserialize<'de> for super::SecurityPolicyDdosProtectionCon
         #[doc(hidden)]
         #[derive(PartialEq, Eq, Hash)]
         enum __FieldTag {
+            __ddos_adaptive_protection,
+            __ddos_impacted_baseline_threshold,
             __ddos_protection,
             Unknown(std::string::String),
         }
@@ -141447,6 +141473,10 @@ impl<'de> serde::de::Deserialize<'de> for super::SecurityPolicyDdosProtectionCon
                         use std::result::Result::Ok;
                         use std::string::ToString;
                         match value {
+                            "ddosAdaptiveProtection" => Ok(__FieldTag::__ddos_adaptive_protection),
+                            "ddosImpactedBaselineThreshold" => {
+                                Ok(__FieldTag::__ddos_impacted_baseline_threshold)
+                            }
                             "ddosProtection" => Ok(__FieldTag::__ddos_protection),
                             _ => Ok(__FieldTag::Unknown(value.to_string())),
                         }
@@ -141473,6 +141503,34 @@ impl<'de> serde::de::Deserialize<'de> for super::SecurityPolicyDdosProtectionCon
                 while let Some(tag) = map.next_key::<__FieldTag>()? {
                     #[allow(clippy::match_single_binding)]
                     match tag {
+                        __FieldTag::__ddos_adaptive_protection => {
+                            if !fields.insert(__FieldTag::__ddos_adaptive_protection) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for ddos_adaptive_protection",
+                                ));
+                            }
+                            result.ddos_adaptive_protection = map.next_value::<std::option::Option<crate::model::security_policy_ddos_protection_config::DdosAdaptiveProtection>>()?
+                                ;
+                        }
+                        __FieldTag::__ddos_impacted_baseline_threshold => {
+                            if !fields.insert(__FieldTag::__ddos_impacted_baseline_threshold) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for ddos_impacted_baseline_threshold",
+                                ));
+                            }
+                            struct __With(std::option::Option<f32>);
+                            impl<'de> serde::de::Deserialize<'de> for __With {
+                                fn deserialize<D>(
+                                    deserializer: D,
+                                ) -> std::result::Result<Self, D::Error>
+                                where
+                                    D: serde::de::Deserializer<'de>,
+                                {
+                                    serde_with::As::< std::option::Option<wkt::internal::F32> >::deserialize(deserializer).map(__With)
+                                }
+                            }
+                            result.ddos_impacted_baseline_threshold = map.next_value::<__With>()?.0;
+                        }
                         __FieldTag::__ddos_protection => {
                             if !fields.insert(__FieldTag::__ddos_protection) {
                                 return std::result::Result::Err(A::Error::duplicate_field(
@@ -144461,6 +144519,7 @@ impl<'de> serde::de::Deserialize<'de> for super::ServiceAttachment {
             __kind,
             __metadata,
             __name,
+            __nat_ips_per_endpoint,
             __nat_subnets,
             __producer_forwarding_rule,
             __propagated_connection_limit,
@@ -144502,6 +144561,7 @@ impl<'de> serde::de::Deserialize<'de> for super::ServiceAttachment {
                             "kind" => Ok(__FieldTag::__kind),
                             "metadata" => Ok(__FieldTag::__metadata),
                             "name" => Ok(__FieldTag::__name),
+                            "natIpsPerEndpoint" => Ok(__FieldTag::__nat_ips_per_endpoint),
                             "natSubnets" => Ok(__FieldTag::__nat_subnets),
                             "producerForwardingRule" => Ok(__FieldTag::__producer_forwarding_rule),
                             "propagatedConnectionLimit" => {
@@ -144691,6 +144751,25 @@ impl<'de> serde::de::Deserialize<'de> for super::ServiceAttachment {
                             }
                             result.name =
                                 map.next_value::<std::option::Option<std::string::String>>()?;
+                        }
+                        __FieldTag::__nat_ips_per_endpoint => {
+                            if !fields.insert(__FieldTag::__nat_ips_per_endpoint) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for nat_ips_per_endpoint",
+                                ));
+                            }
+                            struct __With(std::option::Option<u32>);
+                            impl<'de> serde::de::Deserialize<'de> for __With {
+                                fn deserialize<D>(
+                                    deserializer: D,
+                                ) -> std::result::Result<Self, D::Error>
+                                where
+                                    D: serde::de::Deserializer<'de>,
+                                {
+                                    serde_with::As::< std::option::Option<wkt::internal::U32> >::deserialize(deserializer).map(__With)
+                                }
+                            }
+                            result.nat_ips_per_endpoint = map.next_value::<__With>()?.0;
                         }
                         __FieldTag::__nat_subnets => {
                             if !fields.insert(__FieldTag::__nat_subnets) {

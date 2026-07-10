@@ -18,12 +18,11 @@ mod common;
 #[cfg(all(test, feature = "run-integration-tests"))]
 mod tests {
     use super::common::{setup_sample_database, teardown_sample_database};
-    use google_cloud_lro::Poller;
     use google_cloud_spanner::client::DatabaseClient;
     use google_cloud_spanner::statement::Statement;
     use google_cloud_spanner_admin_database_v1::model::DatabaseDialect;
     use google_cloud_test_utils::errors::anydump;
-    use spanner_samples::{mutation, query, read};
+    use spanner_samples::{database, dml, mutation, query, read};
 
     /// Macro to define sample integration tests, managing database
     /// provisioning and automatic teardown.
@@ -56,35 +55,99 @@ mod tests {
     }
 
     define_sample_tests! {
-        async fn query_samples(client: &DatabaseClient, _ctx: &TestDatabaseContext) -> anyhow::Result<()> [dialect = DatabaseDialect::GoogleStandardSql] {
-            query::query_data::sample(client)
-                .await
-                .inspect_err(anydump)?;
-            Ok(())
-        }
-
-        async fn mutation_and_read_samples(client: &DatabaseClient, ctx: &TestDatabaseContext) -> anyhow::Result<()> [dialect = DatabaseDialect::GoogleStandardSql] {
+        async fn googlesql_samples(client: &DatabaseClient, ctx: &TestDatabaseContext) -> anyhow::Result<()> [dialect = DatabaseDialect::GoogleStandardSql] {
             // 1. Test spanner_insert_data sample
             mutation::insert_data::sample(client)
                 .await
                 .inspect_err(anydump)?;
 
-            // 2. Test spanner_read_data sample
+            // 1b. Test spanner_dml_getting_started_insert sample
+            dml::dml_insert::sample(client)
+                .await
+                .inspect_err(anydump)?;
+
+            // 2. Test spanner_query_data sample
+            query::query_data::sample(client)
+                .await
+                .inspect_err(anydump)?;
+
+            // 3. Test spanner_query_with_parameter sample
+            query::query_parameter::sample(client)
+                .await
+                .inspect_err(anydump)?;
+
+            // 4. Test spanner_read_data sample
             read::read_data::sample(client)
                 .await
                 .inspect_err(anydump)?;
 
-            // 3. Add the MarketingBudget column to the Albums table
-            ctx.admin_client
-                .update_database_ddl()
-                .set_database(ctx.database_name.clone())
-                .set_statements(vec![
-                    "ALTER TABLE Albums ADD COLUMN MarketingBudget INT64".to_string(),
-                ])
-                .poller()
-                .until_done()
+            // 4b. Test spanner_create_index sample
+            database::create_index::sample(&ctx.admin_client, &ctx.database_name)
                 .await
-                .map_err(anyhow::Error::from)
+                .inspect_err(anydump)?;
+
+            // 4c. Test spanner_read_data_with_index sample
+            query::read_data_with_index::sample(client)
+                .await
+                .inspect_err(anydump)?;
+
+            // 5. Test spanner_add_column sample
+            database::add_column::sample(&ctx.admin_client, &ctx.database_name)
+                .await
+                .inspect_err(anydump)?;
+
+            // 6. Test spanner_update_data sample
+            mutation::update_data::sample(client)
+                .await
+                .inspect_err(anydump)?;
+
+            // 6b. Test spanner_dml_getting_started_update sample
+            dml::dml_update::sample(client)
+                .await
+                .inspect_err(anydump)?;
+
+            // 7. Test spanner_query_data_with_new_column sample
+            query::query_new_column::sample(client)
+                .await
+                .inspect_err(anydump)?;
+
+            // 8. Test spanner_read_only_transaction sample
+            query::read_only_transaction::sample(client)
+                .await
+                .inspect_err(anydump)?;
+
+            Ok(())
+        }
+
+        async fn postgresql_samples(client: &DatabaseClient, ctx: &TestDatabaseContext) -> anyhow::Result<()> [dialect = DatabaseDialect::Postgresql] {
+            // 1. Test spanner_insert_data sample (mutations are dialect-agnostic)
+            mutation::insert_data::sample(client)
+                .await
+                .inspect_err(anydump)?;
+
+            // 1b. Test spanner_postgresql_dml_getting_started_insert sample
+            dml::pg_dml_insert::sample(client)
+                .await
+                .inspect_err(anydump)?;
+
+            // 2. Test spanner_postgresql_query_with_parameter sample
+            query::pg_query_parameter::sample(client)
+                .await
+                .inspect_err(anydump)?;
+
+            // 2b. Test spanner_postgresql_create_index sample
+            database::pg_create_index::sample(&ctx.admin_client, &ctx.database_name)
+                .await
+                .inspect_err(anydump)?;
+
+            // 2c. Test spanner_postgresql_read_data_with_index sample
+            query::pg_read_data_with_index::sample(client)
+                .await
+                .inspect_err(anydump)?;
+
+            // 3. Test spanner_postgresql_add_column sample
+            database::pg_add_column::sample(&ctx.admin_client, &ctx.database_name)
+                .await
                 .inspect_err(anydump)?;
 
             // 4. Test spanner_update_data sample
@@ -92,17 +155,19 @@ mod tests {
                 .await
                 .inspect_err(anydump)?;
 
-            // 5. Clean up schema changes by dropping the column
-            ctx.admin_client
-                .update_database_ddl()
-                .set_database(ctx.database_name.clone())
-                .set_statements(vec![
-                    "ALTER TABLE Albums DROP COLUMN MarketingBudget".to_string(),
-                ])
-                .poller()
-                .until_done()
+            // 4b. Test spanner_postgresql_dml_getting_started_update sample
+            dml::pg_dml_update::sample(client)
                 .await
-                .map_err(anyhow::Error::from)
+                .inspect_err(anydump)?;
+
+            // 5. Test spanner_postgresql_query_data_with_new_column sample
+            query::pg_query_new_column::sample(client)
+                .await
+                .inspect_err(anydump)?;
+
+            // 6. Test spanner_postgresql_read_only_transaction sample
+            query::pg_read_only_transaction::sample(client)
+                .await
                 .inspect_err(anydump)?;
 
             Ok(())
