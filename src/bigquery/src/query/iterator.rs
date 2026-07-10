@@ -21,29 +21,25 @@ use std::sync::Arc;
 
 pub type Result<T> = std::result::Result<T, RowError>;
 /// An iterator over rows returned by a query.
+#[derive(Debug)]
 pub struct RowIterator {
     job_service: Arc<JobService>,
     job_ref: Option<JobReference>,
     schema: Arc<Schema>,
     page_token: Option<String>,
-    max_results: Option<u32>,
     rows: VecDeque<wkt::Struct>,
-    is_done: bool,
+    max_results: Option<u32>,
 }
 
 impl RowIterator {
     pub(crate) fn new(q: CompleteQuery) -> Self {
-        let rows = q.cached_rows;
-        let is_done = rows.is_empty() && q.page_token.is_none();
-
         Self {
             job_service: q.job_service,
             job_ref: q.job_ref,
             schema: q.schema,
             page_token: q.page_token,
+            rows: q.cached_rows,
             max_results: None,
-            rows,
-            is_done,
         }
     }
 
@@ -51,7 +47,6 @@ impl RowIterator {
     pub fn with_page_token(mut self, page_token: impl Into<String>) -> Self {
         self.page_token = Some(page_token.into());
         self.rows.clear(); // Clear cached rows since they don't correspond to the custom page token.
-        self.is_done = self.page_token.is_none();
         self
     }
 
@@ -62,41 +57,37 @@ impl RowIterator {
     }
 
     /// Fetches the next row from the result set.
+    ///
+    /// Returns `None` when all rows have been retrieved.
     pub async fn next(&mut self) -> Option<Result<Row>> {
-        if let Some(raw_row) = self.rows.pop_front() {
-            let row = Row::try_new(raw_row, &self.schema);
-            return Some(row);
-        }
-
-        if self.is_done {
-            return None;
-        }
-
-        if let Some(token) = self.page_token.take() {
-            match self.fetch_page(token).await {
-                Ok((fetched_rows, next_token)) => {
-                    self.page_token = next_token;
-                    self.rows.extend(fetched_rows);
-                    if self.rows.is_empty() && self.page_token.is_none() {
-                        self.is_done = true;
-                        return None;
-                    }
-
-                    // Convert and return the first fetched row
-                    self.rows.pop_front().map(|r| Row::try_new(r, &self.schema))
-                }
-                Err(e) => {
-                    self.is_done = true;
-                    Some(Err(e))
-                }
+        loop {
+            if let Some(raw_row) = self.rows.pop_front() {
+                return Some(Row::try_new(raw_row, &self.schema));
             }
-        } else {
-            self.is_done = true;
-            None
+
+            if let Err(e) = self.try_fetch_page().await {
+                return Some(Err(e));
+            }
+
+            if self.rows.is_empty() && self.page_token.is_none() {
+                return None;
+            }
         }
     }
 
-    async fn fetch_page(&self, token: String) -> Result<(Vec<wkt::Struct>, Option<String>)> {
+    async fn try_fetch_page(&mut self) -> Result<()> {
+        let Some(token) = self.page_token.as_deref() else {
+            return Ok(());
+        };
+
+        let (fetched_rows, next_token) = self.fetch_page(token).await?;
+        self.page_token = next_token;
+        self.rows.extend(fetched_rows);
+        Ok(())
+    }
+
+    // Fetches the next page of results and the next page token.
+    async fn fetch_page(&self, token: &str) -> Result<(Vec<wkt::Struct>, Option<String>)> {
         let Some(job_ref) = &self.job_ref else {
             unreachable!("This stateless queries should not return a page token")
         };
@@ -119,14 +110,7 @@ impl RowIterator {
             .get_query_results()
             .with_request(req)
             .send()
-            .await
-            .map_err(|e| RowError::Rpc { source: e })?;
-
-        // TODO: Should we check this array?
-        // At this point the job is done and we are just reading it.
-        // if !res.errors.is_empty() {
-        //   return Err(RowError::Rpc { source: e });
-        // }
+            .await?;
 
         let page_token = if res.page_token.is_empty() {
             None
@@ -135,5 +119,98 @@ impl RowIterator {
         };
 
         Ok((res.rows, page_token))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::query::tests::{MockJobService, create_job_service};
+    use google_cloud_bigquery_v2::model::{
+        JobReference, QueryResponse, TableFieldSchema, TableSchema,
+    };
+    use serde_json::{Map, json};
+    use std::sync::Arc;
+
+    type TestResult = anyhow::Result<()>;
+
+    fn create_test_schema() -> TableSchema {
+        TableSchema::new().set_fields([TableFieldSchema::new()
+            .set_name("col")
+            .set_type("STRING")
+            .set_mode("NULLABLE")])
+    }
+
+    fn create_test_row(val: &str) -> wkt::Struct {
+        Map::from_iter([("f".to_string(), json!([{ "v": val }]))])
+    }
+
+    fn create_test_job_ref() -> JobReference {
+        JobReference::new()
+            .set_project_id("test_project")
+            .set_job_id("test_job")
+    }
+
+    fn create_test_job_ref_with_location(location: &str) -> JobReference {
+        create_test_job_ref().set_location(location)
+    }
+
+    fn create_test_complete_query(
+        job_service: Arc<JobService>,
+        job_ref: Option<JobReference>,
+        rows: Vec<wkt::Struct>,
+        page_token: Option<String>,
+    ) -> CompleteQuery {
+        let mut res = QueryResponse::new()
+            .set_schema(create_test_schema())
+            .set_rows(rows);
+        if let Some(token) = page_token {
+            res = res.set_page_token(token);
+        }
+        CompleteQuery::from_query_response(job_service, job_ref, res)
+    }
+
+    #[tokio::test]
+    async fn test_row_iterator_empty_no_token() -> TestResult {
+        let job_service = create_job_service(MockJobService::new());
+        let q = create_test_complete_query(job_service, Some(create_test_job_ref()), vec![], None);
+        let mut iter = q.read();
+        assert!(iter.next().await.is_none(), "{iter:?}");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_row_iterator_cached_rows_only() -> TestResult {
+        let job_service = create_job_service(MockJobService::new());
+        let rows = vec![create_test_row("first"), create_test_row("second")];
+        let q = create_test_complete_query(job_service, Some(create_test_job_ref()), rows, None);
+        let mut iter = q.read();
+
+        let row1 = iter.next().await.expect("should have row 1")?;
+        assert_eq!(row1.get::<String, _>("col"), "first");
+
+        let row2 = iter.next().await.expect("should have row 2")?;
+        assert_eq!(row2.get::<String, _>("col"), "second");
+
+        assert!(iter.next().await.is_none(), "{iter:?}");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_row_iterator_row_conversion_error() -> TestResult {
+        let job_service = create_job_service(MockJobService::new());
+        let invalid_row = Map::from_iter([("f".to_string(), json!([]))]);
+        let q = create_test_complete_query(
+            job_service,
+            Some(create_test_job_ref()),
+            vec![invalid_row],
+            None,
+        );
+        let mut iter = q.read();
+
+        let err = iter.next().await.expect("should return error").unwrap_err();
+        assert!(matches!(err, RowError::InvalidRowFormat(_)), "{err:?}");
+        assert!(iter.next().await.is_none(), "{iter:?}");
+        Ok(())
     }
 }
