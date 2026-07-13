@@ -28,7 +28,7 @@ pub use google_cloud_gax::Result;
 pub use google_cloud_gax::error::Error;
 
 pub use crate::error::{ConvertError, QueryError, RowError};
-pub use crate::query::{FromRow, FromSql, Interval, Range, Row, RowDrainer, deserialize};
+pub use crate::query::{FromRow, FromSql, Interval, Range, Row, deserialize};
 pub use google_cloud_bigquery_derive::{FromRow, FromSql};
 
 /// Re-export as `builders` as well for alias compatibility.

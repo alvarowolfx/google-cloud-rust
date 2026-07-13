@@ -46,7 +46,7 @@ pub fn derive_from_row(input: TokenStream) -> TokenStream {
         let field_name = f.ident.as_ref().expect("named field must have identifier");
         let db_column_name = get_field_name(f);
         quote! {
-            let #field_name = drainer.take(#db_column_name)?;
+            let #field_name = row.take(#db_column_name)?;
         }
     });
 
@@ -54,9 +54,7 @@ pub fn derive_from_row(input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         impl google_cloud_bigquery::FromRow for #name {
-            fn from_row(row: google_cloud_bigquery::Row) -> std::result::Result<Self, google_cloud_bigquery::RowError> {
-                let mut drainer = row.into_drainer();
-
+            fn from_row(mut row: google_cloud_bigquery::Row) -> std::result::Result<Self, google_cloud_bigquery::RowError> {
                 #( #value_extractions )*
 
                 std::result::Result::Ok(Self {
