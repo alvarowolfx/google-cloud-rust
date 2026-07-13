@@ -139,19 +139,13 @@ impl Row {
             .index(self)
             .ok_or_else(|| RowError::ColumnNotFound(format!("{:?}", index)))?;
 
-        let arr = match &mut self.values {
-            Value::Array(arr) => arr,
-            _ => {
-                return Err(RowError::InvalidRowFormat(
-                    "row values must be an array".into(),
-                ));
-            }
-        };
-
-        let val = arr.get_mut(idx).ok_or_else(|| RowError::IndexOutOfRange {
-            index: idx,
-            len: self.schema.len(),
-        })?;
+        let val = self
+            .values
+            .get_mut(idx)
+            .ok_or_else(|| RowError::IndexOutOfRange {
+                index: idx,
+                len: self.schema.len(),
+            })?;
 
         // swap out the value in-place to avoid clones
         let owned_val = std::mem::replace(val, Value::Null);
