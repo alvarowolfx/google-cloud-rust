@@ -184,19 +184,6 @@ impl<T: FromSql> FromSql for Vec<T> {
     }
 }
 
-impl FromSql for google_cloud_type::model::Decimal {
-    fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
-        match value {
-            wkt::Value::String(s) => Ok(google_cloud_type::model::Decimal::new().set_value(s)),
-            wkt::Value::Null => Err(ConvertError::NotNull),
-            other => Err(ConvertError::TypeMismatch {
-                expected: "string",
-                got: other,
-            }),
-        }
-    }
-}
-
 impl FromSql for wkt::Timestamp {
     fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
         match value {
@@ -311,6 +298,19 @@ impl FromSql for wkt::Struct {
             wkt::Value::Null => Err(ConvertError::NotNull),
             other => Err(ConvertError::TypeMismatch {
                 expected: "object",
+                got: other,
+            }),
+        }
+    }
+}
+
+impl FromSql for google_cloud_type::model::Decimal {
+    fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
+        match value {
+            wkt::Value::String(s) => Ok(google_cloud_type::model::Decimal::new().set_value(s)),
+            wkt::Value::Null => Err(ConvertError::NotNull),
+            other => Err(ConvertError::TypeMismatch {
+                expected: "string",
                 got: other,
             }),
         }
