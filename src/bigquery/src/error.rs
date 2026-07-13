@@ -111,6 +111,10 @@ pub enum ConvertError {
     #[error("expected non-null value, got null")]
     NotNull,
 
+    /// The requested field or array index was missing from the record or struct.
+    #[error("missing field or column '{0}' in struct/record")]
+    MissingField(String),
+
     /// An error occurred during custom conversion (e.g. parsing date/time strings).
     #[error("cannot convert value: {0}")]
     Convert(
@@ -204,6 +208,9 @@ mod tests {
 
         let err = ConvertError::NotNull;
         assert_eq!(err.to_string(), "expected non-null value, got null");
+
+        let err = ConvertError::MissingField("age".to_string());
+        assert_eq!(err.to_string(), "missing field or column 'age' in struct/record");
 
         let inner_err: Box<dyn std::error::Error + Send + Sync> = "invalid integer".into();
         let err = ConvertError::Convert(inner_err);

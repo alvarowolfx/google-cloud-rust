@@ -109,9 +109,6 @@ pub fn derive_from_sql(input: TokenStream) -> TokenStream {
         }
     };
 
-    let field_idents_array = fields
-        .iter()
-        .map(|f| f.ident.as_ref().expect("named field must have identifier"));
     let field_idents_struct_array = fields
         .iter()
         .map(|f| f.ident.as_ref().expect("named field must have identifier"));
@@ -119,12 +116,22 @@ pub fn derive_from_sql(input: TokenStream) -> TokenStream {
         .iter()
         .map(|f| f.ident.as_ref().expect("named field must have identifier"));
 
-    let field_extractions = fields.iter().map(|f| {
+    let field_extractions_array = fields.iter().map(|f| {
+        let field_name = f.ident.as_ref().expect("named field must have identifier");
+        let db_column_name = get_field_name(f);
+        quote! {
+            let #field_name = iter.next()
+                .ok_or_else(|| google_cloud_bigquery::ConvertError::MissingField(#db_column_name.to_string()))?;
+            let #field_name = google_cloud_bigquery::FromSql::from_sql(#field_name)?;
+        }
+    });
+
+    let field_extractions_obj = fields.iter().map(|f| {
         let field_name = f.ident.as_ref().expect("named field must have identifier");
         let db_column_name = get_field_name(f);
         quote! {
             let #field_name = obj.remove(#db_column_name)
-                .unwrap_or(wkt::Value::Null);
+                .ok_or_else(|| google_cloud_bigquery::ConvertError::MissingField(#db_column_name.to_string()))?;
             let #field_name = google_cloud_bigquery::FromSql::from_sql(#field_name)?;
         }
     });
@@ -135,17 +142,13 @@ pub fn derive_from_sql(input: TokenStream) -> TokenStream {
                 match value {
                     wkt::Value::Array(arr) => {
                         let mut iter = arr.into_iter();
-                        #(
-                            let #field_idents_array = iter.next()
-                                .unwrap_or(wkt::Value::Null);
-                            let #field_idents_array = google_cloud_bigquery::FromSql::from_sql(#field_idents_array)?;
-                        )*
+                        #( #field_extractions_array )*
                         std::result::Result::Ok(Self {
                             #( #field_idents_struct_array, )*
                         })
                     }
                     wkt::Value::Object(mut obj) => {
-                        #( #field_extractions )*
+                        #( #field_extractions_obj )*
                         std::result::Result::Ok(Self {
                             #( #field_idents_struct_obj, )*
                         })

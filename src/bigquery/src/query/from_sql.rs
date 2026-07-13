@@ -511,6 +511,7 @@ mod tests {
         NotNull,
         TypeMismatch(&'static str),
         Convert(String),
+        MissingField(String),
     }
 
     impl From<ConvertError> for TestConvertError {
@@ -519,6 +520,7 @@ mod tests {
                 ConvertError::NotNull => Self::NotNull,
                 ConvertError::TypeMismatch { expected, .. } => Self::TypeMismatch(expected),
                 ConvertError::Convert(e) => Self::Convert(e.to_string()),
+                ConvertError::MissingField(f) => Self::MissingField(f),
             }
         }
     }
