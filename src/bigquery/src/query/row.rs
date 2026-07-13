@@ -274,7 +274,6 @@ fn convert_basic_type(value: String, field_name: &str, field_type: &str) -> Resu
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

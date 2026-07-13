@@ -210,7 +210,10 @@ mod tests {
         assert_eq!(err.to_string(), "expected non-null value, got null");
 
         let err = ConvertError::MissingField("age".to_string());
-        assert_eq!(err.to_string(), "missing field or column 'age' in struct/record");
+        assert_eq!(
+            err.to_string(),
+            "missing field or column 'age' in struct/record"
+        );
 
         let inner_err: Box<dyn std::error::Error + Send + Sync> = "invalid integer".into();
         let err = ConvertError::Convert(inner_err);
