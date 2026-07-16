@@ -35,6 +35,8 @@ pub use google_cloud_bigquery_derive::{FromRow, FromSql};
 pub use builder as builders;
 
 pub mod error;
+pub mod retry_policy;
+pub use retry_policy::RetryableErrors;
 
 /// High-level BigQuery client and execution entrypoints.
 pub mod client;

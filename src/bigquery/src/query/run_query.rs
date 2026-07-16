@@ -19,9 +19,15 @@ use crate::query::{Query, Result};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::query_request::JobCreationMode;
 use google_cloud_bigquery_v2::model::{
-    InsertJobRequest, Job, JobConfiguration, JobConfigurationQuery, PostQueryRequest, QueryRequest,
+    InsertJobRequest, Job, JobConfiguration, JobReference, PostQueryRequest, QueryRequest,
 };
+use google_cloud_gax::backoff_policy::BackoffPolicy;
+use google_cloud_gax::retry_policy::RetryPolicy;
+use google_cloud_gax::retry_state::RetryState;
 use std::sync::Arc;
+use uuid::Uuid;
+
+pub(crate) const JOB_ID_PREFIX: &str = "job_";
 
 /// A unified request builder for configuring and running a SQL query.
 /// It automatically routes to either `jobs.query` (fast path) or `jobs.insert` (job path)
@@ -31,6 +37,17 @@ pub struct RunQuery {
     pub(crate) job_service: Arc<JobService>,
     pub(crate) request: RunQueryRequest,
     pub(crate) project_id: Option<String>,
+    pub(crate) retry_policy: Option<Arc<dyn RetryPolicy>>,
+    pub(crate) backoff_policy: Option<Arc<dyn BackoffPolicy>>,
+}
+
+impl std::fmt::Debug for RunQuery {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RunQuery")
+            .field("project_id", &self.project_id)
+            .field("request_id", &self.request.request_id)
+            .finish_non_exhaustive()
+    }
 }
 
 impl RunQuery {
@@ -43,6 +60,8 @@ impl RunQuery {
                 .set_use_legacy_sql(wkt::BoolValue::from(false))
                 .set_job_creation_mode(JobCreationMode::JobCreationOptional),
             project_id: None,
+            retry_policy: None,
+            backoff_policy: None,
         }
     }
 
@@ -50,6 +69,40 @@ impl RunQuery {
     pub fn with_project_id<S: Into<String>>(mut self, project_id: S) -> Self {
         self.project_id = Some(project_id.into());
         self
+    }
+
+    /// Sets the retry policy (`RetryPolicy`) for reissuing queries when a retryable error occurs.
+    pub fn with_retry_policy<T: Into<google_cloud_gax::retry_policy::RetryPolicyArg>>(
+        mut self,
+        retry_policy: T,
+    ) -> Self {
+        self.retry_policy = Some(retry_policy.into().into());
+        self
+    }
+
+    /// Sets the backoff policy (`BackoffPolicy`) for reissuing queries when a retryable error occurs.
+    pub fn with_backoff_policy<T: Into<google_cloud_gax::backoff_policy::BackoffPolicyArg>>(
+        mut self,
+        backoff_policy: T,
+    ) -> Self {
+        self.backoff_policy = Some(backoff_policy.into().into());
+        self
+    }
+
+    pub(crate) fn generate_job_reference(
+        &self,
+        project_id: &str,
+        execution_id: &str,
+    ) -> JobReference {
+        let mut job_ref = JobReference::new()
+            .set_project_id(project_id.to_string())
+            .set_job_id(execution_id.to_string());
+
+        if !self.request.location.is_empty() {
+            job_ref = job_ref.set_location(self.request.location.clone());
+        }
+
+        job_ref
     }
 
     /// Executes the SQL query
@@ -62,30 +115,82 @@ impl RunQuery {
     /// [jobs.query]: https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/query
     /// [jobs.insert]: https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/insert
     pub async fn run(self) -> Result<Query> {
-        let project_id = self.project_id.ok_or(QueryError::MissingProjectId)?;
+        let mut retry_state = RetryState::new(true);
+        let retry_policy = self
+            .retry_policy
+            .clone()
+            .unwrap_or_else(crate::retry_policy::default_retry_policy);
+        let backoff_policy = self
+            .backoff_policy
+            .clone()
+            .unwrap_or_else(crate::retry_policy::default_backoff_policy);
 
+        self.run_with_retry_state(&mut retry_state, &retry_policy, &backoff_policy)
+            .await
+    }
+
+    pub(crate) async fn run_with_retry_state(
+        &self,
+        retry_state: &mut RetryState,
+        retry_policy: &Arc<dyn RetryPolicy>,
+        backoff_policy: &Arc<dyn BackoffPolicy>,
+    ) -> Result<Query> {
+        let project_id = self
+            .project_id
+            .as_ref()
+            .ok_or(QueryError::MissingProjectId)?;
+
+        loop {
+            let execution_id = format!("{JOB_ID_PREFIX}{}", Uuid::new_v4());
+            match self.execute_once(project_id, &execution_id).await {
+                Ok(mut query) => {
+                    query.retry_state = retry_state.clone();
+                    return Ok(query);
+                }
+                Err(err) if crate::retry_policy::is_query_error_retryable(&err) => {
+                    if let Some(gax_err) = crate::retry_policy::query_job_failed_to_gax_error(&err)
+                        && retry_policy.on_error(retry_state, gax_err).is_continue()
+                    {
+                        let delay = backoff_policy.on_failure(retry_state);
+                        tokio::time::sleep(delay).await;
+                        retry_state.attempt_count += 1;
+                        continue;
+                    }
+                    return Err(err);
+                }
+                Err(err) => return Err(err),
+            }
+        }
+    }
+
+    pub(crate) async fn execute_once(&self, project_id: &str, execution_id: &str) -> Result<Query> {
         if self.request.force_job_path() {
             // Route to jobs.insert
-            let job_config: JobConfiguration = self.request.into();
-            let job = Job::new().set_configuration(job_config);
+            let job_config: JobConfiguration = self.request.clone().into();
+            let job_ref = self.generate_job_reference(project_id, execution_id);
+            let job = Job::new()
+                .set_configuration(job_config)
+                .set_job_reference(job_ref);
             let req = InsertJobRequest::new()
                 .set_job(job)
-                .set_project_id(project_id);
-            InsertJobExecutor::new(self.job_service, req)
+                .set_project_id(project_id.to_string());
+            InsertJobExecutor::new(self.job_service.clone(), self.clone(), req)
                 .execute()
                 .await
         } else {
             // Route to jobs.query
-            let query_request: QueryRequest = self.request.into();
-            let query_request = query_request.set_format_options(
-                google_cloud_bigquery_v2::model::DataFormatOptions::new()
-                    .set_use_int64_timestamp(true),
-            );
+            let query_request: QueryRequest = self.request.clone().into();
+            let query_request = query_request
+                .set_format_options(
+                    google_cloud_bigquery_v2::model::DataFormatOptions::new()
+                        .set_use_int64_timestamp(true),
+                )
+                .set_request_id(execution_id.to_string());
             let req = PostQueryRequest::new()
-                .set_project_id(project_id)
+                .set_project_id(project_id.to_string())
                 .set_query_request(query_request);
 
-            PostQueryExecutor::new(self.job_service.clone(), req)
+            PostQueryExecutor::new(self.job_service.clone(), self.clone(), req)
                 .execute()
                 .await
         }
@@ -100,8 +205,8 @@ mod tests {
     use crate::query::tests::{MockJobService, create_job_service};
     use google_cloud_bigquery_v2::model::query_request::JobCreationMode;
     use google_cloud_bigquery_v2::model::{
-        Job, JobConfiguration, JobConfigurationQuery, JobReference, JobStatus, QueryRequest,
-        QueryResponse,
+        ErrorProto, Job, JobConfiguration, JobConfigurationQuery, JobReference, JobStatus,
+        QueryRequest, QueryResponse,
     };
     use google_cloud_gax::response::Response;
     use std::sync::Arc;
@@ -209,5 +314,63 @@ mod tests {
         let job_query = job_config.query.as_ref().unwrap();
         assert_eq!(job_query.query, "SELECT 1");
         assert_eq!(job_query.use_legacy_sql, Some(wkt::BoolValue::from(true)));
+    }
+
+    #[test]
+    fn test_id_generation() {
+        let job_service = create_job_service(MockJobService::new());
+        let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
+
+        let job_ref = run_query.generate_job_reference("my-project", "test-uuid-1234");
+        assert_eq!(job_ref.project_id, "my-project");
+        assert_eq!(job_ref.job_id, "test-uuid-1234");
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn test_run_reissue_on_retryable_job_failed() -> TestResult {
+        let mut mock = MockJobService::new();
+        let mut seq = mockall::Sequence::new();
+        let first_request_id = std::sync::Arc::new(std::sync::Mutex::new(String::new()));
+        let first_request_id_clone = first_request_id.clone();
+
+        mock.expect_query()
+            .in_sequence(&mut seq)
+            .times(1)
+            .returning(move |req, _| {
+                let req_id = req.query_request.as_ref().unwrap().request_id.clone();
+                assert!(req_id.starts_with(JOB_ID_PREFIX));
+                assert!(uuid::Uuid::parse_str(&req_id[JOB_ID_PREFIX.len()..]).is_ok());
+                *first_request_id_clone.lock().unwrap() = req_id;
+                let err_proto = ErrorProto::new()
+                    .set_reason("backendError")
+                    .set_message("temporary server issue");
+                Ok(Response::from(
+                    QueryResponse::new().set_errors(vec![err_proto]),
+                ))
+            });
+
+        mock.expect_query()
+            .in_sequence(&mut seq)
+            .times(1)
+            .returning(move |req, _| {
+                let req_id = req.query_request.as_ref().unwrap().request_id.clone();
+                assert!(req_id.starts_with(JOB_ID_PREFIX));
+                assert!(uuid::Uuid::parse_str(&req_id[JOB_ID_PREFIX.len()..]).is_ok());
+                assert_ne!(
+                    req_id,
+                    *first_request_id.lock().unwrap(),
+                    "reissued query must generate a fresh request_id to avoid 409 duplicate ID conflicts"
+                );
+                Ok(Response::from(
+                    QueryResponse::new().set_query_id("q_success"),
+                ))
+            });
+
+        let job_service = create_job_service(mock);
+        let run_query =
+            RunQuery::new(job_service, "SELECT 1".to_string()).with_project_id("my-project");
+        let query = run_query.run().await?;
+        assert_eq!(query.initial_response.unwrap().query_id, "q_success");
+        Ok(())
     }
 }

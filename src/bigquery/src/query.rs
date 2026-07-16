@@ -48,6 +48,9 @@ pub(crate) mod tests {
     use google_cloud_gax::polling_backoff_policy::PollingBackoffPolicy;
     use google_cloud_gax::polling_state::PollingState;
     use google_cloud_gax::response::Response;
+    use google_cloud_gax::retry_policy::RetryPolicy;
+    use google_cloud_gax::retry_result::RetryResult;
+    use google_cloud_gax::retry_state::RetryState;
     use std::sync::Arc;
 
     mockall::mock! {
@@ -80,11 +83,41 @@ pub(crate) mod tests {
         }
     }
 
+    mockall::mock! {
+        #[derive(Debug)]
+        pub RetryPolicy {}
+        impl RetryPolicy for RetryPolicy {
+            fn on_error(&self, state: &RetryState, error: google_cloud_gax::error::Error) -> RetryResult;
+        }
+    }
+
+    mockall::mock! {
+        #[derive(Debug)]
+        pub RetryBackoffPolicy {}
+        impl google_cloud_gax::backoff_policy::BackoffPolicy for RetryBackoffPolicy {
+            fn on_failure(&self, state: &RetryState) -> std::time::Duration;
+        }
+    }
+
     pub(crate) fn create_job_service(mock: MockJobService) -> Arc<JobService> {
         Arc::new(JobService::from_stub::<MockJobService>(Arc::new(mock)))
     }
 
     pub(crate) fn create_test_backoff_policy() -> MockBackoffPolicy {
         MockBackoffPolicy::new()
+    }
+
+    pub(crate) fn create_test_retry_policy() -> MockRetryPolicy {
+        let mut mock = MockRetryPolicy::new();
+        mock.expect_on_error()
+            .returning(|state, error| crate::retry_policy::RetryableErrors.on_error(state, error));
+        mock
+    }
+
+    pub(crate) fn create_test_retry_backoff_policy() -> MockRetryBackoffPolicy {
+        let mut mock = MockRetryBackoffPolicy::new();
+        mock.expect_on_failure()
+            .return_const(std::time::Duration::from_millis(0));
+        mock
     }
 }

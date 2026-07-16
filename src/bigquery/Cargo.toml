@@ -49,6 +49,7 @@ google-cloud-bigquery-derive = { path = "../bigquery-derive", version = "0.0.0" 
 google-cloud-gax.workspace = true
 google-cloud-rpc.workspace = true
 google-cloud-type          = { workspace = true }
+uuid                       = { workspace = true }
 wkt                        = { workspace = true }
 
 [dev-dependencies]

@@ -16,6 +16,9 @@ use crate::error::{QueryError, RowError};
 use crate::query::{CompleteQuery, Row, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{GetQueryResultsRequest, JobReference};
+use google_cloud_gax::backoff_policy::BackoffPolicy;
+use google_cloud_gax::options::RequestOptionsBuilder;
+use google_cloud_gax::retry_policy::RetryPolicy;
 use std::collections::VecDeque;
 use std::sync::Arc;
 
@@ -29,6 +32,8 @@ pub struct RowIterator {
     page_token: Option<String>,
     rows: VecDeque<wkt::Struct>,
     max_rows_buffered: Option<u32>,
+    retry_policy: Arc<dyn RetryPolicy>,
+    backoff_policy: Arc<dyn BackoffPolicy>,
 }
 
 impl RowIterator {
@@ -40,6 +45,8 @@ impl RowIterator {
             page_token: q.page_token,
             rows: q.cached_rows,
             max_rows_buffered: None,
+            retry_policy: q.retry_policy,
+            backoff_policy: q.backoff_policy,
         }
     }
 
@@ -109,6 +116,8 @@ impl RowIterator {
             .job_service
             .get_query_results()
             .with_request(req)
+            .with_retry_policy(self.retry_policy.clone())
+            .with_backoff_policy(self.backoff_policy.clone())
             .send()
             .await?;
 
@@ -125,7 +134,10 @@ impl RowIterator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::query::tests::{MockJobService, create_job_service};
+    use crate::query::tests::{
+        MockJobService, create_job_service, create_test_retry_backoff_policy,
+        create_test_retry_policy,
+    };
     use google_cloud_bigquery_v2::model::{
         DataFormatOptions, GetQueryResultsResponse, JobReference, QueryResponse, TableFieldSchema,
         TableSchema,
@@ -171,7 +183,13 @@ mod tests {
         if let Some(token) = page_token {
             res = res.set_page_token(token);
         }
-        CompleteQuery::from_query_response(job_service, job_ref, res)
+        CompleteQuery::from_query_response(
+            job_service,
+            job_ref,
+            res,
+            Arc::new(create_test_retry_policy()),
+            Arc::new(create_test_retry_backoff_policy()),
+        )
     }
 
     #[tokio::test]
