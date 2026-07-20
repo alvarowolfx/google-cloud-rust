@@ -2022,8 +2022,8 @@ dependencies = [
  "mockall",
  "prost",
  "prost-types",
- "serde",
  "rust_decimal",
+ "serde",
  "serde_json",
  "serde_with",
  "test-case",
@@ -6256,10 +6256,10 @@ dependencies = [
  "google-cloud-test-utils",
  "google-cloud-type",
  "google-cloud-wkt",
- "serde",
- "serde_json",
  "rand 0.10.2",
  "rust_decimal",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 

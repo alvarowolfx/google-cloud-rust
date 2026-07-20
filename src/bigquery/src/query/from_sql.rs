@@ -131,25 +131,6 @@ impl FromSql for f64 {
     }
 }
 
-impl FromSql for f32 {
-    fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
-        match value {
-            wkt::Value::Number(n) => n
-                .as_f64()
-                .map(|v| v as f32)
-                .ok_or_else(|| ConvertError::Convert("invalid f32 number".into())),
-            wkt::Value::String(s) => s
-                .parse::<f32>()
-                .map_err(|e| ConvertError::Convert(Box::new(e))),
-            wkt::Value::Null => Err(ConvertError::NotNull),
-            other => Err(ConvertError::TypeMismatch {
-                expected: "number or string",
-                got: other,
-            }),
-        }
-    }
-}
-
 impl FromSql for bool {
     fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
         match value {
@@ -327,9 +308,12 @@ impl FromSql for google_cloud_type::model::Decimal {
     fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
         match value {
             wkt::Value::String(s) => Ok(google_cloud_type::model::Decimal::new().set_value(s)),
+            wkt::Value::Number(n) => {
+                Ok(google_cloud_type::model::Decimal::new().set_value(n.to_string()))
+            }
             wkt::Value::Null => Err(ConvertError::NotNull),
             other => Err(ConvertError::TypeMismatch {
-                expected: "string",
+                expected: "string or number",
                 got: other,
             }),
         }

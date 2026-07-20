@@ -155,36 +155,6 @@ impl Row {
     pub fn get<T: FromSql, I: ColumnIndex>(&self, index: I) -> T {
         self.try_get(index).unwrap()
     }
-
-    /// Takes ownership of a value from the row by column name or zero-based index.
-    /// The value in the row is replaced with `Value::Null` in-place to avoid cloning.
-    pub fn take<T: FromSql, I: ColumnIndex>(&mut self, index: I) -> Result<T> {
-        let idx = index
-            .index(self)
-            .ok_or_else(|| RowError::ColumnNotFound(format!("{:?}", index)))?;
-
-        let val = self
-            .values
-            .get_mut(idx)
-            .ok_or_else(|| RowError::IndexOutOfRange {
-                index: idx,
-                len: self.schema.len(),
-            })?;
-
-        // swap out the value in-place to avoid clones
-        let owned_val = std::mem::replace(val, Value::Null);
-        T::from_sql(owned_val).map_err(|e| {
-            let field_name = self
-                .schema
-                .get_field_by_index(idx)
-                .map(|f| f.name.clone())
-                .unwrap_or_else(|| idx.to_string());
-            RowError::TypeConversion {
-                column: field_name,
-                source: e,
-            }
-        })
-    }
 }
 
 fn get_field_list(mut row: Struct) -> Result<Vec<Value>> {
