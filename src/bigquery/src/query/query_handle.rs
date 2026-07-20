@@ -293,7 +293,6 @@ pub(crate) async fn poll_query_results(
             .await?;
 
         if !res.errors.is_empty() {
-            // TODO(#5592): handle jobBackendError and other transient/retryable errors.
             return Err(QueryError::JobFailed { errors: res.errors });
         }
 
