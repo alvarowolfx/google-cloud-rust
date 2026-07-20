@@ -147,21 +147,6 @@ impl FromSql for bool {
     }
 }
 
-impl FromSql for Vec<u8> {
-    fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
-        match value {
-            wkt::Value::String(s) => BASE64_STANDARD
-                .decode(s)
-                .map_err(|e| ConvertError::Convert(Box::new(e))),
-            wkt::Value::Null => Err(ConvertError::NotNull),
-            other => Err(ConvertError::TypeMismatch {
-                expected: "string (base64 encoded)",
-                got: other,
-            }),
-        }
-    }
-}
-
 impl<T: FromSql> FromSql for Option<T> {
     fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
         match value {
@@ -178,6 +163,19 @@ impl<T: FromSql> FromSql for Vec<T> {
             wkt::Value::Null => Err(ConvertError::NotNull),
             other => Err(ConvertError::TypeMismatch {
                 expected: "array",
+                got: other,
+            }),
+        }
+    }
+}
+
+impl FromSql for wkt::Struct {
+    fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
+        match value {
+            wkt::Value::Object(obj) => Ok(obj),
+            wkt::Value::Null => Err(ConvertError::NotNull),
+            other => Err(ConvertError::TypeMismatch {
+                expected: "object",
                 got: other,
             }),
         }
@@ -291,19 +289,6 @@ impl FromSql for google_cloud_type::model::DateTime {
     }
 }
 
-impl FromSql for wkt::Struct {
-    fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
-        match value {
-            wkt::Value::Object(obj) => Ok(obj),
-            wkt::Value::Null => Err(ConvertError::NotNull),
-            other => Err(ConvertError::TypeMismatch {
-                expected: "object",
-                got: other,
-            }),
-        }
-    }
-}
-
 impl FromSql for google_cloud_type::model::Decimal {
     fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
         match value {
@@ -342,6 +327,21 @@ impl FromSql for rust_decimal::Decimal {
             wkt::Value::Null => Err(ConvertError::NotNull),
             other => Err(ConvertError::TypeMismatch {
                 expected: "string or number",
+                got: other,
+            }),
+        }
+    }
+}
+
+impl FromSql for Vec<u8> {
+    fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
+        match value {
+            wkt::Value::String(s) => BASE64_STANDARD
+                .decode(s)
+                .map_err(|e| ConvertError::Convert(Box::new(e))),
+            wkt::Value::Null => Err(ConvertError::NotNull),
+            other => Err(ConvertError::TypeMismatch {
+                expected: "string (base64 encoded)",
                 got: other,
             }),
         }
