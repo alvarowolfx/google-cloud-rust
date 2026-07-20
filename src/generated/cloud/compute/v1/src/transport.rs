@@ -19142,6 +19142,7 @@ impl super::stub::InstanceGroupManagers for InstanceGroupManagers {
                 var_instance_group_manager,
             );
             let builder = self.inner.builder(Method::DELETE, path);
+            let builder = req.no_graceful_shutdown.iter().fold(builder, |builder, p| builder.query(&[("noGracefulShutdown", p)]));
             let builder = req.request_id.iter().fold(builder, |builder, p| builder.query(&[("requestId", p)]));
             let builder = Ok(builder);
             Some(builder.map(|b| (b, Method::DELETE, path_template, resource_name)))
@@ -19219,6 +19220,7 @@ impl super::stub::InstanceGroupManagers for InstanceGroupManagers {
                 var_instance_group_manager,
             );
             let builder = self.inner.builder(Method::POST, path);
+            let builder = req.no_graceful_shutdown.iter().fold(builder, |builder, p| builder.query(&[("noGracefulShutdown", p)]));
             let builder = req.request_id.iter().fold(builder, |builder, p| builder.query(&[("requestId", p)]));
             let builder = Ok(builder);
             Some(builder.map(|b| (b, Method::POST, path_template, resource_name)))
@@ -20031,6 +20033,7 @@ impl super::stub::InstanceGroupManagers for InstanceGroupManagers {
                 var_instance_group_manager,
             );
             let builder = self.inner.builder(Method::POST, path);
+            let builder = req.no_graceful_shutdown.iter().fold(builder, |builder, p| builder.query(&[("noGracefulShutdown", p)]));
             let builder = req.request_id.iter().fold(builder, |builder, p| builder.query(&[("requestId", p)]));
             let builder = Ok(builder);
             Some(builder.map(|b| (b, Method::POST, path_template, resource_name)))
@@ -20498,6 +20501,7 @@ impl super::stub::InstanceGroupManagers for InstanceGroupManagers {
                 var_instance_group_manager,
             );
             let builder = self.inner.builder(Method::POST, path);
+            let builder = req.no_graceful_shutdown.iter().fold(builder, |builder, p| builder.query(&[("noGracefulShutdown", p)]));
             let builder = req.request_id.iter().fold(builder, |builder, p| builder.query(&[("requestId", p)]));
             let builder = Ok(builder);
             Some(builder.map(|b| (b, Method::POST, path_template, resource_name)))
@@ -56415,6 +56419,7 @@ impl super::stub::RegionInstanceGroupManagers for RegionInstanceGroupManagers {
                 var_instance_group_manager,
             );
             let builder = self.inner.builder(Method::DELETE, path);
+            let builder = req.no_graceful_shutdown.iter().fold(builder, |builder, p| builder.query(&[("noGracefulShutdown", p)]));
             let builder = req.request_id.iter().fold(builder, |builder, p| builder.query(&[("requestId", p)]));
             let builder = Ok(builder);
             Some(builder.map(|b| (b, Method::DELETE, path_template, resource_name)))
@@ -56492,6 +56497,7 @@ impl super::stub::RegionInstanceGroupManagers for RegionInstanceGroupManagers {
                 var_instance_group_manager,
             );
             let builder = self.inner.builder(Method::POST, path);
+            let builder = req.no_graceful_shutdown.iter().fold(builder, |builder, p| builder.query(&[("noGracefulShutdown", p)]));
             let builder = req.request_id.iter().fold(builder, |builder, p| builder.query(&[("requestId", p)]));
             let builder = Ok(builder);
             Some(builder.map(|b| (b, Method::POST, path_template, resource_name)))
@@ -57302,6 +57308,7 @@ impl super::stub::RegionInstanceGroupManagers for RegionInstanceGroupManagers {
                 var_instance_group_manager,
             );
             let builder = self.inner.builder(Method::POST, path);
+            let builder = req.no_graceful_shutdown.iter().fold(builder, |builder, p| builder.query(&[("noGracefulShutdown", p)]));
             let builder = req.request_id.iter().fold(builder, |builder, p| builder.query(&[("requestId", p)]));
             let builder = Ok(builder);
             Some(builder.map(|b| (b, Method::POST, path_template, resource_name)))
@@ -57775,6 +57782,7 @@ impl super::stub::RegionInstanceGroupManagers for RegionInstanceGroupManagers {
                 var_instance_group_manager,
             );
             let builder = self.inner.builder(Method::POST, path);
+            let builder = req.no_graceful_shutdown.iter().fold(builder, |builder, p| builder.query(&[("noGracefulShutdown", p)]));
             let builder = req.request_id.iter().fold(builder, |builder, p| builder.query(&[("requestId", p)]));
             let builder = Ok(builder);
             Some(builder.map(|b| (b, Method::POST, path_template, resource_name)))
@@ -75081,6 +75089,84 @@ impl super::stub::Routers for Routers {
         self.inner.execute(builder, body, options).await
     }
 
+    async fn delete_named_set(
+        &self,
+        req: crate::model::routers::DeleteNamedSetRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::Operation>> {
+        use gaxi::http::reqwest::{HeaderValue, Method};
+        use gaxi::path_parameter::PathMismatchBuilder;
+        use gaxi::path_parameter::try_match;
+        use gaxi::routing_parameter::Segment;
+        use google_cloud_gax::error::binding::BindingError;
+        let (builder, method, _path_template, _resource_name) = None
+        .or_else(|| {
+            let var_project = try_match(Some(&req).map(|m| &m.project).map(|s| s.as_str()), &[Segment::SingleWildcard])?;
+            let var_region = try_match(Some(&req).map(|m| &m.region).map(|s| s.as_str()), &[Segment::SingleWildcard])?;
+            let var_router = try_match(Some(&req).map(|m| &m.router).map(|s| s.as_str()), &[Segment::SingleWildcard])?;
+            let path = format!(
+                "/compute/v1/projects/{}/regions/{}/routers/{}/deleteNamedSet",
+                var_project,
+                var_region,
+                var_router,
+            );
+            let path_template = "/compute/v1/projects/{project}/regions/{region}/routers/{router}/deleteNamedSet";
+
+            let resource_name = format!(
+                "//compute.googleapis.com/projects/{}/regions/{}/routers/{}",
+                var_project,
+                var_region,
+                var_router,
+            );
+            let builder = self.inner.builder(Method::POST, path);
+            let builder = req.named_set.iter().fold(builder, |builder, p| builder.query(&[("namedSet", p)]));
+            let builder = req.request_id.iter().fold(builder, |builder, p| builder.query(&[("requestId", p)]));
+            let builder = Ok(builder);
+            Some(builder.map(|b| (b, Method::POST, path_template, resource_name)))
+        })
+        .ok_or_else(|| {
+            let mut paths = Vec::new();
+            {
+                let builder = PathMismatchBuilder::default();
+                let builder = builder.maybe_add(
+                    Some(&req).map(|m| &m.project).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                    "project",
+                    "*");
+                let builder = builder.maybe_add(
+                    Some(&req).map(|m| &m.region).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                    "region",
+                    "*");
+                let builder = builder.maybe_add(
+                    Some(&req).map(|m| &m.router).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                    "router",
+                    "*");
+                paths.push(builder.build());
+            }
+            google_cloud_gax::error::Error::binding(BindingError { paths })
+        })??;
+        if let Some(recorder) = gaxi::observability::RequestRecorder::current() {
+            recorder.on_client_request(
+                gaxi::observability::ClientRequestAttributes::default()
+                    .set_rpc_method("google.cloud.compute.v1.routers/deleteNamedSet")
+                    .set_url_template(_path_template)
+                    .set_resource_name(_resource_name),
+            );
+        }
+        let options = google_cloud_gax::options::internal::set_default_idempotency(
+            options,
+            gaxi::http::default_idempotency(&method),
+        );
+        let builder = builder.query(&[("$alt", "json")]).header(
+            "x-goog-api-client",
+            HeaderValue::from_static(&crate::info::X_GOOG_API_CLIENT_HEADER),
+        );
+        let body = gaxi::http::handle_empty(None::<gaxi::http::NoBody>, &method);
+        self.inner.execute(builder, body, options).await
+    }
+
     async fn delete_route_policy(
         &self,
         req: crate::model::routers::DeleteRoutePolicyRequest,
@@ -75228,6 +75314,95 @@ impl super::stub::Routers for Routers {
             recorder.on_client_request(
                 gaxi::observability::ClientRequestAttributes::default()
                     .set_rpc_method("google.cloud.compute.v1.routers/get")
+                    .set_url_template(_path_template)
+                    .set_resource_name(_resource_name),
+            );
+        }
+        let options = google_cloud_gax::options::internal::set_default_idempotency(
+            options,
+            gaxi::http::default_idempotency(&method),
+        );
+        let builder = builder.query(&[("$alt", "json")]).header(
+            "x-goog-api-client",
+            HeaderValue::from_static(&crate::info::X_GOOG_API_CLIENT_HEADER),
+        );
+        let body = gaxi::http::handle_empty(None::<gaxi::http::NoBody>, &method);
+        self.inner.execute(builder, body, options).await
+    }
+
+    async fn get_named_set(
+        &self,
+        req: crate::model::routers::GetNamedSetRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::RoutersGetNamedSetResponse>> {
+        use gaxi::http::reqwest::{HeaderValue, Method};
+        use gaxi::path_parameter::PathMismatchBuilder;
+        use gaxi::path_parameter::try_match;
+        use gaxi::routing_parameter::Segment;
+        use google_cloud_gax::error::binding::BindingError;
+        let (builder, method, _path_template, _resource_name) = None
+            .or_else(|| {
+                let var_project = try_match(
+                    Some(&req).map(|m| &m.project).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                )?;
+                let var_region = try_match(
+                    Some(&req).map(|m| &m.region).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                )?;
+                let var_router = try_match(
+                    Some(&req).map(|m| &m.router).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                )?;
+                let path = format!(
+                    "/compute/v1/projects/{}/regions/{}/routers/{}/getNamedSet",
+                    var_project, var_region, var_router,
+                );
+                let path_template =
+                    "/compute/v1/projects/{project}/regions/{region}/routers/{router}/getNamedSet";
+
+                let resource_name = format!(
+                    "//compute.googleapis.com/projects/{}/regions/{}/routers/{}",
+                    var_project, var_region, var_router,
+                );
+                let builder = self.inner.builder(Method::GET, path);
+                let builder = req
+                    .named_set
+                    .iter()
+                    .fold(builder, |builder, p| builder.query(&[("namedSet", p)]));
+                let builder = Ok(builder);
+                Some(builder.map(|b| (b, Method::GET, path_template, resource_name)))
+            })
+            .ok_or_else(|| {
+                let mut paths = Vec::new();
+                {
+                    let builder = PathMismatchBuilder::default();
+                    let builder = builder.maybe_add(
+                        Some(&req).map(|m| &m.project).map(|s| s.as_str()),
+                        &[Segment::SingleWildcard],
+                        "project",
+                        "*",
+                    );
+                    let builder = builder.maybe_add(
+                        Some(&req).map(|m| &m.region).map(|s| s.as_str()),
+                        &[Segment::SingleWildcard],
+                        "region",
+                        "*",
+                    );
+                    let builder = builder.maybe_add(
+                        Some(&req).map(|m| &m.router).map(|s| s.as_str()),
+                        &[Segment::SingleWildcard],
+                        "router",
+                        "*",
+                    );
+                    paths.push(builder.build());
+                }
+                google_cloud_gax::error::Error::binding(BindingError { paths })
+            })??;
+        if let Some(recorder) = gaxi::observability::RequestRecorder::current() {
+            recorder.on_client_request(
+                gaxi::observability::ClientRequestAttributes::default()
+                    .set_rpc_method("google.cloud.compute.v1.routers/getNamedSet")
                     .set_url_template(_path_template)
                     .set_resource_name(_resource_name),
             );
@@ -75828,6 +76003,87 @@ impl super::stub::Routers for Routers {
         self.inner.execute(builder, body, options).await
     }
 
+    async fn list_named_sets(
+        &self,
+        req: crate::model::routers::ListNamedSetsRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::RoutersListNamedSets>> {
+        use gaxi::http::reqwest::{HeaderValue, Method};
+        use gaxi::path_parameter::PathMismatchBuilder;
+        use gaxi::path_parameter::try_match;
+        use gaxi::routing_parameter::Segment;
+        use google_cloud_gax::error::binding::BindingError;
+        let (builder, method, _path_template, _resource_name) = None
+        .or_else(|| {
+            let var_project = try_match(Some(&req).map(|m| &m.project).map(|s| s.as_str()), &[Segment::SingleWildcard])?;
+            let var_region = try_match(Some(&req).map(|m| &m.region).map(|s| s.as_str()), &[Segment::SingleWildcard])?;
+            let var_router = try_match(Some(&req).map(|m| &m.router).map(|s| s.as_str()), &[Segment::SingleWildcard])?;
+            let path = format!(
+                "/compute/v1/projects/{}/regions/{}/routers/{}/listNamedSets",
+                var_project,
+                var_region,
+                var_router,
+            );
+            let path_template = "/compute/v1/projects/{project}/regions/{region}/routers/{router}/listNamedSets";
+
+            let resource_name = format!(
+                "//compute.googleapis.com/projects/{}/regions/{}/routers/{}",
+                var_project,
+                var_region,
+                var_router,
+            );
+            let builder = self.inner.builder(Method::GET, path);
+            let builder = req.filter.iter().fold(builder, |builder, p| builder.query(&[("filter", p)]));
+            let builder = req.max_results.iter().fold(builder, |builder, p| builder.query(&[("maxResults", p)]));
+            let builder = req.order_by.iter().fold(builder, |builder, p| builder.query(&[("orderBy", p)]));
+            let builder = req.page_token.iter().fold(builder, |builder, p| builder.query(&[("pageToken", p)]));
+            let builder = req.return_partial_success.iter().fold(builder, |builder, p| builder.query(&[("returnPartialSuccess", p)]));
+            let builder = Ok(builder);
+            Some(builder.map(|b| (b, Method::GET, path_template, resource_name)))
+        })
+        .ok_or_else(|| {
+            let mut paths = Vec::new();
+            {
+                let builder = PathMismatchBuilder::default();
+                let builder = builder.maybe_add(
+                    Some(&req).map(|m| &m.project).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                    "project",
+                    "*");
+                let builder = builder.maybe_add(
+                    Some(&req).map(|m| &m.region).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                    "region",
+                    "*");
+                let builder = builder.maybe_add(
+                    Some(&req).map(|m| &m.router).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                    "router",
+                    "*");
+                paths.push(builder.build());
+            }
+            google_cloud_gax::error::Error::binding(BindingError { paths })
+        })??;
+        if let Some(recorder) = gaxi::observability::RequestRecorder::current() {
+            recorder.on_client_request(
+                gaxi::observability::ClientRequestAttributes::default()
+                    .set_rpc_method("google.cloud.compute.v1.routers/listNamedSets")
+                    .set_url_template(_path_template)
+                    .set_resource_name(_resource_name),
+            );
+        }
+        let options = google_cloud_gax::options::internal::set_default_idempotency(
+            options,
+            gaxi::http::default_idempotency(&method),
+        );
+        let builder = builder.query(&[("$alt", "json")]).header(
+            "x-goog-api-client",
+            HeaderValue::from_static(&crate::info::X_GOOG_API_CLIENT_HEADER),
+        );
+        let body = gaxi::http::handle_empty(None::<gaxi::http::NoBody>, &method);
+        self.inner.execute(builder, body, options).await
+    }
+
     async fn list_route_policies(
         &self,
         req: crate::model::routers::ListRoutePoliciesRequest,
@@ -75982,6 +76238,83 @@ impl super::stub::Routers for Routers {
             recorder.on_client_request(
                 gaxi::observability::ClientRequestAttributes::default()
                     .set_rpc_method("google.cloud.compute.v1.routers/patch")
+                    .set_url_template(_path_template)
+                    .set_resource_name(_resource_name),
+            );
+        }
+        let options = google_cloud_gax::options::internal::set_default_idempotency(
+            options,
+            gaxi::http::default_idempotency(&method),
+        );
+        let builder = builder.query(&[("$alt", "json")]).header(
+            "x-goog-api-client",
+            HeaderValue::from_static(&crate::info::X_GOOG_API_CLIENT_HEADER),
+        );
+        let body = gaxi::http::handle_empty(req.body, &method);
+        self.inner.execute(builder, body, options).await
+    }
+
+    async fn patch_named_set(
+        &self,
+        req: crate::model::routers::PatchNamedSetRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::Operation>> {
+        use gaxi::http::reqwest::{HeaderValue, Method};
+        use gaxi::path_parameter::PathMismatchBuilder;
+        use gaxi::path_parameter::try_match;
+        use gaxi::routing_parameter::Segment;
+        use google_cloud_gax::error::binding::BindingError;
+        let (builder, method, _path_template, _resource_name) = None
+        .or_else(|| {
+            let var_project = try_match(Some(&req).map(|m| &m.project).map(|s| s.as_str()), &[Segment::SingleWildcard])?;
+            let var_region = try_match(Some(&req).map(|m| &m.region).map(|s| s.as_str()), &[Segment::SingleWildcard])?;
+            let var_router = try_match(Some(&req).map(|m| &m.router).map(|s| s.as_str()), &[Segment::SingleWildcard])?;
+            let path = format!(
+                "/compute/v1/projects/{}/regions/{}/routers/{}/patchNamedSet",
+                var_project,
+                var_region,
+                var_router,
+            );
+            let path_template = "/compute/v1/projects/{project}/regions/{region}/routers/{router}/patchNamedSet";
+
+            let resource_name = format!(
+                "//compute.googleapis.com/projects/{}/regions/{}/routers/{}",
+                var_project,
+                var_region,
+                var_router,
+            );
+            let builder = self.inner.builder(Method::POST, path);
+            let builder = req.request_id.iter().fold(builder, |builder, p| builder.query(&[("requestId", p)]));
+            let builder = Ok(builder);
+            Some(builder.map(|b| (b, Method::POST, path_template, resource_name)))
+        })
+        .ok_or_else(|| {
+            let mut paths = Vec::new();
+            {
+                let builder = PathMismatchBuilder::default();
+                let builder = builder.maybe_add(
+                    Some(&req).map(|m| &m.project).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                    "project",
+                    "*");
+                let builder = builder.maybe_add(
+                    Some(&req).map(|m| &m.region).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                    "region",
+                    "*");
+                let builder = builder.maybe_add(
+                    Some(&req).map(|m| &m.router).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                    "router",
+                    "*");
+                paths.push(builder.build());
+            }
+            google_cloud_gax::error::Error::binding(BindingError { paths })
+        })??;
+        if let Some(recorder) = gaxi::observability::RequestRecorder::current() {
+            recorder.on_client_request(
+                gaxi::observability::ClientRequestAttributes::default()
+                    .set_rpc_method("google.cloud.compute.v1.routers/patchNamedSet")
                     .set_url_template(_path_template)
                     .set_resource_name(_resource_name),
             );
@@ -76233,6 +76566,83 @@ impl super::stub::Routers for Routers {
             recorder.on_client_request(
                 gaxi::observability::ClientRequestAttributes::default()
                     .set_rpc_method("google.cloud.compute.v1.routers/update")
+                    .set_url_template(_path_template)
+                    .set_resource_name(_resource_name),
+            );
+        }
+        let options = google_cloud_gax::options::internal::set_default_idempotency(
+            options,
+            gaxi::http::default_idempotency(&method),
+        );
+        let builder = builder.query(&[("$alt", "json")]).header(
+            "x-goog-api-client",
+            HeaderValue::from_static(&crate::info::X_GOOG_API_CLIENT_HEADER),
+        );
+        let body = gaxi::http::handle_empty(req.body, &method);
+        self.inner.execute(builder, body, options).await
+    }
+
+    async fn update_named_set(
+        &self,
+        req: crate::model::routers::UpdateNamedSetRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::Operation>> {
+        use gaxi::http::reqwest::{HeaderValue, Method};
+        use gaxi::path_parameter::PathMismatchBuilder;
+        use gaxi::path_parameter::try_match;
+        use gaxi::routing_parameter::Segment;
+        use google_cloud_gax::error::binding::BindingError;
+        let (builder, method, _path_template, _resource_name) = None
+        .or_else(|| {
+            let var_project = try_match(Some(&req).map(|m| &m.project).map(|s| s.as_str()), &[Segment::SingleWildcard])?;
+            let var_region = try_match(Some(&req).map(|m| &m.region).map(|s| s.as_str()), &[Segment::SingleWildcard])?;
+            let var_router = try_match(Some(&req).map(|m| &m.router).map(|s| s.as_str()), &[Segment::SingleWildcard])?;
+            let path = format!(
+                "/compute/v1/projects/{}/regions/{}/routers/{}/updateNamedSet",
+                var_project,
+                var_region,
+                var_router,
+            );
+            let path_template = "/compute/v1/projects/{project}/regions/{region}/routers/{router}/updateNamedSet";
+
+            let resource_name = format!(
+                "//compute.googleapis.com/projects/{}/regions/{}/routers/{}",
+                var_project,
+                var_region,
+                var_router,
+            );
+            let builder = self.inner.builder(Method::POST, path);
+            let builder = req.request_id.iter().fold(builder, |builder, p| builder.query(&[("requestId", p)]));
+            let builder = Ok(builder);
+            Some(builder.map(|b| (b, Method::POST, path_template, resource_name)))
+        })
+        .ok_or_else(|| {
+            let mut paths = Vec::new();
+            {
+                let builder = PathMismatchBuilder::default();
+                let builder = builder.maybe_add(
+                    Some(&req).map(|m| &m.project).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                    "project",
+                    "*");
+                let builder = builder.maybe_add(
+                    Some(&req).map(|m| &m.region).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                    "region",
+                    "*");
+                let builder = builder.maybe_add(
+                    Some(&req).map(|m| &m.router).map(|s| s.as_str()),
+                    &[Segment::SingleWildcard],
+                    "router",
+                    "*");
+                paths.push(builder.build());
+            }
+            google_cloud_gax::error::Error::binding(BindingError { paths })
+        })??;
+        if let Some(recorder) = gaxi::observability::RequestRecorder::current() {
+            recorder.on_client_request(
+                gaxi::observability::ClientRequestAttributes::default()
+                    .set_rpc_method("google.cloud.compute.v1.routers/updateNamedSet")
                     .set_url_template(_path_template)
                     .set_resource_name(_resource_name),
             );

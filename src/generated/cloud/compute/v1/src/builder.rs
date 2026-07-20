@@ -31928,6 +31928,24 @@ pub mod instance_group_managers {
             self
         }
 
+        /// Sets the value of [no_graceful_shutdown][crate::model::instance_group_managers::DeleteRequest::no_graceful_shutdown].
+        pub fn set_no_graceful_shutdown<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [no_graceful_shutdown][crate::model::instance_group_managers::DeleteRequest::no_graceful_shutdown].
+        pub fn set_or_clear_no_graceful_shutdown<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = v.map(|x| x.into());
+            self
+        }
+
         /// Sets the value of [project][crate::model::instance_group_managers::DeleteRequest::project].
         pub fn set_project<T: Into<std::string::String>>(mut self, v: T) -> Self {
             self.0.request.project = v.into();
@@ -32067,6 +32085,24 @@ pub mod instance_group_managers {
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::DeleteInstancesRequest::instance_group_manager].
         pub fn set_instance_group_manager<T: Into<std::string::String>>(mut self, v: T) -> Self {
             self.0.request.instance_group_manager = v.into();
+            self
+        }
+
+        /// Sets the value of [no_graceful_shutdown][crate::model::instance_group_managers::DeleteInstancesRequest::no_graceful_shutdown].
+        pub fn set_no_graceful_shutdown<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [no_graceful_shutdown][crate::model::instance_group_managers::DeleteInstancesRequest::no_graceful_shutdown].
+        pub fn set_or_clear_no_graceful_shutdown<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = v.map(|x| x.into());
             self
         }
 
@@ -33709,6 +33745,24 @@ pub mod instance_group_managers {
             self
         }
 
+        /// Sets the value of [no_graceful_shutdown][crate::model::instance_group_managers::RecreateInstancesRequest::no_graceful_shutdown].
+        pub fn set_no_graceful_shutdown<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [no_graceful_shutdown][crate::model::instance_group_managers::RecreateInstancesRequest::no_graceful_shutdown].
+        pub fn set_or_clear_no_graceful_shutdown<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = v.map(|x| x.into());
+            self
+        }
+
         /// Sets the value of [project][crate::model::instance_group_managers::RecreateInstancesRequest::project].
         pub fn set_project<T: Into<std::string::String>>(mut self, v: T) -> Self {
             self.0.request.project = v.into();
@@ -34651,6 +34705,24 @@ pub mod instance_group_managers {
         /// Sets the value of [instance_group_manager][crate::model::instance_group_managers::StopInstancesRequest::instance_group_manager].
         pub fn set_instance_group_manager<T: Into<std::string::String>>(mut self, v: T) -> Self {
             self.0.request.instance_group_manager = v.into();
+            self
+        }
+
+        /// Sets the value of [no_graceful_shutdown][crate::model::instance_group_managers::StopInstancesRequest::no_graceful_shutdown].
+        pub fn set_no_graceful_shutdown<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [no_graceful_shutdown][crate::model::instance_group_managers::StopInstancesRequest::no_graceful_shutdown].
+        pub fn set_or_clear_no_graceful_shutdown<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = v.map(|x| x.into());
             self
         }
 
@@ -94030,6 +94102,24 @@ pub mod region_instance_group_managers {
             self
         }
 
+        /// Sets the value of [no_graceful_shutdown][crate::model::region_instance_group_managers::DeleteRequest::no_graceful_shutdown].
+        pub fn set_no_graceful_shutdown<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [no_graceful_shutdown][crate::model::region_instance_group_managers::DeleteRequest::no_graceful_shutdown].
+        pub fn set_or_clear_no_graceful_shutdown<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = v.map(|x| x.into());
+            self
+        }
+
         /// Sets the value of [project][crate::model::region_instance_group_managers::DeleteRequest::project].
         pub fn set_project<T: Into<std::string::String>>(mut self, v: T) -> Self {
             self.0.request.project = v.into();
@@ -94169,6 +94259,24 @@ pub mod region_instance_group_managers {
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::DeleteInstancesRequest::instance_group_manager].
         pub fn set_instance_group_manager<T: Into<std::string::String>>(mut self, v: T) -> Self {
             self.0.request.instance_group_manager = v.into();
+            self
+        }
+
+        /// Sets the value of [no_graceful_shutdown][crate::model::region_instance_group_managers::DeleteInstancesRequest::no_graceful_shutdown].
+        pub fn set_no_graceful_shutdown<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [no_graceful_shutdown][crate::model::region_instance_group_managers::DeleteInstancesRequest::no_graceful_shutdown].
+        pub fn set_or_clear_no_graceful_shutdown<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = v.map(|x| x.into());
             self
         }
 
@@ -95821,6 +95929,24 @@ pub mod region_instance_group_managers {
             self
         }
 
+        /// Sets the value of [no_graceful_shutdown][crate::model::region_instance_group_managers::RecreateInstancesRequest::no_graceful_shutdown].
+        pub fn set_no_graceful_shutdown<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [no_graceful_shutdown][crate::model::region_instance_group_managers::RecreateInstancesRequest::no_graceful_shutdown].
+        pub fn set_or_clear_no_graceful_shutdown<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = v.map(|x| x.into());
+            self
+        }
+
         /// Sets the value of [project][crate::model::region_instance_group_managers::RecreateInstancesRequest::project].
         pub fn set_project<T: Into<std::string::String>>(mut self, v: T) -> Self {
             self.0.request.project = v.into();
@@ -96764,6 +96890,24 @@ pub mod region_instance_group_managers {
         /// Sets the value of [instance_group_manager][crate::model::region_instance_group_managers::StopInstancesRequest::instance_group_manager].
         pub fn set_instance_group_manager<T: Into<std::string::String>>(mut self, v: T) -> Self {
             self.0.request.instance_group_manager = v.into();
+            self
+        }
+
+        /// Sets the value of [no_graceful_shutdown][crate::model::region_instance_group_managers::StopInstancesRequest::no_graceful_shutdown].
+        pub fn set_no_graceful_shutdown<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [no_graceful_shutdown][crate::model::region_instance_group_managers::StopInstancesRequest::no_graceful_shutdown].
+        pub fn set_or_clear_no_graceful_shutdown<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.no_graceful_shutdown = v.map(|x| x.into());
             self
         }
 
@@ -123750,6 +123894,161 @@ pub mod routers {
         }
     }
 
+    /// The request builder for [Routers::delete_named_set][crate::client::Routers::delete_named_set] calls.
+    ///
+    /// # Example
+    /// ```
+    /// # use google_cloud_compute_v1::builder::routers::DeleteNamedSet;
+    /// # async fn sample() -> google_cloud_compute_v1::Result<()> {
+    ///
+    /// let builder = prepare_request_builder();
+    /// let response = builder.send().await?;
+    /// # Ok(()) }
+    ///
+    /// fn prepare_request_builder() -> DeleteNamedSet {
+    ///   # panic!();
+    ///   // ... details omitted ...
+    /// }
+    /// ```
+    #[derive(Clone, Debug)]
+    pub struct DeleteNamedSet(RequestBuilder<crate::model::routers::DeleteNamedSetRequest>);
+
+    impl DeleteNamedSet {
+        pub(crate) fn new(stub: std::sync::Arc<dyn super::super::stub::dynamic::Routers>) -> Self {
+            Self(RequestBuilder::new(stub))
+        }
+
+        /// Sets the full request, replacing any prior values.
+        pub fn with_request<V: Into<crate::model::routers::DeleteNamedSetRequest>>(
+            mut self,
+            v: V,
+        ) -> Self {
+            self.0.request = v.into();
+            self
+        }
+
+        /// Sets all the options, replacing any prior values.
+        pub fn with_options<V: Into<crate::RequestOptions>>(mut self, v: V) -> Self {
+            self.0.options = v.into();
+            self
+        }
+
+        /// Sends the request.
+        pub async fn send(self) -> Result<crate::model::Operation> {
+            (*self.0.stub)
+                .delete_named_set(self.0.request, self.0.options)
+                .await
+                .map(crate::Response::into_body)
+        }
+
+        /// Creates a [Poller][google_cloud_lro::Poller] to work with `delete_named_set`.
+        pub fn poller(
+            self,
+        ) -> impl google_cloud_lro::Poller<crate::model::Operation, crate::model::Operation>
+        {
+            let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
+            let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
+            let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
+            if let Some(ref mut details) = poller_options.tracing {
+                details.method_name =
+                    "google_cloud_compute_v1::client::Routers::delete_named_set::until_done";
+            }
+
+            let stub = self.0.stub.clone();
+            let mut options = self.0.options.clone();
+            options.set_retry_policy(google_cloud_gax::retry_policy::NeverRetry);
+            let project = self.0.request.project.clone();
+            let region = self.0.request.region.clone();
+            let query = move |name| {
+                let stub = stub.clone();
+                let options = options.clone();
+                let project = project.clone();
+                let region = region.clone();
+                async {
+                    GetOperation::new(stub)
+                        .set_project(project)
+                        .set_region(region)
+                        .set_operation(name)
+                        .with_options(options)
+                        .send()
+                        .await
+                }
+            };
+
+            let start = move || async { self.send().await };
+
+            use google_cloud_lro::internal::PollerExt;
+            google_cloud_lro::internal::new_discovery_poller(
+                polling_error_policy,
+                polling_backoff_policy,
+                start,
+                query,
+            )
+            .with_options(poller_options)
+        }
+
+        /// Sets the value of [named_set][crate::model::routers::DeleteNamedSetRequest::named_set].
+        pub fn set_named_set<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.named_set = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [named_set][crate::model::routers::DeleteNamedSetRequest::named_set].
+        pub fn set_or_clear_named_set<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.named_set = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [project][crate::model::routers::DeleteNamedSetRequest::project].
+        pub fn set_project<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.project = v.into();
+            self
+        }
+
+        /// Sets the value of [region][crate::model::routers::DeleteNamedSetRequest::region].
+        pub fn set_region<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.region = v.into();
+            self
+        }
+
+        /// Sets the value of [request_id][crate::model::routers::DeleteNamedSetRequest::request_id].
+        pub fn set_request_id<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.request_id = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [request_id][crate::model::routers::DeleteNamedSetRequest::request_id].
+        pub fn set_or_clear_request_id<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.request_id = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [router][crate::model::routers::DeleteNamedSetRequest::router].
+        pub fn set_router<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.router = v.into();
+            self
+        }
+    }
+
+    #[doc(hidden)]
+    impl crate::RequestBuilder for DeleteNamedSet {
+        fn request_options(&mut self) -> &mut crate::RequestOptions {
+            &mut self.0.options
+        }
+    }
+
     /// The request builder for [Routers::delete_route_policy][crate::client::Routers::delete_route_policy] calls.
     ///
     /// # Example
@@ -123970,6 +124269,97 @@ pub mod routers {
 
     #[doc(hidden)]
     impl crate::RequestBuilder for Get {
+        fn request_options(&mut self) -> &mut crate::RequestOptions {
+            &mut self.0.options
+        }
+    }
+
+    /// The request builder for [Routers::get_named_set][crate::client::Routers::get_named_set] calls.
+    ///
+    /// # Example
+    /// ```
+    /// # use google_cloud_compute_v1::builder::routers::GetNamedSet;
+    /// # async fn sample() -> google_cloud_compute_v1::Result<()> {
+    ///
+    /// let builder = prepare_request_builder();
+    /// let response = builder.send().await?;
+    /// # Ok(()) }
+    ///
+    /// fn prepare_request_builder() -> GetNamedSet {
+    ///   # panic!();
+    ///   // ... details omitted ...
+    /// }
+    /// ```
+    #[derive(Clone, Debug)]
+    pub struct GetNamedSet(RequestBuilder<crate::model::routers::GetNamedSetRequest>);
+
+    impl GetNamedSet {
+        pub(crate) fn new(stub: std::sync::Arc<dyn super::super::stub::dynamic::Routers>) -> Self {
+            Self(RequestBuilder::new(stub))
+        }
+
+        /// Sets the full request, replacing any prior values.
+        pub fn with_request<V: Into<crate::model::routers::GetNamedSetRequest>>(
+            mut self,
+            v: V,
+        ) -> Self {
+            self.0.request = v.into();
+            self
+        }
+
+        /// Sets all the options, replacing any prior values.
+        pub fn with_options<V: Into<crate::RequestOptions>>(mut self, v: V) -> Self {
+            self.0.options = v.into();
+            self
+        }
+
+        /// Sends the request.
+        pub async fn send(self) -> Result<crate::model::RoutersGetNamedSetResponse> {
+            (*self.0.stub)
+                .get_named_set(self.0.request, self.0.options)
+                .await
+                .map(crate::Response::into_body)
+        }
+
+        /// Sets the value of [named_set][crate::model::routers::GetNamedSetRequest::named_set].
+        pub fn set_named_set<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.named_set = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [named_set][crate::model::routers::GetNamedSetRequest::named_set].
+        pub fn set_or_clear_named_set<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.named_set = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [project][crate::model::routers::GetNamedSetRequest::project].
+        pub fn set_project<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.project = v.into();
+            self
+        }
+
+        /// Sets the value of [region][crate::model::routers::GetNamedSetRequest::region].
+        pub fn set_region<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.region = v.into();
+            self
+        }
+
+        /// Sets the value of [router][crate::model::routers::GetNamedSetRequest::router].
+        pub fn set_router<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.router = v.into();
+            self
+        }
+    }
+
+    #[doc(hidden)]
+    impl crate::RequestBuilder for GetNamedSet {
         fn request_options(&mut self) -> &mut crate::RequestOptions {
             &mut self.0.options
         }
@@ -125054,6 +125444,199 @@ pub mod routers {
         }
     }
 
+    /// The request builder for [Routers::list_named_sets][crate::client::Routers::list_named_sets] calls.
+    ///
+    /// # Example
+    /// ```
+    /// # use google_cloud_compute_v1::builder::routers::ListNamedSets;
+    /// # async fn sample() -> google_cloud_compute_v1::Result<()> {
+    /// use google_cloud_gax::paginator::ItemPaginator;
+    ///
+    /// let builder = prepare_request_builder();
+    /// let mut items = builder.by_item();
+    /// while let Some(result) = items.next().await {
+    ///   let item = result?;
+    /// }
+    /// # Ok(()) }
+    ///
+    /// fn prepare_request_builder() -> ListNamedSets {
+    ///   # panic!();
+    ///   // ... details omitted ...
+    /// }
+    /// ```
+    #[derive(Clone, Debug)]
+    pub struct ListNamedSets(RequestBuilder<crate::model::routers::ListNamedSetsRequest>);
+
+    impl ListNamedSets {
+        pub(crate) fn new(stub: std::sync::Arc<dyn super::super::stub::dynamic::Routers>) -> Self {
+            Self(RequestBuilder::new(stub))
+        }
+
+        /// Sets the full request, replacing any prior values.
+        pub fn with_request<V: Into<crate::model::routers::ListNamedSetsRequest>>(
+            mut self,
+            v: V,
+        ) -> Self {
+            self.0.request = v.into();
+            self
+        }
+
+        /// Sets all the options, replacing any prior values.
+        pub fn with_options<V: Into<crate::RequestOptions>>(mut self, v: V) -> Self {
+            self.0.options = v.into();
+            self
+        }
+
+        /// Sends the request.
+        pub async fn send(self) -> Result<crate::model::RoutersListNamedSets> {
+            (*self.0.stub)
+                .list_named_sets(self.0.request, self.0.options)
+                .await
+                .map(crate::Response::into_body)
+        }
+
+        /// Streams each page in the collection.
+        pub fn by_page(
+            self,
+        ) -> impl google_cloud_gax::paginator::Paginator<crate::model::RoutersListNamedSets, crate::Error>
+        {
+            use std::clone::Clone;
+            let token = self.0.request.page_token.clone().unwrap_or_default();
+            let execute = move |token: String| {
+                let mut builder = self.clone();
+                builder.0.request = builder.0.request.set_page_token(token);
+                builder.send()
+            };
+            google_cloud_gax::paginator::internal::new_paginator(token, execute)
+        }
+
+        /// Streams each item in the collection.
+        pub fn by_item(
+            self,
+        ) -> impl google_cloud_gax::paginator::ItemPaginator<
+            crate::model::RoutersListNamedSets,
+            crate::Error,
+        > {
+            use google_cloud_gax::paginator::Paginator;
+            self.by_page().items()
+        }
+
+        /// Sets the value of [filter][crate::model::routers::ListNamedSetsRequest::filter].
+        pub fn set_filter<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.filter = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [filter][crate::model::routers::ListNamedSetsRequest::filter].
+        pub fn set_or_clear_filter<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.filter = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [max_results][crate::model::routers::ListNamedSetsRequest::max_results].
+        pub fn set_max_results<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<u32>,
+        {
+            self.0.request.max_results = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [max_results][crate::model::routers::ListNamedSetsRequest::max_results].
+        pub fn set_or_clear_max_results<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<u32>,
+        {
+            self.0.request.max_results = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [order_by][crate::model::routers::ListNamedSetsRequest::order_by].
+        pub fn set_order_by<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.order_by = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [order_by][crate::model::routers::ListNamedSetsRequest::order_by].
+        pub fn set_or_clear_order_by<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.order_by = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [page_token][crate::model::routers::ListNamedSetsRequest::page_token].
+        pub fn set_page_token<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.page_token = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [page_token][crate::model::routers::ListNamedSetsRequest::page_token].
+        pub fn set_or_clear_page_token<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.page_token = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [project][crate::model::routers::ListNamedSetsRequest::project].
+        pub fn set_project<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.project = v.into();
+            self
+        }
+
+        /// Sets the value of [region][crate::model::routers::ListNamedSetsRequest::region].
+        pub fn set_region<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.region = v.into();
+            self
+        }
+
+        /// Sets the value of [return_partial_success][crate::model::routers::ListNamedSetsRequest::return_partial_success].
+        pub fn set_return_partial_success<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.return_partial_success = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [return_partial_success][crate::model::routers::ListNamedSetsRequest::return_partial_success].
+        pub fn set_or_clear_return_partial_success<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.0.request.return_partial_success = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [router][crate::model::routers::ListNamedSetsRequest::router].
+        pub fn set_router<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.router = v.into();
+            self
+        }
+    }
+
+    #[doc(hidden)]
+    impl crate::RequestBuilder for ListNamedSets {
+        fn request_options(&mut self) -> &mut crate::RequestOptions {
+            &mut self.0.options
+        }
+    }
+
     /// The request builder for [Routers::list_route_policies][crate::client::Routers::list_route_policies] calls.
     ///
     /// # Example
@@ -125395,6 +125978,161 @@ pub mod routers {
 
     #[doc(hidden)]
     impl crate::RequestBuilder for Patch {
+        fn request_options(&mut self) -> &mut crate::RequestOptions {
+            &mut self.0.options
+        }
+    }
+
+    /// The request builder for [Routers::patch_named_set][crate::client::Routers::patch_named_set] calls.
+    ///
+    /// # Example
+    /// ```
+    /// # use google_cloud_compute_v1::builder::routers::PatchNamedSet;
+    /// # async fn sample() -> google_cloud_compute_v1::Result<()> {
+    ///
+    /// let builder = prepare_request_builder();
+    /// let response = builder.send().await?;
+    /// # Ok(()) }
+    ///
+    /// fn prepare_request_builder() -> PatchNamedSet {
+    ///   # panic!();
+    ///   // ... details omitted ...
+    /// }
+    /// ```
+    #[derive(Clone, Debug)]
+    pub struct PatchNamedSet(RequestBuilder<crate::model::routers::PatchNamedSetRequest>);
+
+    impl PatchNamedSet {
+        pub(crate) fn new(stub: std::sync::Arc<dyn super::super::stub::dynamic::Routers>) -> Self {
+            Self(RequestBuilder::new(stub))
+        }
+
+        /// Sets the full request, replacing any prior values.
+        pub fn with_request<V: Into<crate::model::routers::PatchNamedSetRequest>>(
+            mut self,
+            v: V,
+        ) -> Self {
+            self.0.request = v.into();
+            self
+        }
+
+        /// Sets all the options, replacing any prior values.
+        pub fn with_options<V: Into<crate::RequestOptions>>(mut self, v: V) -> Self {
+            self.0.options = v.into();
+            self
+        }
+
+        /// Sends the request.
+        pub async fn send(self) -> Result<crate::model::Operation> {
+            (*self.0.stub)
+                .patch_named_set(self.0.request, self.0.options)
+                .await
+                .map(crate::Response::into_body)
+        }
+
+        /// Creates a [Poller][google_cloud_lro::Poller] to work with `patch_named_set`.
+        pub fn poller(
+            self,
+        ) -> impl google_cloud_lro::Poller<crate::model::Operation, crate::model::Operation>
+        {
+            let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
+            let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
+            let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
+            if let Some(ref mut details) = poller_options.tracing {
+                details.method_name =
+                    "google_cloud_compute_v1::client::Routers::patch_named_set::until_done";
+            }
+
+            let stub = self.0.stub.clone();
+            let mut options = self.0.options.clone();
+            options.set_retry_policy(google_cloud_gax::retry_policy::NeverRetry);
+            let project = self.0.request.project.clone();
+            let region = self.0.request.region.clone();
+            let query = move |name| {
+                let stub = stub.clone();
+                let options = options.clone();
+                let project = project.clone();
+                let region = region.clone();
+                async {
+                    GetOperation::new(stub)
+                        .set_project(project)
+                        .set_region(region)
+                        .set_operation(name)
+                        .with_options(options)
+                        .send()
+                        .await
+                }
+            };
+
+            let start = move || async { self.send().await };
+
+            use google_cloud_lro::internal::PollerExt;
+            google_cloud_lro::internal::new_discovery_poller(
+                polling_error_policy,
+                polling_backoff_policy,
+                start,
+                query,
+            )
+            .with_options(poller_options)
+        }
+
+        /// Sets the value of [project][crate::model::routers::PatchNamedSetRequest::project].
+        pub fn set_project<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.project = v.into();
+            self
+        }
+
+        /// Sets the value of [region][crate::model::routers::PatchNamedSetRequest::region].
+        pub fn set_region<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.region = v.into();
+            self
+        }
+
+        /// Sets the value of [request_id][crate::model::routers::PatchNamedSetRequest::request_id].
+        pub fn set_request_id<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.request_id = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [request_id][crate::model::routers::PatchNamedSetRequest::request_id].
+        pub fn set_or_clear_request_id<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.request_id = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [router][crate::model::routers::PatchNamedSetRequest::router].
+        pub fn set_router<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.router = v.into();
+            self
+        }
+
+        /// Sets the value of [body][crate::model::routers::PatchNamedSetRequest::body].
+        pub fn set_body<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<crate::model::NamedSet>,
+        {
+            self.0.request.body = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [body][crate::model::routers::PatchNamedSetRequest::body].
+        pub fn set_or_clear_body<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<crate::model::NamedSet>,
+        {
+            self.0.request.body = v.map(|x| x.into());
+            self
+        }
+    }
+
+    #[doc(hidden)]
+    impl crate::RequestBuilder for PatchNamedSet {
         fn request_options(&mut self) -> &mut crate::RequestOptions {
             &mut self.0.options
         }
@@ -125793,6 +126531,161 @@ pub mod routers {
 
     #[doc(hidden)]
     impl crate::RequestBuilder for Update {
+        fn request_options(&mut self) -> &mut crate::RequestOptions {
+            &mut self.0.options
+        }
+    }
+
+    /// The request builder for [Routers::update_named_set][crate::client::Routers::update_named_set] calls.
+    ///
+    /// # Example
+    /// ```
+    /// # use google_cloud_compute_v1::builder::routers::UpdateNamedSet;
+    /// # async fn sample() -> google_cloud_compute_v1::Result<()> {
+    ///
+    /// let builder = prepare_request_builder();
+    /// let response = builder.send().await?;
+    /// # Ok(()) }
+    ///
+    /// fn prepare_request_builder() -> UpdateNamedSet {
+    ///   # panic!();
+    ///   // ... details omitted ...
+    /// }
+    /// ```
+    #[derive(Clone, Debug)]
+    pub struct UpdateNamedSet(RequestBuilder<crate::model::routers::UpdateNamedSetRequest>);
+
+    impl UpdateNamedSet {
+        pub(crate) fn new(stub: std::sync::Arc<dyn super::super::stub::dynamic::Routers>) -> Self {
+            Self(RequestBuilder::new(stub))
+        }
+
+        /// Sets the full request, replacing any prior values.
+        pub fn with_request<V: Into<crate::model::routers::UpdateNamedSetRequest>>(
+            mut self,
+            v: V,
+        ) -> Self {
+            self.0.request = v.into();
+            self
+        }
+
+        /// Sets all the options, replacing any prior values.
+        pub fn with_options<V: Into<crate::RequestOptions>>(mut self, v: V) -> Self {
+            self.0.options = v.into();
+            self
+        }
+
+        /// Sends the request.
+        pub async fn send(self) -> Result<crate::model::Operation> {
+            (*self.0.stub)
+                .update_named_set(self.0.request, self.0.options)
+                .await
+                .map(crate::Response::into_body)
+        }
+
+        /// Creates a [Poller][google_cloud_lro::Poller] to work with `update_named_set`.
+        pub fn poller(
+            self,
+        ) -> impl google_cloud_lro::Poller<crate::model::Operation, crate::model::Operation>
+        {
+            let polling_error_policy = self.0.stub.get_polling_error_policy(&self.0.options);
+            let polling_backoff_policy = self.0.stub.get_polling_backoff_policy(&self.0.options);
+            let mut poller_options = self.0.stub.get_poller_options(&self.0.options);
+            if let Some(ref mut details) = poller_options.tracing {
+                details.method_name =
+                    "google_cloud_compute_v1::client::Routers::update_named_set::until_done";
+            }
+
+            let stub = self.0.stub.clone();
+            let mut options = self.0.options.clone();
+            options.set_retry_policy(google_cloud_gax::retry_policy::NeverRetry);
+            let project = self.0.request.project.clone();
+            let region = self.0.request.region.clone();
+            let query = move |name| {
+                let stub = stub.clone();
+                let options = options.clone();
+                let project = project.clone();
+                let region = region.clone();
+                async {
+                    GetOperation::new(stub)
+                        .set_project(project)
+                        .set_region(region)
+                        .set_operation(name)
+                        .with_options(options)
+                        .send()
+                        .await
+                }
+            };
+
+            let start = move || async { self.send().await };
+
+            use google_cloud_lro::internal::PollerExt;
+            google_cloud_lro::internal::new_discovery_poller(
+                polling_error_policy,
+                polling_backoff_policy,
+                start,
+                query,
+            )
+            .with_options(poller_options)
+        }
+
+        /// Sets the value of [project][crate::model::routers::UpdateNamedSetRequest::project].
+        pub fn set_project<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.project = v.into();
+            self
+        }
+
+        /// Sets the value of [region][crate::model::routers::UpdateNamedSetRequest::region].
+        pub fn set_region<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.region = v.into();
+            self
+        }
+
+        /// Sets the value of [request_id][crate::model::routers::UpdateNamedSetRequest::request_id].
+        pub fn set_request_id<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.request_id = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [request_id][crate::model::routers::UpdateNamedSetRequest::request_id].
+        pub fn set_or_clear_request_id<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.0.request.request_id = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [router][crate::model::routers::UpdateNamedSetRequest::router].
+        pub fn set_router<T: Into<std::string::String>>(mut self, v: T) -> Self {
+            self.0.request.router = v.into();
+            self
+        }
+
+        /// Sets the value of [body][crate::model::routers::UpdateNamedSetRequest::body].
+        pub fn set_body<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<crate::model::NamedSet>,
+        {
+            self.0.request.body = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [body][crate::model::routers::UpdateNamedSetRequest::body].
+        pub fn set_or_clear_body<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<crate::model::NamedSet>,
+        {
+            self.0.request.body = v.map(|x| x.into());
+            self
+        }
+    }
+
+    #[doc(hidden)]
+    impl crate::RequestBuilder for UpdateNamedSet {
         fn request_options(&mut self) -> &mut crate::RequestOptions {
             &mut self.0.options
         }

@@ -51,6 +51,7 @@ google-cloud-rpc.workspace = true
 google-cloud-type          = { workspace = true }
 uuid                       = { workspace = true }
 wkt                        = { workspace = true }
+rust_decimal.workspace     = true
 
 [dev-dependencies]
 anyhow.workspace    = true

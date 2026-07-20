@@ -37,5 +37,6 @@ google-cloud-type        = { workspace = true }
 rand.workspace           = true
 serde                    = { workspace = true, features = ["derive"] }
 serde_json               = { workspace = true }
+rust_decimal             = { workspace = true }
 tokio.workspace          = true
 wkt.workspace            = true

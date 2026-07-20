@@ -11296,6 +11296,11 @@ pub struct GroundingMetadata {
     /// Optional. Google search entry for the following-up web searches.
     pub search_entry_point: std::option::Option<crate::model::SearchEntryPoint>,
 
+    /// Optional. The queries that were executed by the retrieval tools.
+    /// This field is populated only when the grounding source is a retrieval tool,
+    /// such as Vertex AI Search.
+    pub retrieval_queries: std::vec::Vec<std::string::String>,
+
     /// List of supporting references retrieved from specified grounding source.
     pub grounding_chunks: std::vec::Vec<crate::model::GroundingChunk>,
 
@@ -11371,6 +11376,23 @@ impl GroundingMetadata {
         T: std::convert::Into<crate::model::SearchEntryPoint>,
     {
         self.search_entry_point = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [retrieval_queries][crate::model::GroundingMetadata::retrieval_queries].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_aiplatform_v1::model::GroundingMetadata;
+    /// let x = GroundingMetadata::new().set_retrieval_queries(["a", "b", "c"]);
+    /// ```
+    pub fn set_retrieval_queries<T, V>(mut self, v: T) -> Self
+    where
+        T: std::iter::IntoIterator<Item = V>,
+        V: std::convert::Into<std::string::String>,
+    {
+        use std::iter::Iterator;
+        self.retrieval_queries = v.into_iter().map(|i| i.into()).collect();
         self
     }
 

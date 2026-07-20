@@ -7023,6 +7023,7 @@ impl<'de> serde::de::Deserialize<'de> for super::GroundingMetadata {
         enum __FieldTag {
             __web_search_queries,
             __search_entry_point,
+            __retrieval_queries,
             __grounding_chunks,
             __grounding_supports,
             __retrieval_metadata,
@@ -7052,6 +7053,8 @@ impl<'de> serde::de::Deserialize<'de> for super::GroundingMetadata {
                             "web_search_queries" => Ok(__FieldTag::__web_search_queries),
                             "searchEntryPoint" => Ok(__FieldTag::__search_entry_point),
                             "search_entry_point" => Ok(__FieldTag::__search_entry_point),
+                            "retrievalQueries" => Ok(__FieldTag::__retrieval_queries),
+                            "retrieval_queries" => Ok(__FieldTag::__retrieval_queries),
                             "groundingChunks" => Ok(__FieldTag::__grounding_chunks),
                             "grounding_chunks" => Ok(__FieldTag::__grounding_chunks),
                             "groundingSupports" => Ok(__FieldTag::__grounding_supports),
@@ -7108,6 +7111,14 @@ impl<'de> serde::de::Deserialize<'de> for super::GroundingMetadata {
                             result.search_entry_point = map
                                 .next_value::<std::option::Option<crate::model::SearchEntryPoint>>(
                                 )?;
+                        }
+                        __FieldTag::__retrieval_queries => {
+                            if !fields.insert(__FieldTag::__retrieval_queries) {
+                                return std::result::Result::Err(A::Error::duplicate_field(
+                                    "multiple values for retrieval_queries",
+                                ));
+                            }
+                            result.retrieval_queries = map.next_value::<std::option::Option<std::vec::Vec<std::string::String>>>()?.unwrap_or_default();
                         }
                         __FieldTag::__grounding_chunks => {
                             if !fields.insert(__FieldTag::__grounding_chunks) {

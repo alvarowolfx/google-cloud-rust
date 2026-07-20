@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! Derive macros for the Google Cloud BigQuery client.
+
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
@@ -50,7 +52,9 @@ pub fn derive_from_row(input: TokenStream) -> TokenStream {
         }
     });
 
-    let field_idents = fields.iter().map(|f| f.ident.as_ref().expect("named field must have identifier"));
+    let field_idents = fields
+        .iter()
+        .map(|f| f.ident.as_ref().expect("named field must have identifier"));
 
     let expanded = quote! {
         impl google_cloud_bigquery::FromRow for #name {
