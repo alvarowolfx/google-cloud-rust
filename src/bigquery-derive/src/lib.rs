@@ -46,7 +46,6 @@ pub fn derive_from_row(input: TokenStream) -> TokenStream {
                 .into();
         }
     };
-
     let value_extractions = fields.iter().map(|f| {
         let field_name = f.ident.as_ref().expect("named field must have identifier");
         let db_column_name = get_field_name(f);

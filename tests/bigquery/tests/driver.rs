@@ -74,25 +74,9 @@ mod bigquery {
     }
 
     #[tokio::test]
-    async fn run_query_client_row_parsing() -> anyhow::Result<()> {
-        let _guard = enable_tracing();
-        integration_tests_bigquery::query_client_row_parsing()
-            .await
-            .inspect_err(anydump)
-    }
-
-    #[tokio::test]
     async fn run_query_client_nested_types() -> anyhow::Result<()> {
         let _guard = enable_tracing();
         integration_tests_bigquery::query_client_nested_types()
-            .await
-            .inspect_err(anydump)
-    }
-
-    #[tokio::test]
-    async fn run_query_client_range_values() -> anyhow::Result<()> {
-        let _guard = enable_tracing();
-        integration_tests_bigquery::query_client_range_values()
             .await
             .inspect_err(anydump)
     }

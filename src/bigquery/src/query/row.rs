@@ -13,14 +13,13 @@
 // limitations under the License.
 
 use crate::error::{ConvertError, RowError};
-use crate::query::Schema;
-use crate::query::from_sql::FromSql;
+use crate::query::{FromSql, Schema};
 use std::sync::Arc;
 use wkt::{ListValue, Struct, Value};
 
 pub type Result<T> = std::result::Result<T, RowError>;
 
-/// A row in a query result.
+/// A container for a single row within a query result set.
 #[derive(Clone, Debug)]
 pub struct Row {
     pub(crate) values: Value,
@@ -59,12 +58,6 @@ impl ColumnIndex for String {
     fn index(&self, row: &Row) -> Option<usize> {
         self.as_str().index(row)
     }
-}
-
-/// A trait for types that can be created from a BigQuery [`Row`].
-pub trait FromRow: Sized {
-    /// Creates an instance of this type by consuming the given [`Row`].
-    fn from_row(row: Row) -> Result<Self>;
 }
 
 impl Row {
