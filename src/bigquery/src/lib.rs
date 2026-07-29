@@ -25,11 +25,11 @@
 //!
 //! [bigquery]: https://cloud.google.com/bigquery
 
-pub use google_cloud_gax::Result;
-pub use google_cloud_gax::error::Error;
 pub use crate::error::{ConvertError, QueryError, RowError};
 pub use crate::query::{FromRow, FromSql, Interval, Range, Row, deserialize};
 pub use google_cloud_bigquery_derive::{FromRow, FromSql};
+pub use google_cloud_gax::Result;
+pub use google_cloud_gax::error::Error;
 
 /// Re-export as `builders` as well for alias compatibility.
 pub use builder as builders;

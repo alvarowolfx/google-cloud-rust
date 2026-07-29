@@ -700,37 +700,6 @@ pub async fn query_client_nested_types() -> Result<()> {
     let complete_query = query.until_done().await?;
     let mut rows = complete_query.read();
 
-    if let Some(row) = rows.next().await {
-        let row = row?;
-
-        // Deserialize the entire row using TryInto implemented by our FromRow derive macro!
-        let data: RowData = row.try_into()?;
-
-        // verify nested struct
-        assert_eq!(data.user.name, "Alice");
-        assert_eq!(data.user.age, 25);
-
-        // verify repeated basic type (ARRAY)
-        assert_eq!(data.numbers, vec![1, 2, 3]);
-
-        // verify repeated struct
-        assert_eq!(data.users.len(), 2);
-        assert_eq!(data.users[0].name, "Bob");
-        assert_eq!(data.users[0].age, 28);
-        assert_eq!(data.users[1].name, "Charlie");
-        assert_eq!(data.users[1].age, 31);
-
-        // verify user-defined struct with BQ-specific date field
-        assert_eq!(data.profile.name, "Dave");
-        assert_eq!(data.profile.age, 40);
-        assert_eq!(data.profile.birth_date.year, 1986);
-        assert_eq!(data.profile.birth_date.month, 5);
-        assert_eq!(data.profile.birth_date.day, 28);
-    } else {
-        panic!("expected at least one row");
-    }
-
-    println!("NESTED TYPES INTEGRATION TEST COMPLETED SUCCESSFULLY");
     let row = rows.next().await.expect("row must exist")?;
 
     // Deserialize the entire row as user defined struct

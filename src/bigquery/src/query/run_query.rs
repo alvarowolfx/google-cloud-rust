@@ -28,7 +28,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 pub(crate) const JOB_ID_PREFIX: &str = "job_";
-pub(crate) const QUERY_REQUEST_ID_PREFIX: &str = "query_req_";
+pub(crate) const QUERY_REQUEST_ID_PREFIX: &str = "";
 
 /// A unified request builder for configuring and running a SQL query.
 /// It automatically routes to either `jobs.query` (fast path) or `jobs.insert` (job path)
