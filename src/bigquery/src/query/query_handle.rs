@@ -312,7 +312,7 @@ pub(crate) async fn poll_query_results(
 mod tests {
     use super::*;
     use crate::query::RunQuery;
-    use crate::query::run_query::JOB_ID_PREFIX;
+    use crate::query::run_query::QUERY_REQUEST_ID_PREFIX;
     use crate::query::tests::{
         MockBackoffPolicy, MockJobService, create_job_service, create_test_backoff_policy,
         create_test_retry_backoff_policy, create_test_retry_policy,
@@ -638,8 +638,8 @@ mod tests {
             .times(1)
             .returning(|req, _| {
                 let req_id = &req.query_request.as_ref().unwrap().request_id;
-                assert!(req_id.starts_with(JOB_ID_PREFIX));
-                assert!(uuid::Uuid::parse_str(&req_id[JOB_ID_PREFIX.len()..]).is_ok());
+                assert!(req_id.starts_with(QUERY_REQUEST_ID_PREFIX));
+                assert!(uuid::Uuid::parse_str(&req_id[QUERY_REQUEST_ID_PREFIX.len()..]).is_ok());
                 let new_job_ref = JobReference::new()
                     .set_project_id("some_project")
                     .set_job_id("reissued_job_id");
@@ -714,8 +714,8 @@ mod tests {
             .times(1)
             .returning(|req, _| {
                 let req_id = &req.query_request.as_ref().unwrap().request_id;
-                assert!(req_id.starts_with(JOB_ID_PREFIX));
-                assert!(uuid::Uuid::parse_str(&req_id[JOB_ID_PREFIX.len()..]).is_ok());
+                assert!(req_id.starts_with(QUERY_REQUEST_ID_PREFIX));
+                assert!(uuid::Uuid::parse_str(&req_id[QUERY_REQUEST_ID_PREFIX.len()..]).is_ok());
                 let new_job_ref = JobReference::new()
                     .set_project_id("some_project")
                     .set_job_id("reissued_job_id");

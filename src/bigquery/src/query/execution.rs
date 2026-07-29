@@ -53,6 +53,9 @@ impl PostQueryExecutor {
         let res = self
             .job_service
             .query()
+            // requests to jobs.query are idempotent because every request
+            // carries a generated request_id.
+            .with_idempotency(true)
             .with_request(self.request)
             .with_retry_policy(retry_policy.clone())
             .with_backoff_policy(backoff_policy.clone())
@@ -75,7 +78,7 @@ impl PostQueryExecutor {
             query_template: Some(self.query_template),
             retry_policy,
             backoff_policy,
-            retry_state: RetryState::new(true),
+            retry_state: RetryState::default(),
         })
     }
 }
@@ -126,6 +129,9 @@ impl InsertJobExecutor {
             .job_service
             .insert_job()
             .with_request(self.request)
+            // jobs.insert is idempotent because every request
+            // carries a generated UUID job_id.
+            .with_idempotency(true)
             .with_retry_policy(retry_policy.clone())
             .with_backoff_policy(backoff_policy.clone())
             .send()

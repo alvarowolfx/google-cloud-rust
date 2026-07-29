@@ -28,6 +28,7 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 pub(crate) const JOB_ID_PREFIX: &str = "job_";
+pub(crate) const QUERY_REQUEST_ID_PREFIX: &str = "query_req_";
 
 /// A unified request builder for configuring and running a SQL query.
 /// It automatically routes to either `jobs.query` (fast path) or `jobs.insert` (job path)
@@ -89,14 +90,11 @@ impl RunQuery {
         self
     }
 
-    pub(crate) fn generate_job_reference(
-        &self,
-        project_id: &str,
-        execution_id: &str,
-    ) -> JobReference {
+    fn generate_job_reference(&self, project_id: &str) -> JobReference {
+        let job_id = format!("{JOB_ID_PREFIX}{}", Uuid::new_v4());
         let mut job_ref = JobReference::new()
             .set_project_id(project_id.to_string())
-            .set_job_id(execution_id.to_string());
+            .set_job_id(job_id);
 
         if !self.request.location.is_empty() {
             job_ref = job_ref.set_location(self.request.location.clone());
@@ -115,7 +113,7 @@ impl RunQuery {
     /// [jobs.query]: https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/query
     /// [jobs.insert]: https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/insert
     pub async fn run(self) -> Result<Query> {
-        let mut retry_state = RetryState::new(true);
+        let mut retry_state = RetryState::default();
         let retry_policy = self
             .retry_policy
             .clone()
@@ -141,8 +139,7 @@ impl RunQuery {
             .ok_or(QueryError::MissingProjectId)?;
 
         loop {
-            let execution_id = format!("{JOB_ID_PREFIX}{}", Uuid::new_v4());
-            match self.execute_once(project_id, &execution_id).await {
+            match self.execute_once(project_id).await {
                 Ok(mut query) => {
                     query.retry_state = retry_state.clone();
                     return Ok(query);
@@ -163,11 +160,11 @@ impl RunQuery {
         }
     }
 
-    pub(crate) async fn execute_once(&self, project_id: &str, execution_id: &str) -> Result<Query> {
+    pub(crate) async fn execute_once(&self, project_id: &str) -> Result<Query> {
         if self.request.force_job_path() {
             // Route to jobs.insert
             let job_config: JobConfiguration = self.request.clone().into();
-            let job_ref = self.generate_job_reference(project_id, execution_id);
+            let job_ref = self.generate_job_reference(project_id);
             let job = Job::new()
                 .set_configuration(job_config)
                 .set_job_reference(job_ref);
@@ -178,6 +175,7 @@ impl RunQuery {
                 .execute()
                 .await
         } else {
+            let query_request_id = format!("{QUERY_REQUEST_ID_PREFIX}{}", Uuid::new_v4());
             // Route to jobs.query
             let query_request: QueryRequest = self.request.clone().into();
             let query_request = query_request
@@ -185,7 +183,7 @@ impl RunQuery {
                     google_cloud_bigquery_v2::model::DataFormatOptions::new()
                         .set_use_int64_timestamp(true),
                 )
-                .set_request_id(execution_id.to_string());
+                .set_request_id(query_request_id);
             let req = PostQueryRequest::new()
                 .set_project_id(project_id.to_string())
                 .set_query_request(query_request);
@@ -321,9 +319,9 @@ mod tests {
         let job_service = create_job_service(MockJobService::new());
         let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
 
-        let job_ref = run_query.generate_job_reference("my-project", "test-uuid-1234");
+        let job_ref = run_query.generate_job_reference("my-project");
         assert_eq!(job_ref.project_id, "my-project");
-        assert_eq!(job_ref.job_id, "test-uuid-1234");
+        assert!(job_ref.job_id.starts_with(JOB_ID_PREFIX));
     }
 
     #[tokio::test(start_paused = true)]
@@ -338,8 +336,8 @@ mod tests {
             .times(1)
             .returning(move |req, _| {
                 let req_id = req.query_request.as_ref().unwrap().request_id.clone();
-                assert!(req_id.starts_with(JOB_ID_PREFIX));
-                assert!(uuid::Uuid::parse_str(&req_id[JOB_ID_PREFIX.len()..]).is_ok());
+                assert!(req_id.starts_with(QUERY_REQUEST_ID_PREFIX));
+                assert!(uuid::Uuid::parse_str(&req_id[QUERY_REQUEST_ID_PREFIX.len()..]).is_ok());
                 *first_request_id_clone.lock().unwrap() = req_id;
                 let err_proto = ErrorProto::new()
                     .set_reason("backendError")
@@ -354,8 +352,8 @@ mod tests {
             .times(1)
             .returning(move |req, _| {
                 let req_id = req.query_request.as_ref().unwrap().request_id.clone();
-                assert!(req_id.starts_with(JOB_ID_PREFIX));
-                assert!(uuid::Uuid::parse_str(&req_id[JOB_ID_PREFIX.len()..]).is_ok());
+                assert!(req_id.starts_with(QUERY_REQUEST_ID_PREFIX));
+                assert!(uuid::Uuid::parse_str(&req_id[QUERY_REQUEST_ID_PREFIX.len()..]).is_ok());
                 assert_ne!(
                     req_id,
                     *first_request_id.lock().unwrap(),
