@@ -6407,8 +6407,6 @@ dependencies = [
  "google-cloud-wkt",
  "rand 0.10.2",
  "rust_decimal",
- "serde",
- "serde_json",
  "tokio",
 ]
 

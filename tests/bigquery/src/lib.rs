@@ -20,8 +20,7 @@ use google_cloud_bigquery_v2::client::{DatasetService, JobService};
 use google_cloud_bigquery_v2::model::{
     Dataset, DatasetReference, Job, JobConfiguration, JobConfigurationQuery, JobReference,
 };
-use google_cloud_gax::error::rpc::Code;
-use google_cloud_gax::paginator::ItemPaginator;
+use google_cloud_gax::{error::rpc::Code, paginator::ItemPaginator};
 use google_cloud_test_utils::runtime_config::project_id;
 use google_cloud_type::model::Decimal;
 use rand::{RngExt, distr::Alphanumeric};
