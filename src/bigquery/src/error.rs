@@ -29,6 +29,10 @@ pub enum QueryError {
     #[error("only query jobs are supported")]
     UnsupportedJobType,
 
+    /// The operation is not supported for stateless queries.
+    #[error("cannot perform this operation on a stateless query")]
+    StatelessQuery,
+
     /// The query job failed on the BigQuery service side.
     /// Includes the list of error protocols returned by the service.
     #[error("query job failed: {errors:?}")]
@@ -36,10 +40,6 @@ pub enum QueryError {
         /// The list of all errors associated with the job.
         errors: Vec<ErrorProto>,
     },
-
-    /// The operation is not supported for stateless queries.
-    #[error("cannot perform this operation on a stateless query")]
-    StatelessQuery,
 
     /// The underlying RPC failed.
     #[non_exhaustive]

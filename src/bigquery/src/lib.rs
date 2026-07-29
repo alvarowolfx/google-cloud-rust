@@ -25,26 +25,22 @@
 //!
 //! [bigquery]: https://cloud.google.com/bigquery
 
-pub use crate::error::{ConvertError, QueryError, RowError};
-pub use crate::query::{FromRow, FromSql, Interval, Range, Row, deserialize};
-pub use google_cloud_bigquery_derive::{FromRow, FromSql};
 pub use google_cloud_gax::Result;
 pub use google_cloud_gax::error::Error;
-
-/// Re-export as `builders` as well for alias compatibility.
-pub use builder as builders;
-
 pub mod error;
 pub mod retry_policy;
+pub use crate::error::{ConvertError, QueryError, RowError};
+pub use crate::query::{FromSql, Interval, Range, Row, deserialize};
+pub use google_cloud_bigquery_derive::{FromRow, FromSql};
 pub use retry_policy::RetryableErrors;
+
+pub(crate) mod generated;
+pub(crate) mod query;
+pub(crate) use google_cloud_gax::client_builder::Result as ClientBuilderResult;
 
 /// High-level BigQuery client and execution entrypoints.
 pub mod client;
 mod client_builder;
-pub(crate) mod generated;
-pub(crate) mod query;
-
-pub(crate) use google_cloud_gax::client_builder::Result as ClientBuilderResult;
 
 pub mod model {
     //! Re-exports for the Google Cloud BigQuery v2 API types.

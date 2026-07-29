@@ -28,7 +28,7 @@ pub use from_sql::{FromSql, Interval, Range, deserialize};
 pub use iterator::RowIterator;
 pub use query_handle::{CompleteQuery, Query};
 pub use query_reference::QueryReference;
-pub use row::{FromRow, Row};
+pub use row::Row;
 pub use run_query::RunQuery;
 pub(crate) use schema::Schema;
 
