@@ -13,15 +13,13 @@
 // limitations under the License.
 
 use crate::error::QueryError;
-use crate::model::{QueryMetadata, RunQueryRequest};
+use crate::model::QueryMetadata;
 use crate::query::{QueryReference, Result, RowIterator, RunQuery, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{
     GetQueryResultsRequest, GetQueryResultsResponse, Job, JobReference, QueryResponse,
 };
 use google_cloud_gax::backoff_policy::BackoffPolicy;
-use google_cloud_gax::error::Error as GaxError;
-use google_cloud_gax::error::rpc::{Code, Status};
 use google_cloud_gax::exponential_backoff::ExponentialBackoffBuilder;
 use google_cloud_gax::options::RequestOptionsBuilder;
 use google_cloud_gax::polling_backoff_policy::PollingBackoffPolicy;
@@ -38,8 +36,11 @@ pub struct Query {
     pub(crate) job_ref: Option<JobReference>,
     pub(crate) completed: bool,
     pub(crate) initial_response: Option<QueryResponse>,
+    // TODO(#5592): add QueryCreationMetadata to expose initial job and response data.
+    #[allow(dead_code)]
     pub(crate) initial_job: Option<Job>,
     pub(crate) query_template: Option<RunQuery>,
+    pub(crate) max_results: Option<u32>,
     pub(crate) retry_state: RetryState,
     pub(crate) retry_policy: Arc<dyn RetryPolicy>,
     pub(crate) backoff_policy: Arc<dyn BackoffPolicy>,
@@ -82,6 +83,7 @@ impl Query {
                     initial_response,
                     retry_policy.clone(),
                     backoff_policy.clone(),
+                    self.max_results,
                 ));
             }
 
@@ -114,6 +116,7 @@ impl Query {
                         res,
                         retry_policy.clone(),
                         backoff_policy.clone(),
+                        self.max_results,
                     ));
                 }
                 Err(err) if crate::retry_policy::is_query_error_retryable(&err) => {
@@ -155,6 +158,7 @@ pub struct CompleteQuery {
     pub(crate) metadata: QueryMetadata,
     pub(crate) retry_policy: Arc<dyn RetryPolicy>,
     pub(crate) backoff_policy: Arc<dyn BackoffPolicy>,
+    pub(crate) max_results: Option<u32>,
 }
 
 impl std::fmt::Debug for CompleteQuery {
@@ -175,13 +179,12 @@ impl CompleteQuery {
         mut res: GetQueryResultsResponse,
         retry_policy: Arc<dyn RetryPolicy>,
         backoff_policy: Arc<dyn BackoffPolicy>,
+        max_results: Option<u32>,
     ) -> Self {
         let cached_rows = VecDeque::from(std::mem::take(&mut res.rows));
         let metadata = QueryMetadata::from(res);
-        let schema = metadata
-            .schema
-            .clone()
-            .expect("complete query should have schema");
+        // DDL/DML queries have no schema.
+        let schema = metadata.schema.clone().unwrap_or_default();
         let schema = Arc::new(Schema::new(schema));
         let page_token = if metadata.page_token.is_empty() {
             None
@@ -197,6 +200,7 @@ impl CompleteQuery {
             metadata,
             retry_policy,
             backoff_policy,
+            max_results,
         }
     }
 
@@ -206,13 +210,12 @@ impl CompleteQuery {
         mut res: QueryResponse,
         retry_policy: Arc<dyn RetryPolicy>,
         backoff_policy: Arc<dyn BackoffPolicy>,
+        max_results: Option<u32>,
     ) -> Self {
         let cached_rows = VecDeque::from(std::mem::take(&mut res.rows));
         let metadata = QueryMetadata::from(res);
-        let schema = metadata
-            .schema
-            .clone()
-            .expect("complete query should have schema");
+        // DDL/DML queries have no schema.
+        let schema = metadata.schema.clone().unwrap_or_default();
         let schema = Arc::new(Schema::new(schema));
         let page_token = if metadata.page_token.is_empty() {
             None
@@ -228,6 +231,7 @@ impl CompleteQuery {
             metadata,
             retry_policy,
             backoff_policy,
+            max_results,
         }
     }
 
@@ -241,11 +245,13 @@ impl CompleteQuery {
         &self.metadata
     }
 
-    /// Performs a network call to fetch the full `Job` resource from the backend.
+    /// Fetches the full `Job` information for the given query.
+    ///
+    /// Stateless queries will return `QueryError::StatelessQuery`.
     pub async fn job_metadata(&self) -> Result<Job> {
         let job_ref = self.job_ref.as_ref().ok_or(QueryError::StatelessQuery)?;
 
-        let mut req = self
+        let req = self
             .job_service
             .get_job()
             .set_job_id(job_ref.job_id.clone())
@@ -253,14 +259,13 @@ impl CompleteQuery {
             .with_retry_policy(self.retry_policy.clone())
             .with_backoff_policy(self.backoff_policy.clone());
 
-        if let Some(location) = job_ref.location.clone() {
-            req = req.set_location(location);
-        }
+        let req = job_ref
+            .location
+            .clone()
+            .into_iter()
+            .fold(req, |req, location| req.set_location(location));
 
-        let job = req
-            .send()
-            .await
-            .map_err(|e| QueryError::Rpc { source: e })?;
+        let job = req.send().await?;
         Ok(job)
     }
 }
@@ -314,12 +319,12 @@ mod tests {
     use crate::query::RunQuery;
     use crate::query::run_query::QUERY_REQUEST_ID_PREFIX;
     use crate::query::tests::{
-        MockBackoffPolicy, MockJobService, create_job_service, create_test_backoff_policy,
+        MockJobService, create_job_service, create_test_backoff_policy,
         create_test_retry_backoff_policy, create_test_retry_policy,
     };
     use crate::retry_policy::RetryableErrors;
     use google_cloud_bigquery_v2::model::{
-        ErrorProto, GetQueryResultsResponse, JobReference, QueryResponse, TableFieldSchema,
+        ErrorProto, GetQueryResultsResponse, Job, JobReference, QueryResponse, TableFieldSchema,
         TableSchema,
     };
     use google_cloud_gax::error::Error as GaxError;
@@ -353,6 +358,7 @@ mod tests {
             retry_policy: Arc::new(create_test_retry_policy()),
             backoff_policy: Arc::new(create_test_retry_backoff_policy()),
             retry_state: RetryState::new(true),
+            max_results: None,
         };
 
         let result = query.query_reference();
@@ -383,6 +389,7 @@ mod tests {
             retry_policy: Arc::new(create_test_retry_policy()),
             backoff_policy: Arc::new(create_test_retry_backoff_policy()),
             retry_state: RetryState::new(true),
+            max_results: None,
         };
 
         let completed = query.until_done().await?;
@@ -394,6 +401,36 @@ mod tests {
         assert_eq!(metadata.cache_hit, Some(true));
         assert_eq!(metadata.job_complete, Some(true));
         assert_eq!(metadata.page_token, "some_page_token".to_string());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_query_until_done_preserves_max_results() -> TestResult {
+        let job_service = create_job_service(MockJobService::new());
+        let job_ref = JobReference::new()
+            .set_project_id("some_project")
+            .set_job_id("some_job_id");
+        let query_res = QueryResponse::new()
+            .set_job_complete(true)
+            .set_job_reference(job_ref.clone())
+            .set_schema(TableSchema::new());
+
+        let query = Query {
+            job_service: job_service.clone(),
+            job_ref: Some(job_ref),
+            completed: true,
+            initial_job: None,
+            initial_response: Some(query_res),
+            query_template: Some(RunQuery::new(job_service.clone(), "SELECT 1".to_string())),
+            retry_policy: Arc::new(create_test_retry_policy()),
+            backoff_policy: Arc::new(create_test_retry_backoff_policy()),
+            retry_state: RetryState::new(true),
+            max_results: Some(42),
+        };
+
+        let completed = query.until_done().await?;
+        assert_eq!(completed.max_results, Some(42));
 
         Ok(())
     }
@@ -433,6 +470,7 @@ mod tests {
             retry_policy: Arc::new(create_test_retry_policy()),
             backoff_policy: Arc::new(create_test_retry_backoff_policy()),
             retry_state: RetryState::new(true),
+            max_results: None,
         };
 
         let completed = query.until_done().await?;
@@ -524,6 +562,7 @@ mod tests {
             retry_policy: Arc::new(create_test_retry_policy()),
             backoff_policy: Arc::new(create_test_retry_backoff_policy()),
             retry_state: RetryState::new(true),
+            max_results: None,
         };
 
         let err = query.until_done().await.unwrap_err();
@@ -568,6 +607,7 @@ mod tests {
             retry_policy: Arc::new(create_test_retry_policy()),
             backoff_policy: Arc::new(create_test_retry_backoff_policy()),
             retry_state: RetryState::new(true),
+            max_results: None,
         };
 
         let err = query.until_done().await.unwrap_err();
@@ -606,6 +646,7 @@ mod tests {
             query_res,
             Arc::new(create_test_retry_policy()),
             Arc::new(create_test_retry_backoff_policy()),
+            None,
         );
 
         let mut iter = complete_query.read();
@@ -680,6 +721,7 @@ mod tests {
             retry_policy: Arc::new(create_test_retry_policy()),
             backoff_policy: Arc::new(create_test_retry_backoff_policy()),
             retry_state: RetryState::new(true),
+            max_results: None,
         };
 
         let completed = query.until_done().await?;
@@ -760,6 +802,7 @@ mod tests {
             retry_policy: policy,
             backoff_policy: Arc::new(create_test_retry_backoff_policy()),
             retry_state: RetryState::new(true),
+            max_results: None,
         };
 
         let err = query.until_done().await.unwrap_err();
@@ -771,6 +814,96 @@ mod tests {
         assert_eq!(errors[0].reason, "backendError");
         assert_eq!(errors[0].message, "second temporary server issue");
 
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_complete_query_job_metadata_success() -> TestResult {
+        let mut mock = MockJobService::new();
+        mock.expect_get_job().returning(|req, _| {
+            assert_eq!(req.project_id, "some_project");
+            assert_eq!(req.job_id, "some_job_id");
+            assert_eq!(req.location, "us-central1");
+            let res = Job::new()
+                .set_job_reference(JobReference::new().set_job_id(req.job_id))
+                .set_user_email("test@example.com");
+            Ok(Response::from(res))
+        });
+        let job_service = create_job_service(mock);
+        let job_ref = JobReference::new()
+            .set_project_id("some_project")
+            .set_job_id("some_job_id")
+            .set_location("us-central1");
+        let query_res = QueryResponse::new().set_schema(TableSchema::new());
+
+        let retry_policy = Arc::new(create_test_retry_policy());
+        let backoff_policy = Arc::new(create_test_retry_backoff_policy());
+        let complete_query = CompleteQuery::from_query_response(
+            job_service,
+            Some(job_ref),
+            query_res,
+            retry_policy,
+            backoff_policy,
+            None,
+        );
+        let job = complete_query.job_metadata().await?;
+        assert_eq!(job.user_email, "test@example.com");
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_complete_query_job_metadata_stateless() -> TestResult {
+        let job_service = create_job_service(MockJobService::new());
+        let query_res = QueryResponse::new().set_schema(TableSchema::new());
+
+        let retry_policy = Arc::new(create_test_retry_policy());
+        let backoff_policy = Arc::new(create_test_retry_backoff_policy());
+        let complete_query = CompleteQuery::from_query_response(
+            job_service,
+            None,
+            query_res,
+            retry_policy,
+            backoff_policy,
+            None,
+        );
+        let err = complete_query.job_metadata().await.unwrap_err();
+        assert!(matches!(err, QueryError::StatelessQuery));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_complete_query_job_metadata_rpc_error() -> TestResult {
+        let mut mock = MockJobService::new();
+        mock.expect_get_job().returning(|req, _| {
+            assert_eq!(req.project_id, "some_project");
+            assert_eq!(req.job_id, "some_job_id");
+            let status = Status::default()
+                .set_code(Code::NotFound)
+                .set_message("job not found");
+            Err(GaxError::service(status))
+        });
+        let job_service = create_job_service(mock);
+        let job_ref = JobReference::new()
+            .set_project_id("some_project")
+            .set_job_id("some_job_id");
+        let query_res = QueryResponse::new().set_schema(TableSchema::new());
+
+        let retry_policy = Arc::new(create_test_retry_policy());
+        let backoff_policy = Arc::new(create_test_retry_backoff_policy());
+        let complete_query = CompleteQuery::from_query_response(
+            job_service,
+            Some(job_ref),
+            query_res,
+            retry_policy,
+            backoff_policy,
+            None,
+        );
+        let err = complete_query.job_metadata().await.unwrap_err();
+        let source = match err {
+            QueryError::Rpc { source } => source,
+            _ => panic!("expected QueryError::Rpc, got {err:?}"),
+        };
+        assert_eq!(source.status().unwrap().code, Code::NotFound);
         Ok(())
     }
 }

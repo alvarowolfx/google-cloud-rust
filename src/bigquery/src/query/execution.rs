@@ -50,6 +50,11 @@ impl PostQueryExecutor {
             .backoff_policy
             .clone()
             .unwrap_or_else(crate::retry_policy::default_backoff_policy);
+        let max_results = self
+            .request
+            .query_request
+            .as_ref()
+            .and_then(|q| q.max_results);
         let res = self
             .job_service
             .query()
@@ -79,6 +84,7 @@ impl PostQueryExecutor {
             retry_policy,
             backoff_policy,
             retry_state: RetryState::default(),
+            max_results,
         })
     }
 }
@@ -87,6 +93,7 @@ pub(crate) struct InsertJobExecutor {
     pub(crate) job_service: Arc<JobService>,
     pub(crate) query_template: RunQuery,
     pub(crate) request: InsertJobRequest,
+    pub(crate) max_results: Option<u32>,
 }
 
 impl InsertJobExecutor {
@@ -94,11 +101,13 @@ impl InsertJobExecutor {
         job_service: Arc<JobService>,
         query_template: RunQuery,
         request: InsertJobRequest,
+        max_results: Option<u32>,
     ) -> Self {
         Self {
             job_service,
             query_template,
             request,
+            max_results,
         }
     }
 
@@ -156,6 +165,7 @@ impl InsertJobExecutor {
             retry_policy,
             backoff_policy,
             retry_state: RetryState::new(true),
+            max_results: self.max_results,
         })
     }
 }
@@ -163,7 +173,6 @@ impl InsertJobExecutor {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::RunQueryRequest;
     use crate::query::RunQuery;
     use crate::query::tests::{MockJobService, create_job_service};
     use google_cloud_bigquery_v2::model::{
@@ -262,7 +271,7 @@ mod tests {
         let job_service = create_job_service(mock);
         let req = InsertJobRequest::new(); // no job config at all
         let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
-        let executor = InsertJobExecutor::new(job_service, run_query, req);
+        let executor = InsertJobExecutor::new(job_service, run_query, req, None);
         let res = executor.execute().await;
         assert!(matches!(res, Err(QueryError::UnsupportedJobType)));
         Ok(())
@@ -283,7 +292,7 @@ mod tests {
         let job = Job::new().set_configuration(job_config);
         let req = InsertJobRequest::new().set_job(job);
         let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
-        let executor = InsertJobExecutor::new(job_service, run_query, req);
+        let executor = InsertJobExecutor::new(job_service, run_query, req, None);
         let res = executor.execute().await;
         assert!(matches!(res, Err(QueryError::Rpc { .. })));
         Ok(())
@@ -308,7 +317,7 @@ mod tests {
         let job = Job::new().set_configuration(job_config);
         let req = InsertJobRequest::new().set_job(job);
         let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
-        let executor = InsertJobExecutor::new(job_service, run_query, req);
+        let executor = InsertJobExecutor::new(job_service, run_query, req, None);
         let err = executor.execute().await.unwrap_err();
 
         let errors = match err {
@@ -348,7 +357,7 @@ mod tests {
         let job = Job::new().set_configuration(job_config);
         let req = InsertJobRequest::new().set_job(job);
         let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
-        let executor = InsertJobExecutor::new(job_service, run_query, req);
+        let executor = InsertJobExecutor::new(job_service, run_query, req, None);
         let query = executor.execute().await?;
 
         assert_eq!(query.completed, completed);

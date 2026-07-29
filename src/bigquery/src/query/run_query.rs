@@ -163,6 +163,7 @@ impl RunQuery {
     pub(crate) async fn execute_once(&self, project_id: &str) -> Result<Query> {
         if self.request.force_job_path() {
             // Route to jobs.insert
+            let max_results = self.request.max_results;
             let job_config: JobConfiguration = self.request.clone().into();
             let job_ref = self.generate_job_reference(project_id);
             let job = Job::new()
@@ -171,7 +172,7 @@ impl RunQuery {
             let req = InsertJobRequest::new()
                 .set_job(job)
                 .set_project_id(project_id.to_string());
-            InsertJobExecutor::new(self.job_service.clone(), self.clone(), req)
+            InsertJobExecutor::new(self.job_service.clone(), self.clone(), req, max_results)
                 .execute()
                 .await
         } else {
@@ -203,11 +204,9 @@ mod tests {
     use crate::query::tests::{MockJobService, create_job_service};
     use google_cloud_bigquery_v2::model::query_request::JobCreationMode;
     use google_cloud_bigquery_v2::model::{
-        ErrorProto, Job, JobConfiguration, JobConfigurationQuery, JobReference, JobStatus,
-        QueryRequest, QueryResponse,
+        ErrorProto, Job, JobConfiguration, JobReference, JobStatus, QueryRequest, QueryResponse,
     };
     use google_cloud_gax::response::Response;
-    use std::sync::Arc;
 
     type TestResult = anyhow::Result<()>;
 
@@ -369,6 +368,51 @@ mod tests {
             RunQuery::new(job_service, "SELECT 1".to_string()).with_project_id("my-project");
         let query = run_query.run().await?;
         assert_eq!(query.initial_response.unwrap().query_id, "q_success");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_run_jobs_query_with_max_results() -> TestResult {
+        let mut mock = MockJobService::new();
+        mock.expect_query().returning(move |req, _| {
+            assert_eq!(
+                req.query_request.as_ref().and_then(|r| r.max_results),
+                Some(100)
+            );
+            Ok(Response::from(QueryResponse::new()))
+        });
+        let job_service = create_job_service(mock);
+        let run_query = RunQuery::new(job_service, "SELECT 1".to_string())
+            .with_project_id("my-project")
+            .set_max_results(100_u32);
+        let query = run_query.run().await?;
+        assert_eq!(query.max_results, Some(100));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_run_jobs_insert_with_max_results() -> TestResult {
+        let mut mock = MockJobService::new();
+        mock.expect_insert_job().returning(|_, _| {
+            let job_ref = JobReference::new()
+                .set_job_id("test-job")
+                .set_project_id("my-project");
+            let job = Job::new()
+                .set_job_reference(job_ref)
+                .set_status(JobStatus::new().set_state("DONE"));
+            Ok(google_cloud_gax::response::Response::from(job))
+        });
+        let job_service = create_job_service(mock);
+
+        let run_query = RunQuery::new(job_service, "SELECT 1".to_string())
+            .with_project_id("my-project")
+            .set_allow_large_results(true)
+            .set_max_results(50_u32);
+        let query = run_query.run().await?;
+        assert_eq!(query.max_results, Some(50));
+
         Ok(())
     }
 }

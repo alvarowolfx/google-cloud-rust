@@ -14,10 +14,11 @@
 
 //! Google Cloud Client Libraries for Rust - BigQuery
 //!
-//! **WARNING:** this crate is under active development. We expect multiple
-//! breaking changes in the upcoming releases. Testing is also incomplete, we do
-//! **not** recommend that you use this crate in production. We welcome feedback
-//! about the APIs, documentation, missing features, bugs, etc.
+//! **WARNING:** this is a preview release of the crate. We believe the APIs to be
+//! stable. We also are seeking feedback about the APIs and may need to make
+//! breaking changes if we discover that some parts are hard to use.
+//!
+//! We welcome feedback about the APIs, documentation, missing features, bugs, etc.
 //!
 //! This crate contains traits, types, and functions to interact with
 //! [BigQuery].
@@ -26,7 +27,6 @@
 
 pub use google_cloud_gax::Result;
 pub use google_cloud_gax::error::Error;
-
 pub use crate::error::{ConvertError, QueryError, RowError};
 pub use crate::query::{FromRow, FromSql, Interval, Range, Row, deserialize};
 pub use google_cloud_bigquery_derive::{FromRow, FromSql};
@@ -49,7 +49,7 @@ pub(crate) use google_cloud_gax::client_builder::Result as ClientBuilderResult;
 pub mod model {
     //! Re-exports for the Google Cloud BigQuery v2 API types.
     pub use crate::generated::{QueryMetadata, RunQueryRequest};
-    pub use crate::query::{QueryReference, RunQuery};
+    pub use crate::query::{CompleteQuery, Query, QueryReference, RowIterator, RunQuery};
     pub use google_cloud_bigquery_v2::model::*;
 }
 

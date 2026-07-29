@@ -94,6 +94,7 @@ impl BigQuery {
             retry_policy: crate::retry_policy::default_retry_policy(),
             backoff_policy: crate::retry_policy::default_backoff_policy(),
             retry_state: RetryState::new(true),
+            max_results: None,
         })
     }
 }

@@ -16,16 +16,15 @@ use crate::error::ConvertError;
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use serde::Deserialize;
-use std::str::FromStr;
-
-type BoxedError = Box<dyn std::error::Error + Send + Sync>;
 
 pub(crate) const BIGQUERY_DATE_FORMAT: &[time::format_description::FormatItem<'static>] =
     time::macros::format_description!("[year]-[month]-[day]");
-pub(crate) const BIGQUERY_TIME_FORMAT: &[time::format_description::FormatItem<'static>] =
-    time::macros::format_description!("[hour]:[minute]:[second]");
-pub(crate) const BIGQUERY_TIME_SUBSEC_FORMAT: &[time::format_description::FormatItem<'static>] =
-    time::macros::format_description!("[hour]:[minute]:[second].[subsecond]");
+pub(crate) const BIGQUERY_TIME_FORMAT: &[time::format_description::FormatItem<'static>] = time::macros::format_description!(
+    "[hour padding:none]:[minute padding:none]:[second padding:none]"
+);
+pub(crate) const BIGQUERY_TIME_SUBSEC_FORMAT: &[time::format_description::FormatItem<'static>] = time::macros::format_description!(
+    "[hour padding:none]:[minute padding:none]:[second padding:none].[subsecond]"
+);
 pub(crate) const BIGQUERY_DATETIME_FORMAT: &[time::format_description::FormatItem<'static>] =
     time::macros::format_description!("[year]-[month]-[day]T[hour]:[minute]:[second]");
 pub(crate) const BIGQUERY_DATETIME_SUBSEC_FORMAT: &[time::format_description::FormatItem<
@@ -234,22 +233,25 @@ impl FromSql for google_cloud_type::model::Date {
     }
 }
 
+fn parse_time(s: &str) -> Result<time::Time, ConvertError> {
+    let format = if s.contains('.') {
+        BIGQUERY_TIME_SUBSEC_FORMAT
+    } else {
+        BIGQUERY_TIME_FORMAT
+    };
+    time::Time::parse(s, format).map_err(|e| ConvertError::Convert(Box::new(e)))
+}
+
 impl FromSql for google_cloud_type::model::TimeOfDay {
     fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
         match value {
             wkt::Value::String(s) => {
-                let format = if s.contains('.') {
-                    BIGQUERY_TIME_SUBSEC_FORMAT
-                } else {
-                    BIGQUERY_TIME_FORMAT
-                };
-                let t = time::Time::parse(s.as_str(), format)
-                    .map_err(|e| ConvertError::Convert(Box::new(e)))?;
+                let time = parse_time(s.as_str())?;
                 Ok(google_cloud_type::model::TimeOfDay::new()
-                    .set_hours(t.hour() as i32)
-                    .set_minutes(t.minute() as i32)
-                    .set_seconds(t.second() as i32)
-                    .set_nanos(t.nanosecond() as i32))
+                    .set_hours(time.hour() as i32)
+                    .set_minutes(time.minute() as i32)
+                    .set_seconds(time.second() as i32)
+                    .set_nanos(time.nanosecond() as i32))
             }
             wkt::Value::Null => Err(ConvertError::NotNull),
             other => Err(ConvertError::TypeMismatch {
@@ -333,22 +335,109 @@ impl FromSql for rust_decimal::Decimal {
     }
 }
 
-impl FromSql for Vec<u8> {
+/// Represents a BigQuery time [INTERVAL] value.
+///
+/// [INTERVAL]: https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/data-types#interval_type
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Interval {
+    /// Years component.
+    pub years: i32,
+    /// Months component.
+    pub months: i32,
+    /// Days component.
+    pub days: i32,
+    /// Hours component.
+    pub hours: i32,
+    /// Minutes component.
+    pub minutes: i32,
+    /// Seconds component.
+    pub seconds: i32,
+    /// Nanoseconds component.
+    pub nanos: i32,
+}
+
+impl FromSql for Interval {
     fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
         match value {
-            wkt::Value::String(s) => BASE64_STANDARD
-                .decode(s)
-                .map_err(|e| ConvertError::Convert(Box::new(e))),
+            wkt::Value::String(s) => {
+                let mut parts = s.split_whitespace();
+                let ym_str = parts.next();
+                let days_str = parts.next();
+                let time_str = parts.next();
+                let extra = parts.next();
+
+                let (ym_str, days_str, time_str) = match (ym_str, days_str, time_str, extra) {
+                    (Some(ym), Some(d), Some(t), None) => (ym, d, t),
+                    _ => {
+                        return Err(ConvertError::Convert(
+                            format!("invalid interval format: expected 3 parts, got `{s}`").into(),
+                        ));
+                    }
+                };
+
+                // Parse Y-M
+                let ym_neg = ym_str.starts_with('-');
+                let ym_content = if ym_neg { &ym_str[1..] } else { ym_str };
+                let mut ym_parts = ym_content.split('-');
+                let y_str = ym_parts.next();
+                let m_str = ym_parts.next();
+                let ym_extra = ym_parts.next();
+
+                let (y_str, m_str) = match (y_str, m_str, ym_extra) {
+                    (Some(y), Some(m), None) => (y, m),
+                    _ => {
+                        return Err(ConvertError::Convert(
+                            "invalid interval year-month format".into(),
+                        ));
+                    }
+                };
+                let ym_sign = if ym_neg { -1 } else { 1 };
+                let years = y_str
+                    .parse::<i32>()
+                    .map_err(|e| ConvertError::Convert(Box::new(e)))?
+                    * ym_sign;
+                let months = m_str
+                    .parse::<i32>()
+                    .map_err(|e| ConvertError::Convert(Box::new(e)))?
+                    * ym_sign;
+
+                // Parse Days
+                let days = days_str
+                    .parse::<i32>()
+                    .map_err(|e| ConvertError::Convert(Box::new(e)))?;
+
+                // Parse H:M:S.F
+                let time_neg = time_str.starts_with('-');
+                let time_content = if time_neg { &time_str[1..] } else { time_str };
+                let t = parse_time(time_content)?;
+                let time_sign = if time_neg { -1 } else { 1 };
+                let hours = t.hour() as i32 * time_sign;
+                let minutes = t.minute() as i32 * time_sign;
+                let seconds = t.second() as i32 * time_sign;
+                let nanos = t.nanosecond() as i32 * time_sign;
+
+                Ok(Interval {
+                    years,
+                    months,
+                    days,
+                    hours,
+                    minutes,
+                    seconds,
+                    nanos,
+                })
+            }
             wkt::Value::Null => Err(ConvertError::NotNull),
             other => Err(ConvertError::TypeMismatch {
-                expected: "string (base64 encoded)",
+                expected: "string",
                 got: other,
             }),
         }
     }
 }
 
-/// Represents a BigQuery RANGE value.
+/// Represents a BigQuery [RANGE] value.
+///
+/// [RANGE]: https://docs.cloud.google.com/bigquery/docs/reference/standard-sql/data-types#range_type
 #[derive(Clone, Debug, PartialEq)]
 pub struct Range<T> {
     /// The inclusive start of the range (or None if unbounded).
@@ -362,14 +451,15 @@ impl<T: FromSql> FromSql for Range<T> {
         match value {
             wkt::Value::String(s) => {
                 let trimmed = s.trim();
-                if trimmed.len() < 2 {
-                    return Err(ConvertError::Convert(
-                        "invalid range format: too short".into(),
-                    ));
-                }
-
-                // Strip leading [ or ( and trailing ] or )
-                let content = &trimmed[1..trimmed.len() - 1];
+                // Strip leading [ and trailing )
+                let content = trimmed
+                    .strip_prefix('[')
+                    .and_then(|c| c.strip_suffix(')'))
+                    .ok_or_else(|| {
+                        ConvertError::Convert(
+                            "invalid range format: missing enclosing brackets".into(),
+                        )
+                    })?;
 
                 // Split on the comma
                 let parts: Vec<&str> = content.split(',').collect();
@@ -409,123 +499,24 @@ impl<T: FromSql> FromSql for Range<T> {
     }
 }
 
-/// Represents a BigQuery TIME INTERVAL value.
-#[derive(Clone, Debug, Default, PartialEq)]
-pub struct Interval {
-    /// Years component.
-    pub years: i32,
-    /// Months component.
-    pub months: i32,
-    /// Days component.
-    pub days: i32,
-    /// Hours component.
-    pub hours: i32,
-    /// Minutes component.
-    pub minutes: i32,
-    /// Seconds component.
-    pub seconds: i32,
-    /// Nanoseconds component.
-    pub nanos: i32,
-}
-
-fn parse_time(s: &str) -> Result<(i32, i32, i32, i32), BoxedError> {
-    let (time_str, nanos_str) = if let Some((t, n)) = s.split_once('.') {
-        (t, Some(n))
-    } else {
-        (s, None)
-    };
-    let parts: Vec<&str> = time_str.split(':').collect();
-    if parts.len() != 3 {
-        return Err("invalid time format".into());
-    }
-    let hours = parts[0].parse::<i32>()?;
-    let minutes = parts[1].parse::<i32>()?;
-    let seconds = parts[2].parse::<i32>()?;
-
-    let nanos = if let Some(n_str) = nanos_str {
-        let mut padded = n_str.to_string();
-        if padded.len() < 9 {
-            padded.push_str(&"0".repeat(9 - padded.len()));
-        } else if padded.len() > 9 {
-            padded.truncate(9);
-        }
-        padded.parse::<i32>()?
-    } else {
-        0
-    };
-    Ok((hours, minutes, seconds, nanos))
-}
-
-impl FromSql for Interval {
+impl FromSql for Vec<u8> {
     fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
         match value {
-            wkt::Value::String(s) => {
-                let parts: Vec<&str> = s.split_whitespace().collect();
-                if parts.len() != 3 {
-                    return Err(ConvertError::Convert(
-                        format!(
-                            "invalid interval format: expected 3 parts, got {}",
-                            parts.len()
-                        )
-                        .into(),
-                    ));
-                }
-
-                // 1. Parse Y-M
-                let ym_str = parts[0];
-                let ym_neg = ym_str.starts_with('-');
-                let ym_content = if ym_neg { &ym_str[1..] } else { ym_str };
-                let ym_parts: Vec<&str> = ym_content.split('-').collect();
-                if ym_parts.len() != 2 {
-                    return Err(ConvertError::Convert(
-                        "invalid interval year-month format".into(),
-                    ));
-                }
-                let mut years = ym_parts[0]
-                    .parse::<i32>()
-                    .map_err(|e| ConvertError::Convert(Box::new(e)))?;
-                let mut months = ym_parts[1]
-                    .parse::<i32>()
-                    .map_err(|e| ConvertError::Convert(Box::new(e)))?;
-                if ym_neg {
-                    years = -years;
-                    months = -months;
-                }
-
-                // 2. Parse Days
-                let days = parts[1]
-                    .parse::<i32>()
-                    .map_err(|e| ConvertError::Convert(Box::new(e)))?;
-
-                // 3. Parse H:M:S.F
-                let time_str = parts[2];
-                let time_neg = time_str.starts_with('-');
-                let time_content = if time_neg { &time_str[1..] } else { time_str };
-                let (mut hours, mut minutes, mut seconds, mut nanos) =
-                    parse_time(time_content).map_err(ConvertError::Convert)?;
-                if time_neg {
-                    hours = -hours;
-                    minutes = -minutes;
-                    seconds = -seconds;
-                    nanos = -nanos;
-                }
-
-                Ok(Interval {
-                    years,
-                    months,
-                    days,
-                    hours,
-                    minutes,
-                    seconds,
-                    nanos,
-                })
-            }
+            wkt::Value::String(s) => BASE64_STANDARD
+                .decode(s)
+                .map_err(|e| ConvertError::Convert(Box::new(e))),
             wkt::Value::Null => Err(ConvertError::NotNull),
             other => Err(ConvertError::TypeMismatch {
-                expected: "string",
+                expected: "string (base64 encoded)",
                 got: other,
             }),
         }
+    }
+}
+
+impl FromSql for bytes::Bytes {
+    fn from_sql(value: wkt::Value) -> Result<Self, ConvertError> {
+        Vec::<u8>::from_sql(value).map(bytes::Bytes::from)
     }
 }
 
@@ -543,6 +534,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate as google_cloud_bigquery;
+    use crate::FromSql;
     use google_cloud_type::model::Decimal;
     use rust_decimal::Decimal as RustDecimal;
     use test_case::test_case;
@@ -706,6 +699,85 @@ mod tests {
     #[test_case(wkt::Value::Null => Err(TestConvertError::NotNull) ; "null rust_decimal")]
     #[test_case(wkt::Value::Bool(true) => Err(TestConvertError::TypeMismatch("string or number")) ; "try bool as rust_decimal")]
     fn test_from_sql_rust_decimal(value: wkt::Value) -> Result<RustDecimal, TestConvertError> {
+        FromSql::from_sql(value).map_err(TestConvertError::from)
+    }
+
+    #[test_case(wkt::Value::String("1-2 3 4:05:06.789123456".to_string()) => Ok(Interval { years: 1, months: 2, days: 3, hours: 4, minutes: 5, seconds: 6, nanos: 789_123_456 }) ; "valid interval with nanos")]
+    #[test_case(wkt::Value::String("0-0 0 0:00:00".to_string()) => Ok(Interval { years: 0, months: 0, days: 0, hours: 0, minutes: 0, seconds: 0, nanos: 0 }) ; "zero interval")]
+    #[test_case(wkt::Value::String("0-0 1 2:30:45.123456".to_string()) => Ok(Interval { years: 0, months: 0, days: 1, hours: 2, minutes: 30, seconds: 45, nanos: 123_456_000 }) ; "valid interval from integration test")]
+    #[test_case(wkt::Value::String("1-2 3 4:5:6".to_string()) => Ok(Interval { years: 1, months: 2, days: 3, hours: 4, minutes: 5, seconds: 6, nanos: 0 }) ; "unpadded time without subseconds")]
+    #[test_case(wkt::Value::String("1-2 3 4:5:6.5".to_string()) => Ok(Interval { years: 1, months: 2, days: 3, hours: 4, minutes: 5, seconds: 6, nanos: 500_000_000 }) ; "unpadded time with short subsecond")]
+    #[test_case(wkt::Value::String("-1-2 3 -4:5:6.123".to_string()) => Ok(Interval { years: -1, months: -2, days: 3, hours: -4, minutes: -5, seconds: -6, nanos: -123_000_000 }) ; "mixed signs interval")]
+    #[test_case(wkt::Value::String("0-0 0 1:1:1.000000001".to_string()) => Ok(Interval { years: 0, months: 0, days: 0, hours: 1, minutes: 1, seconds: 1, nanos: 1 }) ; "single nanosecond")]
+    #[test_case(wkt::Value::String("-1-2 -3 -4:05:06.123".to_string()) => Ok(Interval { years: -1, months: -2, days: -3, hours: -4, minutes: -5, seconds: -6, nanos: -123_000_000 }) ; "all negative interval")]
+    #[test_case(wkt::Value::String("0-0 0 0:00:00.1234567899".to_string()) => Ok(Interval { years: 0, months: 0, days: 0, hours: 0, minutes: 0, seconds: 0, nanos: 123_456_789 }) ; "truncated nanos")]
+    #[test_case(wkt::Value::Null => Err(TestConvertError::NotNull) ; "null interval")]
+    #[test_case(wkt::Value::Number(123.into()) => Err(TestConvertError::TypeMismatch("string")) ; "type mismatch interval")]
+    #[test_case(wkt::Value::String("".to_string()) => Err(TestConvertError::Convert("invalid interval format: expected 3 parts, got ``".to_string())) ; "empty interval string")]
+    #[test_case(wkt::Value::String("1-2 3".to_string()) => Err(TestConvertError::Convert("invalid interval format: expected 3 parts, got `1-2 3`".to_string())) ; "invalid interval parts count")]
+    #[test_case(wkt::Value::String("1 3 4:05:06".to_string()) => Err(TestConvertError::Convert("invalid interval year-month format".to_string())) ; "invalid year-month format")]
+    #[test_case(wkt::Value::String("1-2 3 4:05".to_string()) => Err(TestConvertError::Convert("a character literal was not valid".to_string())) ; "invalid time format")]
+    fn test_from_sql_interval(value: wkt::Value) -> Result<Interval, TestConvertError> {
+        FromSql::from_sql(value).map_err(TestConvertError::from)
+    }
+
+    #[test_case(wkt::Value::String("[2026-05-28, 2026-05-29)".to_string()) => Ok(Range { start: Some(google_cloud_type::model::Date::new().set_year(2026).set_month(5).set_day(28)), end: Some(google_cloud_type::model::Date::new().set_year(2026).set_month(5).set_day(29)) }) ; "date range bounded")]
+    #[test_case(wkt::Value::String("[2026-05-28, UNBOUNDED)".to_string()) => Ok(Range { start: Some(google_cloud_type::model::Date::new().set_year(2026).set_month(5).set_day(28)), end: None }) ; "date range unbounded end")]
+    #[test_case(wkt::Value::String("[UNBOUNDED, 2026-05-29)".to_string()) => Ok(Range { start: None, end: Some(google_cloud_type::model::Date::new().set_year(2026).set_month(5).set_day(29)) }) ; "date range unbounded start")]
+    #[test_case(wkt::Value::String("[UNBOUNDED, UNBOUNDED)".to_string()) => Ok(Range { start: None, end: None }) ; "date range unbounded both")]
+    #[test_case(wkt::Value::Null => Err(TestConvertError::NotNull) ; "null range")]
+    #[test_case(wkt::Value::Number(123.into()) => Err(TestConvertError::TypeMismatch("string")) ; "range type mismatch")]
+    #[test_case(wkt::Value::String("[2026-05-28)".to_string()) => Err(TestConvertError::Convert("invalid range format: expected 2 parts, got 1".to_string())) ; "range invalid format one part")]
+    #[test_case(wkt::Value::String("[2026-05-28, 2026-05-29, 2026-05-30)".to_string()) => Err(TestConvertError::Convert("invalid range format: expected 2 parts, got 3".to_string())) ; "range invalid format three parts")]
+    #[test_case(wkt::Value::String("[".to_string()) => Err(TestConvertError::Convert("invalid range format: missing enclosing brackets".to_string())) ; "range too short")]
+    #[test_case(wkt::Value::String("2026-05-28, 2026-05-29".to_string()) => Err(TestConvertError::Convert("invalid range format: missing enclosing brackets".to_string())) ; "range missing brackets")]
+    #[test_case(wkt::Value::String("(2026-05-28, 2026-05-29)".to_string()) => Err(TestConvertError::Convert("invalid range format: missing enclosing brackets".to_string())) ; "range invalid leading parenthesis")]
+    #[test_case(wkt::Value::String("[2026-05-28, 2026-05-29]".to_string()) => Err(TestConvertError::Convert("invalid range format: missing enclosing brackets".to_string())) ; "range invalid trailing square bracket")]
+    fn test_from_sql_range(
+        value: wkt::Value,
+    ) -> Result<Range<google_cloud_type::model::Date>, TestConvertError> {
+        FromSql::from_sql(value).map_err(TestConvertError::from)
+    }
+
+    #[test_case(wkt::Value::String("AQIDBA==".to_string()) => Ok(vec![1, 2, 3, 4]) ; "vec u8 from base64")]
+    #[test_case(wkt::Value::String("".to_string()) => Ok(vec![]) ; "vec u8 from empty base64")]
+    #[test_case(wkt::Value::Null => Err(TestConvertError::NotNull) ; "null vec u8")]
+    #[test_case(wkt::Value::Bool(true) => Err(TestConvertError::TypeMismatch("string (base64 encoded)")) ; "try bool as vec u8")]
+    fn test_from_sql_vec_u8(value: wkt::Value) -> Result<Vec<u8>, TestConvertError> {
+        FromSql::from_sql(value).map_err(TestConvertError::from)
+    }
+
+    #[test_case(wkt::Value::String("AQIDBA==".to_string()) => Ok(bytes::Bytes::from_static(&[1, 2, 3, 4])) ; "bytes from base64")]
+    #[test_case(wkt::Value::String("".to_string()) => Ok(bytes::Bytes::from_static(&[])) ; "bytes from empty base64")]
+    #[test_case(wkt::Value::Null => Err(TestConvertError::NotNull) ; "null bytes")]
+    #[test_case(wkt::Value::Bool(true) => Err(TestConvertError::TypeMismatch("string (base64 encoded)")) ; "try bool as bytes")]
+    fn test_from_sql_bytes(value: wkt::Value) -> Result<bytes::Bytes, TestConvertError> {
+        FromSql::from_sql(value).map_err(TestConvertError::from)
+    }
+
+    #[test_case("AQIDBA" ; "missing padding")]
+    #[test_case("Not a base64 string" ; "words with spaces")]
+    fn test_from_sql_bytes_invalid_base64(input: &str) {
+        let err = bytes::Bytes::from_sql(wkt::Value::String(input.to_string())).unwrap_err();
+        assert!(matches!(err, ConvertError::Convert(_)));
+
+        let err = Vec::<u8>::from_sql(wkt::Value::String(input.to_string())).unwrap_err();
+        assert!(matches!(err, ConvertError::Convert(_)));
+    }
+
+    #[derive(FromSql, Debug, PartialEq)]
+    struct TestSqlStruct {
+        name: String,
+        #[bigquery(rename = "custom_int")]
+        some_int: i64,
+        some_bool: bool,
+    }
+
+    #[test_case(wkt::Value::Array(vec![wkt::Value::String("James".to_string()), wkt::Value::Number(272793.into()), wkt::Value::Bool(true)]) => Ok(TestSqlStruct { name: "James".to_string(), some_int: 272793, some_bool: true }) ; "array success")]
+    #[test_case(wkt::Value::Object(wkt::Struct::from_iter([("name".to_string(), wkt::Value::String("James".to_string())), ("custom_int".to_string(), wkt::Value::Number(272793.into())), ("some_bool".to_string(), wkt::Value::Bool(true))])) => Ok(TestSqlStruct { name: "James".to_string(), some_int: 272793, some_bool: true }) ; "object success")]
+    #[test_case(wkt::Value::Object(wkt::Struct::from_iter([("name".to_string(), wkt::Value::String("James".to_string())), ("some_bool".to_string(), wkt::Value::Bool(true))])) => Err(TestConvertError::MissingField("custom_int".to_string())) ; "missing field")]
+    #[test_case(wkt::Value::String("invalid".to_string()) => Err(TestConvertError::TypeMismatch("array or object")) ; "type mismatch")]
+    fn test_derive_from_sql(value: wkt::Value) -> Result<TestSqlStruct, TestConvertError> {
         FromSql::from_sql(value).map_err(TestConvertError::from)
     }
 }

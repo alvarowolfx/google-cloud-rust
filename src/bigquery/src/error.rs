@@ -111,8 +111,8 @@ pub enum ConvertError {
     #[error("expected non-null value, got null")]
     NotNull,
 
-    /// The requested field or array index was missing from the record or struct.
-    #[error("missing field or column '{0}' in struct/record")]
+    /// A required field or element was missing during SQL type conversion.
+    #[error("missing field: {0}")]
     MissingField(String),
 
     /// An error occurred during custom conversion (e.g. parsing date/time strings).
@@ -157,6 +157,15 @@ mod tests {
         assert_eq!(
             err.to_string(),
             "the operation failed. RPC error: the service reports an error with code INVALID_ARGUMENT described as: simulated bad request"
+        );
+    }
+
+    #[test]
+    fn test_stateless_query_display() {
+        let err = QueryError::StatelessQuery;
+        assert_eq!(
+            err.to_string(),
+            "cannot perform this operation on a stateless query"
         );
     }
 
@@ -209,11 +218,8 @@ mod tests {
         let err = ConvertError::NotNull;
         assert_eq!(err.to_string(), "expected non-null value, got null");
 
-        let err = ConvertError::MissingField("age".to_string());
-        assert_eq!(
-            err.to_string(),
-            "missing field or column 'age' in struct/record"
-        );
+        let err = ConvertError::MissingField("custom_col".to_string());
+        assert_eq!(err.to_string(), "missing field: custom_col");
 
         let inner_err: Box<dyn std::error::Error + Send + Sync> = "invalid integer".into();
         let err = ConvertError::Convert(inner_err);

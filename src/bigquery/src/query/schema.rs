@@ -13,7 +13,6 @@
 // limitations under the License.
 
 use google_cloud_bigquery_v2::model::{TableFieldSchema, TableSchema};
-use std::slice::Iter;
 
 /// Schema of a table.
 #[derive(Clone, Debug)]
