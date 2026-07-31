@@ -16,9 +16,6 @@ use crate::error::RowError;
 use crate::query::{CompleteQuery, Row, Schema};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{GetQueryResultsRequest, JobReference};
-use google_cloud_gax::backoff_policy::BackoffPolicy;
-use google_cloud_gax::options::RequestOptionsBuilder;
-use google_cloud_gax::retry_policy::RetryPolicy;
 use std::collections::VecDeque;
 use std::sync::Arc;
 
@@ -31,8 +28,6 @@ pub struct RowIterator {
     schema: Arc<Schema>,
     page_token: Option<String>,
     rows: VecDeque<wkt::Struct>,
-    retry_policy: Arc<dyn RetryPolicy>,
-    backoff_policy: Arc<dyn BackoffPolicy>,
     max_results: Option<u32>,
 }
 
@@ -44,8 +39,6 @@ impl RowIterator {
             schema: q.schema,
             page_token: q.page_token,
             rows: q.cached_rows,
-            retry_policy: q.retry_policy,
-            backoff_policy: q.backoff_policy,
             max_results: q.max_results,
         }
     }
@@ -116,8 +109,6 @@ impl RowIterator {
             .job_service
             .get_query_results()
             .with_request(req)
-            .with_retry_policy(self.retry_policy.clone())
-            .with_backoff_policy(self.backoff_policy.clone())
             .send()
             .await?;
 
@@ -134,10 +125,7 @@ impl RowIterator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::query::tests::{
-        MockJobService, create_job_service, create_test_retry_backoff_policy,
-        create_test_retry_policy,
-    };
+    use crate::query::tests::{MockJobService, create_job_service};
     use google_cloud_bigquery_v2::model::{
         DataFormatOptions, GetQueryResultsResponse, JobReference, QueryResponse, TableFieldSchema,
         TableSchema,
@@ -183,14 +171,7 @@ mod tests {
         if let Some(token) = page_token {
             res = res.set_page_token(token);
         }
-        CompleteQuery::from_query_response(
-            job_service,
-            job_ref,
-            res,
-            Arc::new(create_test_retry_policy()),
-            Arc::new(create_test_retry_backoff_policy()),
-            None,
-        )
+        CompleteQuery::from_query_response(job_service, job_ref, res, None)
     }
 
     #[tokio::test]
@@ -350,8 +331,6 @@ mod tests {
             job_service,
             Some(create_test_job_ref()),
             res,
-            Arc::new(create_test_retry_policy()),
-            Arc::new(create_test_retry_backoff_policy()),
             Some(25),
         );
         let mut iter = q.read();

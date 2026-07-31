@@ -40,16 +40,7 @@ impl PostQueryExecutor {
     }
 
     pub(crate) async fn execute(self) -> Result<Query> {
-        let retry_policy = self
-            .query_template
-            .retry_policy
-            .clone()
-            .unwrap_or_else(crate::retry_policy::default_retry_policy);
-        let backoff_policy = self
-            .query_template
-            .backoff_policy
-            .clone()
-            .unwrap_or_else(crate::retry_policy::default_backoff_policy);
+        let job_retry_policy = self.query_template.job_retry_policy.clone();
         let max_results = self
             .request
             .query_request
@@ -62,8 +53,6 @@ impl PostQueryExecutor {
             // carries a generated request_id.
             .with_idempotency(true)
             .with_request(self.request)
-            .with_retry_policy(retry_policy.clone())
-            .with_backoff_policy(backoff_policy.clone())
             .send()
             .await?;
 
@@ -81,8 +70,7 @@ impl PostQueryExecutor {
             initial_response: Some(res),
             initial_job: None,
             query_template: Some(self.query_template),
-            retry_policy,
-            backoff_policy,
+            job_retry_policy,
             retry_state: RetryState::default(),
             max_results,
         })
@@ -123,16 +111,7 @@ impl InsertJobExecutor {
             return Err(QueryError::UnsupportedJobType);
         }
 
-        let retry_policy = self
-            .query_template
-            .retry_policy
-            .clone()
-            .unwrap_or_else(crate::retry_policy::default_retry_policy);
-        let backoff_policy = self
-            .query_template
-            .backoff_policy
-            .clone()
-            .unwrap_or_else(crate::retry_policy::default_backoff_policy);
+        let job_retry_policy = self.query_template.job_retry_policy.clone();
 
         let res = self
             .job_service
@@ -141,8 +120,6 @@ impl InsertJobExecutor {
             // jobs.insert is idempotent because every request
             // carries a generated UUID job_id.
             .with_idempotency(true)
-            .with_retry_policy(retry_policy.clone())
-            .with_backoff_policy(backoff_policy.clone())
             .send()
             .await?;
 
@@ -162,8 +139,7 @@ impl InsertJobExecutor {
             initial_job: Some(res),
             initial_response: None,
             query_template: Some(self.query_template.clone()),
-            retry_policy,
-            backoff_policy,
+            job_retry_policy,
             retry_state: RetryState::new(true),
             max_results: self.max_results,
         })

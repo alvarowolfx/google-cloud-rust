@@ -34,6 +34,7 @@ pub(crate) use schema::Schema;
 
 #[cfg(test)]
 pub(crate) mod tests {
+    use crate::retry_policy::{JobRetryPolicy, RetryableJobErrors};
     use google_cloud_bigquery_v2::Result;
     use google_cloud_bigquery_v2::client::JobService;
     use google_cloud_bigquery_v2::model::{
@@ -44,8 +45,6 @@ pub(crate) mod tests {
     use google_cloud_gax::polling_backoff_policy::PollingBackoffPolicy;
     use google_cloud_gax::polling_state::PollingState;
     use google_cloud_gax::response::Response;
-    use google_cloud_gax::retry_policy::RetryPolicy;
-    use google_cloud_gax::retry_result::RetryResult;
     use google_cloud_gax::retry_state::RetryState;
     use std::sync::Arc;
 
@@ -82,20 +81,7 @@ pub(crate) mod tests {
         impl PollingBackoffPolicy for BackoffPolicy {
             fn wait_period(&self, _state: &PollingState) -> std::time::Duration;
         }
-    }
-
-    mockall::mock! {
-        #[derive(Debug)]
-        pub RetryPolicy {}
-        impl RetryPolicy for RetryPolicy {
-            fn on_error(&self, state: &RetryState, error: google_cloud_gax::error::Error) -> RetryResult;
-        }
-    }
-
-    mockall::mock! {
-        #[derive(Debug)]
-        pub RetryBackoffPolicy {}
-        impl google_cloud_gax::backoff_policy::BackoffPolicy for RetryBackoffPolicy {
+        impl google_cloud_gax::backoff_policy::BackoffPolicy for BackoffPolicy {
             fn on_failure(&self, state: &RetryState) -> std::time::Duration;
         }
     }
@@ -108,17 +94,11 @@ pub(crate) mod tests {
         MockBackoffPolicy::new()
     }
 
-    pub(crate) fn create_test_retry_policy() -> MockRetryPolicy {
-        let mut mock = MockRetryPolicy::new();
-        mock.expect_on_error()
-            .returning(|state, error| crate::retry_policy::RetryableErrors.on_error(state, error));
-        mock
-    }
-
-    pub(crate) fn create_test_retry_backoff_policy() -> MockRetryBackoffPolicy {
-        let mut mock = MockRetryBackoffPolicy::new();
-        mock.expect_on_failure()
-            .return_const(std::time::Duration::from_millis(0));
-        mock
+    pub(crate) fn create_test_job_retry_policy() -> Arc<dyn JobRetryPolicy> {
+        let mut backoff = MockBackoffPolicy::new();
+        backoff
+            .expect_on_failure()
+            .return_const(std::time::Duration::ZERO);
+        Arc::new(RetryableJobErrors::default().with_backoff_policy(backoff))
     }
 }

@@ -46,14 +46,10 @@ impl BigQuery {
         if builder.config.tracing {
             job_service_builder = job_service_builder.with_tracing();
         }
-        if let Some(retry_policy) = builder.config.retry_policy {
-            job_service_builder = job_service_builder.with_retry_policy(retry_policy);
-        }
-        if let Some(backoff_policy) = builder.config.backoff_policy {
-            job_service_builder = job_service_builder.with_backoff_policy(backoff_policy);
-        }
-        job_service_builder =
-            job_service_builder.with_retry_throttler(builder.config.retry_throttler);
+        job_service_builder = job_service_builder
+            .with_retry_policy(crate::retry_policy::default_retry_policy())
+            .with_backoff_policy(crate::retry_policy::default_backoff_policy())
+            .with_retry_throttler(builder.config.retry_throttler);
         let job_service = Arc::new(job_service_builder.build().await?);
 
         Ok(BigQuery { job_service })
@@ -91,8 +87,7 @@ impl BigQuery {
             initial_response: None,
             initial_job: Some(job),
             query_template: None,
-            retry_policy: crate::retry_policy::default_retry_policy(),
-            backoff_policy: crate::retry_policy::default_backoff_policy(),
+            job_retry_policy: crate::retry_policy::default_job_retry_policy(),
             retry_state: RetryState::new(true),
             max_results: None,
         })

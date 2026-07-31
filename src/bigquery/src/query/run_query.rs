@@ -16,13 +16,14 @@ use crate::error::QueryError;
 use crate::model::RunQueryRequest;
 use crate::query::execution::{InsertJobExecutor, PostQueryExecutor};
 use crate::query::{Query, Result};
+use crate::retry_policy::{
+    JobRetryPolicy, JobRetryResult, RetryableJobErrors, default_job_retry_policy,
+};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::query_request::JobCreationMode;
 use google_cloud_bigquery_v2::model::{
     InsertJobRequest, Job, JobConfiguration, JobReference, PostQueryRequest, QueryRequest,
 };
-use google_cloud_gax::backoff_policy::BackoffPolicy;
-use google_cloud_gax::retry_policy::RetryPolicy;
 use google_cloud_gax::retry_state::RetryState;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -38,8 +39,7 @@ pub struct RunQuery {
     pub(crate) job_service: Arc<JobService>,
     pub(crate) request: RunQueryRequest,
     pub(crate) project_id: Option<String>,
-    pub(crate) retry_policy: Option<Arc<dyn RetryPolicy>>,
-    pub(crate) backoff_policy: Option<Arc<dyn BackoffPolicy>>,
+    pub(crate) job_retry_policy: Arc<dyn JobRetryPolicy>,
 }
 
 impl std::fmt::Debug for RunQuery {
@@ -61,8 +61,7 @@ impl RunQuery {
                 .set_use_legacy_sql(wkt::BoolValue::from(false))
                 .set_job_creation_mode(JobCreationMode::JobCreationOptional),
             project_id: None,
-            retry_policy: None,
-            backoff_policy: None,
+            job_retry_policy: default_job_retry_policy(),
         }
     }
 
@@ -72,21 +71,11 @@ impl RunQuery {
         self
     }
 
-    /// Sets the retry policy (`RetryPolicy`) for reissuing queries when a retryable error occurs.
-    pub fn with_retry_policy<T: Into<google_cloud_gax::retry_policy::RetryPolicyArg>>(
-        mut self,
-        retry_policy: T,
-    ) -> Self {
-        self.retry_policy = Some(retry_policy.into().into());
-        self
-    }
-
-    /// Sets the backoff policy (`BackoffPolicy`) for reissuing queries when a retryable error occurs.
-    pub fn with_backoff_policy<T: Into<google_cloud_gax::backoff_policy::BackoffPolicyArg>>(
-        mut self,
-        backoff_policy: T,
-    ) -> Self {
-        self.backoff_policy = Some(backoff_policy.into().into());
+    /// Sets the maximum number of attempts for reissuing the query when
+    /// a retryable BigQuery server job error occurs.
+    pub fn with_job_attempt_limit(mut self, attempt_limit: u32) -> Self {
+        self.job_retry_policy =
+            Arc::new(RetryableJobErrors::default().with_attempt_limit(attempt_limit));
         self
     }
 
@@ -114,24 +103,15 @@ impl RunQuery {
     /// [jobs.insert]: https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/insert
     pub async fn run(self) -> Result<Query> {
         let mut retry_state = RetryState::default();
-        let retry_policy = self
-            .retry_policy
-            .clone()
-            .unwrap_or_else(crate::retry_policy::default_retry_policy);
-        let backoff_policy = self
-            .backoff_policy
-            .clone()
-            .unwrap_or_else(crate::retry_policy::default_backoff_policy);
-
-        self.run_with_retry_state(&mut retry_state, &retry_policy, &backoff_policy)
+        let job_retry_policy = self.job_retry_policy.clone();
+        self.run_with_retry_state(&mut retry_state, &job_retry_policy)
             .await
     }
 
     pub(crate) async fn run_with_retry_state(
         &self,
         retry_state: &mut RetryState,
-        retry_policy: &Arc<dyn RetryPolicy>,
-        backoff_policy: &Arc<dyn BackoffPolicy>,
+        job_retry_policy: &Arc<dyn JobRetryPolicy>,
     ) -> Result<Query> {
         let project_id = self
             .project_id
@@ -144,18 +124,15 @@ impl RunQuery {
                     query.retry_state = retry_state.clone();
                     return Ok(query);
                 }
-                Err(err) if crate::retry_policy::is_query_error_retryable(&err) => {
-                    if let Some(gax_err) = crate::retry_policy::query_job_failed_to_gax_error(&err)
-                        && retry_policy.on_error(retry_state, gax_err).is_continue()
-                    {
-                        let delay = backoff_policy.on_failure(retry_state);
+                Err(err) => match job_retry_policy.on_error(retry_state, err) {
+                    JobRetryResult::Continue(delay, _) => {
                         tokio::time::sleep(delay).await;
                         retry_state.attempt_count += 1;
-                        continue;
                     }
-                    return Err(err);
-                }
-                Err(err) => return Err(err),
+                    JobRetryResult::Permanent(e) | JobRetryResult::Exhausted(e) => {
+                        return Err(e);
+                    }
+                },
             }
         }
     }
