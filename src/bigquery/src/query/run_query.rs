@@ -253,7 +253,7 @@ mod tests {
             RunQuery::new(job_service, "SELECT 1".to_string()).with_project_id("my-project");
         let query = run_query.run().await?;
         assert!(!query.completed, "{query:?}");
-        assert!(query.initial_response.is_some(), "{query:?}");
+        assert_eq!(query.metadata().query_id, "");
 
         Ok(())
     }
@@ -344,7 +344,7 @@ mod tests {
         let run_query =
             RunQuery::new(job_service, "SELECT 1".to_string()).with_project_id("my-project");
         let query = run_query.run().await?;
-        assert_eq!(query.initial_response.unwrap().query_id, "q_success");
+        assert_eq!(query.metadata().query_id, "q_success");
 
         Ok(())
     }

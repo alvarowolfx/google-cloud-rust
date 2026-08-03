@@ -17,7 +17,6 @@ use crate::query::{Query, Result, RunQuery};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{InsertJobRequest, PostQueryRequest};
 use google_cloud_gax::options::RequestOptionsBuilder;
-use google_cloud_gax::retry_state::RetryState;
 use std::sync::Arc;
 
 pub(crate) struct PostQueryExecutor {
@@ -40,7 +39,6 @@ impl PostQueryExecutor {
     }
 
     pub(crate) async fn execute(self) -> Result<Query> {
-        let job_retry_policy = self.query_template.job_retry_policy.clone();
         let max_results = self
             .request
             .query_request
@@ -60,20 +58,12 @@ impl PostQueryExecutor {
             return Err(QueryError::JobFailed { errors: res.errors });
         }
 
-        let completed = res.job_complete.unwrap_or(false);
-        let job_ref = res.job_reference.clone();
-
-        Ok(Query {
-            job_service: self.job_service.clone(),
-            job_ref,
-            completed,
-            initial_response: Some(res),
-            initial_job: None,
-            query_template: Some(self.query_template),
-            job_retry_policy,
-            retry_state: RetryState::default(),
+        Ok(Query::from_query_response(
+            self.job_service,
+            res,
+            self.query_template,
             max_results,
-        })
+        ))
     }
 }
 
@@ -111,8 +101,6 @@ impl InsertJobExecutor {
             return Err(QueryError::UnsupportedJobType);
         }
 
-        let job_retry_policy = self.query_template.job_retry_policy.clone();
-
         let res = self
             .job_service
             .insert_job()
@@ -129,20 +117,12 @@ impl InsertJobExecutor {
             return Err(QueryError::JobFailed { errors });
         }
 
-        let completed = job_status.map(|s| s.state == "DONE").unwrap_or(false);
-        let job_ref = res.job_reference.clone();
-
-        Ok(Query {
-            job_service: self.job_service.clone(),
-            job_ref,
-            completed,
-            initial_job: Some(res),
-            initial_response: None,
-            query_template: Some(self.query_template.clone()),
-            job_retry_policy,
-            retry_state: RetryState::new(true),
-            max_results: self.max_results,
-        })
+        Ok(Query::from_job(
+            self.job_service,
+            res,
+            Some(self.query_template),
+            self.max_results,
+        ))
     }
 }
 
@@ -181,9 +161,12 @@ mod tests {
         let query = executor.execute().await?;
 
         assert!(query.completed, "{query:?}");
-        let job_ref = query.job_ref.clone().expect("should have job_ref");
+        let job_ref = query
+            .metadata
+            .job_reference
+            .clone()
+            .expect("should have job_ref");
         assert_eq!(job_ref.job_id, "my-job-123", "{job_ref:?}");
-        assert!(query.initial_response.is_some(), "{query:?}");
 
         Ok(())
     }
@@ -337,7 +320,7 @@ mod tests {
         let query = executor.execute().await?;
 
         assert_eq!(query.completed, completed);
-        assert_eq!(query.job_ref, Some(job_ref));
+        assert_eq!(query.metadata.job_reference, Some(job_ref));
         Ok(())
     }
 }

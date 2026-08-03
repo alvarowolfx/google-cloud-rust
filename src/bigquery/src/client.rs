@@ -16,9 +16,8 @@ use crate::ClientBuilderResult as BuilderResult;
 use crate::Result;
 use crate::client_builder::ClientBuilder;
 use crate::query::{Query, RunQuery};
-use crate::retry_policy::{default_backoff_policy, default_job_retry_policy, default_retry_policy};
+use crate::retry_policy::{default_backoff_policy, default_retry_policy};
 use google_cloud_bigquery_v2::client::JobService;
-use google_cloud_gax::retry_state::RetryState;
 use std::sync::Arc;
 
 /// A high-level BigQuery client for executing queries and managing jobs.
@@ -81,17 +80,7 @@ impl BigQuery {
 
         let job = req.send().await?;
 
-        Ok(Query {
-            job_service: self.job_service.clone(),
-            job_ref: Some(job_ref),
-            completed: false,
-            initial_response: None,
-            initial_job: Some(job),
-            query_template: None,
-            job_retry_policy: default_job_retry_policy(),
-            retry_state: RetryState::new(true),
-            max_results: None,
-        })
+        Ok(Query::from_job(self.job_service.clone(), job, None, None))
     }
 }
 

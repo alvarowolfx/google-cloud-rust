@@ -168,10 +168,13 @@ mod tests {
         let mut res = QueryResponse::new()
             .set_schema(create_test_schema())
             .set_rows(rows);
+        if let Some(job_ref) = job_ref {
+            res = res.set_job_reference(job_ref);
+        }
         if let Some(token) = page_token {
             res = res.set_page_token(token);
         }
-        CompleteQuery::from_query_response(job_service, job_ref, res, None)
+        CompleteQuery::from_query_response(job_service, res, None)
     }
 
     #[tokio::test]
@@ -324,15 +327,12 @@ mod tests {
             });
 
         let job_service = create_job_service(mock);
+        let job_ref = create_test_job_ref();
         let res = QueryResponse::new()
             .set_schema(create_test_schema())
+            .set_job_reference(job_ref)
             .set_page_token("token_1");
-        let q = CompleteQuery::from_query_response(
-            job_service,
-            Some(create_test_job_ref()),
-            res,
-            Some(25),
-        );
+        let q = CompleteQuery::from_query_response(job_service, res, Some(25));
         let mut iter = q.read();
 
         let row = iter.next().await.expect("should have row")?;
