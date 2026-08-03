@@ -16,6 +16,7 @@ use crate::ClientBuilderResult as BuilderResult;
 use crate::Result;
 use crate::client_builder::ClientBuilder;
 use crate::query::{Query, RunQuery};
+use crate::retry_policy::{default_backoff_policy, default_job_retry_policy, default_retry_policy};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_gax::retry_state::RetryState;
 use std::sync::Arc;
@@ -47,8 +48,8 @@ impl BigQuery {
             job_service_builder = job_service_builder.with_tracing();
         }
         job_service_builder = job_service_builder
-            .with_retry_policy(crate::retry_policy::default_retry_policy())
-            .with_backoff_policy(crate::retry_policy::default_backoff_policy())
+            .with_retry_policy(default_retry_policy())
+            .with_backoff_policy(default_backoff_policy())
             .with_retry_throttler(builder.config.retry_throttler);
         let job_service = Arc::new(job_service_builder.build().await?);
 
@@ -87,7 +88,7 @@ impl BigQuery {
             initial_response: None,
             initial_job: Some(job),
             query_template: None,
-            job_retry_policy: crate::retry_policy::default_job_retry_policy(),
+            job_retry_policy: default_job_retry_policy(),
             retry_state: RetryState::new(true),
             max_results: None,
         })
