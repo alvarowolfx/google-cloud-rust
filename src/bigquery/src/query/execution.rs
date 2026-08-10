@@ -13,37 +13,33 @@
 // limitations under the License.
 
 use crate::error::QueryError;
+use crate::query::run_query::{QUERY_REQUEST_ID_PREFIX, generate_job_reference};
 use crate::query::{Query, Result, RunQuery};
+use crate::retry_policy::JobRetryResult;
 use google_cloud_bigquery_v2::client::JobService;
-use google_cloud_bigquery_v2::model::{InsertJobRequest, PostQueryRequest};
+use google_cloud_bigquery_v2::model::{
+    InsertJobRequest, Job, JobConfiguration, PostQueryRequest, QueryRequest, QueryResponse,
+};
 use google_cloud_gax::options::RequestOptionsBuilder;
+use google_cloud_gax::retry_state::RetryState;
 use std::sync::Arc;
+use std::time::Duration;
+use uuid::Uuid;
 
 pub(crate) struct PostQueryExecutor {
     pub(crate) job_service: Arc<JobService>,
-    pub(crate) query_template: RunQuery,
     pub(crate) request: PostQueryRequest,
 }
 
 impl PostQueryExecutor {
-    pub(crate) fn new(
-        job_service: Arc<JobService>,
-        query_template: RunQuery,
-        request: PostQueryRequest,
-    ) -> Self {
+    pub(crate) fn new(job_service: Arc<JobService>, request: PostQueryRequest) -> Self {
         Self {
             job_service,
-            query_template,
             request,
         }
     }
 
-    pub(crate) async fn execute(self) -> Result<Query> {
-        let max_results = self
-            .request
-            .query_request
-            .as_ref()
-            .and_then(|q| q.max_results);
+    pub(crate) async fn execute(self) -> Result<QueryResponse> {
         let res = self
             .job_service
             .query()
@@ -58,38 +54,24 @@ impl PostQueryExecutor {
             return Err(QueryError::JobFailed { errors: res.errors });
         }
 
-        Ok(Query::from_query_response(
-            self.job_service,
-            res,
-            self.query_template,
-            max_results,
-        ))
+        Ok(res)
     }
 }
 
 pub(crate) struct InsertJobExecutor {
     pub(crate) job_service: Arc<JobService>,
-    pub(crate) query_template: RunQuery,
     pub(crate) request: InsertJobRequest,
-    pub(crate) max_results: Option<u32>,
 }
 
 impl InsertJobExecutor {
-    pub(crate) fn new(
-        job_service: Arc<JobService>,
-        query_template: RunQuery,
-        request: InsertJobRequest,
-        max_results: Option<u32>,
-    ) -> Self {
+    pub(crate) fn new(job_service: Arc<JobService>, request: InsertJobRequest) -> Self {
         Self {
             job_service,
-            query_template,
             request,
-            max_results,
         }
     }
 
-    pub(crate) async fn execute(self) -> Result<Query> {
+    pub(crate) async fn execute(self) -> Result<Job> {
         let is_query = self
             .request
             .job
@@ -117,19 +99,110 @@ impl InsertJobExecutor {
             return Err(QueryError::JobFailed { errors });
         }
 
-        Ok(Query::from_job(
-            self.job_service,
-            res,
-            Some(self.query_template),
-            self.max_results,
-        ))
+        Ok(res)
+    }
+}
+
+/// Context for running queries and handling job-level retries / re-issuances.
+#[derive(Clone, Debug)]
+pub(crate) struct RetryContext {
+    pub(crate) template: RunQuery,
+    pub(crate) state: RetryState,
+}
+
+impl RetryContext {
+    pub(crate) fn new(template: RunQuery) -> Self {
+        Self {
+            template,
+            state: RetryState::default(),
+        }
+    }
+
+    pub(crate) fn on_error(&self, error: QueryError) -> JobRetryResult {
+        self.template.job_retry_policy.on_error(&self.state, error)
+    }
+
+    pub(crate) async fn reissue(&mut self, delay: Duration) -> Result<Query> {
+        tokio::time::sleep(delay).await;
+        self.state.attempt_count += 1;
+        self.clone().execute().await
+    }
+
+    pub(crate) async fn execute(mut self) -> Result<Query> {
+        let project_id = self
+            .template
+            .project_id
+            .as_ref()
+            .ok_or(QueryError::MissingProjectId)?;
+
+        loop {
+            match self.execute_once(project_id).await {
+                Ok(query) => return Ok(query),
+                Err(err) => match self.on_error(err) {
+                    JobRetryResult::Continue(delay, _) => {
+                        tokio::time::sleep(delay).await;
+                        self.state.attempt_count += 1;
+                    }
+                    JobRetryResult::Permanent(e) | JobRetryResult::Exhausted(e) => {
+                        return Err(e);
+                    }
+                },
+            }
+        }
+    }
+
+    async fn execute_once(&self, project_id: &str) -> Result<Query> {
+        let max_results = self.template.request.max_results;
+        if self.template.request.force_job_path() {
+            let job_config: JobConfiguration = self.template.request.clone().into();
+            let job_ref = generate_job_reference(project_id, Some(&self.template.request.location));
+            let job = Job::new()
+                .set_configuration(job_config)
+                .set_job_reference(job_ref);
+            let req = InsertJobRequest::new()
+                .set_job(job)
+                .set_project_id(project_id.to_string());
+
+            let res = InsertJobExecutor::new(self.template.job_service.clone(), req)
+                .execute()
+                .await?;
+
+            Ok(Query::from_job(
+                self.template.job_service.clone(),
+                res,
+                Some(self.clone()),
+                max_results,
+            ))
+        } else {
+            let query_request_id = format!("{QUERY_REQUEST_ID_PREFIX}{}", Uuid::new_v4());
+            let query_request: QueryRequest = self.template.request.clone().into();
+            let query_request = query_request
+                .set_format_options(
+                    google_cloud_bigquery_v2::model::DataFormatOptions::new()
+                        .set_use_int64_timestamp(true),
+                )
+                .set_request_id(query_request_id);
+            let req = PostQueryRequest::new()
+                .set_project_id(project_id.to_string())
+                .set_query_request(query_request);
+
+            let res = PostQueryExecutor::new(self.template.job_service.clone(), req)
+                .execute()
+                .await?;
+
+            Ok(Query::from_query_response(
+                self.template.job_service.clone(),
+                res,
+                Some(self.clone()),
+                max_results,
+            ))
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::query::RunQuery;
     use crate::query::tests::{MockJobService, create_job_service};
     use google_cloud_bigquery_v2::model::{
         ErrorProto, Job, JobConfiguration, JobConfigurationQuery, JobReference, JobStatus,
@@ -156,16 +229,10 @@ mod tests {
         let job_service = create_job_service(mock);
 
         let request = PostQueryRequest::new();
-        let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
-        let executor = PostQueryExecutor::new(job_service, run_query, request);
-        let query = executor.execute().await?;
+        let executor = PostQueryExecutor::new(job_service, request);
+        let res = executor.execute().await?;
 
-        assert!(query.completed, "{query:?}");
-        let job_ref = query
-            .metadata
-            .job_reference
-            .clone()
-            .expect("should have job_ref");
+        let job_ref = res.job_reference.expect("should have job_ref");
         assert_eq!(job_ref.job_id, "my-job-123", "{job_ref:?}");
 
         Ok(())
@@ -184,8 +251,7 @@ mod tests {
         let job_service = create_job_service(mock);
 
         let request = PostQueryRequest::new();
-        let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
-        let executor = PostQueryExecutor::new(job_service, run_query, request);
+        let executor = PostQueryExecutor::new(job_service, request);
         let err = executor.execute().await.unwrap_err();
 
         let errors = match err {
@@ -211,8 +277,7 @@ mod tests {
         let job_service = create_job_service(mock);
 
         let request = PostQueryRequest::new();
-        let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
-        let executor = PostQueryExecutor::new(job_service, run_query, request);
+        let executor = PostQueryExecutor::new(job_service, request);
         let err = executor.execute().await.unwrap_err();
 
         let source = match err {
@@ -229,8 +294,7 @@ mod tests {
         let mock = MockJobService::new();
         let job_service = create_job_service(mock);
         let req = InsertJobRequest::new(); // no job config at all
-        let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
-        let executor = InsertJobExecutor::new(job_service, run_query, req, None);
+        let executor = InsertJobExecutor::new(job_service, req);
         let res = executor.execute().await;
         assert!(matches!(res, Err(QueryError::UnsupportedJobType)));
         Ok(())
@@ -250,8 +314,7 @@ mod tests {
         let job_config = JobConfiguration::new().set_query(JobConfigurationQuery::new());
         let job = Job::new().set_configuration(job_config);
         let req = InsertJobRequest::new().set_job(job);
-        let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
-        let executor = InsertJobExecutor::new(job_service, run_query, req, None);
+        let executor = InsertJobExecutor::new(job_service, req);
         let res = executor.execute().await;
         assert!(matches!(res, Err(QueryError::Rpc { .. })));
         Ok(())
@@ -275,8 +338,7 @@ mod tests {
         let job_config = JobConfiguration::new().set_query(JobConfigurationQuery::new());
         let job = Job::new().set_configuration(job_config);
         let req = InsertJobRequest::new().set_job(job);
-        let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
-        let executor = InsertJobExecutor::new(job_service, run_query, req, None);
+        let executor = InsertJobExecutor::new(job_service, req);
         let err = executor.execute().await.unwrap_err();
 
         let errors = match err {
@@ -290,13 +352,10 @@ mod tests {
         Ok(())
     }
 
-    #[test_case("DONE", true; "completed")]
-    #[test_case("RUNNING", false; "pending")]
+    #[test_case("DONE"; "completed")]
+    #[test_case("RUNNING"; "pending")]
     #[tokio::test]
-    async fn test_jobs_insert_execute_success(
-        job_state: &'static str,
-        completed: bool,
-    ) -> TestResult {
+    async fn test_jobs_insert_execute_success(job_state: &'static str) -> TestResult {
         let job_ref = JobReference::new()
             .set_job_id("test-job")
             .set_project_id("my-project");
@@ -315,12 +374,11 @@ mod tests {
         let job_config = JobConfiguration::new().set_query(JobConfigurationQuery::new());
         let job = Job::new().set_configuration(job_config);
         let req = InsertJobRequest::new().set_job(job);
-        let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
-        let executor = InsertJobExecutor::new(job_service, run_query, req, None);
-        let query = executor.execute().await?;
+        let executor = InsertJobExecutor::new(job_service, req);
+        let job = executor.execute().await?;
 
-        assert_eq!(query.completed, completed);
-        assert_eq!(query.metadata.job_reference, Some(job_ref));
+        assert_eq!(job.status.as_ref().unwrap().state, job_state);
+        assert_eq!(job.job_reference, Some(job_ref));
         Ok(())
     }
 }

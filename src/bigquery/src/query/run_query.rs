@@ -12,24 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::error::QueryError;
 use crate::model::RunQueryRequest;
-use crate::query::execution::{InsertJobExecutor, PostQueryExecutor};
+use crate::query::execution::RetryContext;
 use crate::query::{Query, Result};
-use crate::retry_policy::{
-    JobRetryPolicy, JobRetryResult, RetryableJobErrors, default_job_retry_policy,
-};
+use crate::retry_policy::{JobRetryPolicy, RetryableJobErrors, default_job_retry_policy};
 use google_cloud_bigquery_v2::client::JobService;
+use google_cloud_bigquery_v2::model::JobReference;
 use google_cloud_bigquery_v2::model::query_request::JobCreationMode;
-use google_cloud_bigquery_v2::model::{
-    InsertJobRequest, Job, JobConfiguration, JobReference, PostQueryRequest, QueryRequest,
-};
-use google_cloud_gax::retry_state::RetryState;
 use std::sync::Arc;
 use uuid::Uuid;
 
 pub(crate) const JOB_ID_PREFIX: &str = "job_";
 pub(crate) const QUERY_REQUEST_ID_PREFIX: &str = "";
+
+pub(crate) fn generate_job_reference(project_id: &str, location: Option<&str>) -> JobReference {
+    let job_id = format!("{JOB_ID_PREFIX}{}", Uuid::new_v4());
+    let mut job_ref = JobReference::new()
+        .set_project_id(project_id.to_string())
+        .set_job_id(job_id);
+
+    if let Some(location) = location.filter(|l| !l.is_empty()) {
+        job_ref = job_ref.set_location(location.to_string());
+    }
+
+    job_ref
+}
 
 /// A unified request builder for configuring and running a SQL query.
 /// It automatically routes to either `jobs.query` (fast path) or `jobs.insert` (job path)
@@ -79,19 +86,6 @@ impl RunQuery {
         self
     }
 
-    fn generate_job_reference(&self, project_id: &str) -> JobReference {
-        let job_id = format!("{JOB_ID_PREFIX}{}", Uuid::new_v4());
-        let mut job_ref = JobReference::new()
-            .set_project_id(project_id.to_string())
-            .set_job_id(job_id);
-
-        if !self.request.location.is_empty() {
-            job_ref = job_ref.set_location(self.request.location.clone());
-        }
-
-        job_ref
-    }
-
     /// Executes the SQL query
     ///
     /// The implementation routes internally to [jobs.query] (fast path)
@@ -102,74 +96,7 @@ impl RunQuery {
     /// [jobs.query]: https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/query
     /// [jobs.insert]: https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/insert
     pub async fn run(self) -> Result<Query> {
-        let mut retry_state = RetryState::default();
-        let job_retry_policy = self.job_retry_policy.clone();
-        self.run_with_retry_state(&mut retry_state, &job_retry_policy)
-            .await
-    }
-
-    pub(crate) async fn run_with_retry_state(
-        &self,
-        retry_state: &mut RetryState,
-        job_retry_policy: &Arc<dyn JobRetryPolicy>,
-    ) -> Result<Query> {
-        let project_id = self
-            .project_id
-            .as_ref()
-            .ok_or(QueryError::MissingProjectId)?;
-
-        loop {
-            match self.execute_once(project_id).await {
-                Ok(mut query) => {
-                    query.retry_state = retry_state.clone();
-                    return Ok(query);
-                }
-                Err(err) => match job_retry_policy.on_error(retry_state, err) {
-                    JobRetryResult::Continue(delay, _) => {
-                        tokio::time::sleep(delay).await;
-                        retry_state.attempt_count += 1;
-                    }
-                    JobRetryResult::Permanent(e) | JobRetryResult::Exhausted(e) => {
-                        return Err(e);
-                    }
-                },
-            }
-        }
-    }
-
-    pub(crate) async fn execute_once(&self, project_id: &str) -> Result<Query> {
-        if self.request.force_job_path() {
-            // Route to jobs.insert
-            let max_results = self.request.max_results;
-            let job_config: JobConfiguration = self.request.clone().into();
-            let job_ref = self.generate_job_reference(project_id);
-            let job = Job::new()
-                .set_configuration(job_config)
-                .set_job_reference(job_ref);
-            let req = InsertJobRequest::new()
-                .set_job(job)
-                .set_project_id(project_id.to_string());
-            InsertJobExecutor::new(self.job_service.clone(), self.clone(), req, max_results)
-                .execute()
-                .await
-        } else {
-            let query_request_id = format!("{QUERY_REQUEST_ID_PREFIX}{}", Uuid::new_v4());
-            // Route to jobs.query
-            let query_request: QueryRequest = self.request.clone().into();
-            let query_request = query_request
-                .set_format_options(
-                    google_cloud_bigquery_v2::model::DataFormatOptions::new()
-                        .set_use_int64_timestamp(true),
-                )
-                .set_request_id(query_request_id);
-            let req = PostQueryRequest::new()
-                .set_project_id(project_id.to_string())
-                .set_query_request(query_request);
-
-            PostQueryExecutor::new(self.job_service.clone(), self.clone(), req)
-                .execute()
-                .await
-        }
+        RetryContext::new(self).execute().await
     }
 }
 
@@ -178,6 +105,7 @@ include!("../generated/run_query_builder.rs");
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::QueryError;
     use crate::query::tests::{MockJobService, create_job_service};
     use google_cloud_bigquery_v2::model::query_request::JobCreationMode;
     use google_cloud_bigquery_v2::model::{
@@ -292,12 +220,15 @@ mod tests {
 
     #[test]
     fn test_id_generation() {
-        let job_service = create_job_service(MockJobService::new());
-        let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
-
-        let job_ref = run_query.generate_job_reference("my-project");
+        let job_ref = generate_job_reference("my-project", None);
         assert_eq!(job_ref.project_id, "my-project");
         assert!(job_ref.job_id.starts_with(JOB_ID_PREFIX));
+        assert_eq!(job_ref.location, None);
+
+        let job_ref_with_loc = generate_job_reference("my-project", Some("us-central1"));
+        assert_eq!(job_ref_with_loc.project_id, "my-project");
+        assert!(job_ref_with_loc.job_id.starts_with(JOB_ID_PREFIX));
+        assert_eq!(job_ref_with_loc.location, Some("us-central1".to_string()));
     }
 
     #[tokio::test(start_paused = true)]

@@ -74,6 +74,7 @@ pub(crate) fn default_backoff_policy() -> Arc<dyn BackoffPolicy> {
 
 /// The result of evaluating a BigQuery job error against a [`JobRetryPolicy`].
 #[derive(Debug)]
+#[allow(dead_code)]
 pub(crate) enum JobRetryResult {
     Continue(Duration, QueryError),
     Exhausted(QueryError),

@@ -14,8 +14,9 @@
 
 use crate::error::QueryError;
 use crate::model::{QueryCreationMetadata, QueryMetadata};
-use crate::query::{QueryReference, Result, RowIterator, RunQuery, Schema};
-use crate::retry_policy::{JobRetryResult, default_job_retry_policy};
+use crate::query::execution::RetryContext;
+use crate::query::{QueryReference, Result, RowIterator, Schema};
+use crate::retry_policy::JobRetryResult;
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{
     GetQueryResultsRequest, GetQueryResultsResponse, Job, JobReference, QueryResponse,
@@ -23,7 +24,6 @@ use google_cloud_bigquery_v2::model::{
 use google_cloud_gax::exponential_backoff::ExponentialBackoffBuilder;
 use google_cloud_gax::polling_backoff_policy::PollingBackoffPolicy;
 use google_cloud_gax::polling_state::PollingState;
-use google_cloud_gax::retry_state::RetryState;
 use std::collections::VecDeque;
 use std::sync::Arc;
 
@@ -34,9 +34,8 @@ pub struct Query {
     pub(crate) completed: bool,
     pub(crate) cached_rows: Option<VecDeque<wkt::Struct>>,
     pub(crate) metadata: QueryCreationMetadata,
-    pub(crate) query_template: Option<RunQuery>,
     pub(crate) max_results: Option<u32>,
-    pub(crate) retry_state: RetryState,
+    pub(crate) retry_context: Option<RetryContext>,
 }
 
 impl std::fmt::Debug for Query {
@@ -52,7 +51,7 @@ impl Query {
     pub(crate) fn from_job(
         job_service: Arc<JobService>,
         initial_job: Job,
-        query_template: Option<RunQuery>,
+        retry_context: Option<RetryContext>,
         max_results: Option<u32>,
     ) -> Self {
         let completed = initial_job
@@ -65,8 +64,7 @@ impl Query {
             completed,
             cached_rows: None,
             metadata: QueryCreationMetadata::from(initial_job),
-            query_template,
-            retry_state: RetryState::new(true),
+            retry_context,
             max_results,
         }
     }
@@ -74,7 +72,7 @@ impl Query {
     pub(crate) fn from_query_response(
         job_service: Arc<JobService>,
         mut query_response: QueryResponse,
-        query_template: RunQuery,
+        retry_context: Option<RetryContext>,
         max_results: Option<u32>,
     ) -> Self {
         let completed = query_response.job_complete.unwrap_or(false);
@@ -85,8 +83,7 @@ impl Query {
             completed,
             cached_rows: Some(cached_rows),
             metadata,
-            query_template: Some(query_template),
-            retry_state: RetryState::default(),
+            retry_context,
             max_results,
         }
     }
@@ -128,13 +125,6 @@ impl Query {
     /// Periodically checks the status of the background job until it finishes.
     /// Returns an error if a remote service or connection failure happens during polling.
     pub async fn until_done(mut self) -> Result<CompleteQuery> {
-        let job_retry_policy = self
-            .query_template
-            .as_ref()
-            .map(|r| r.job_retry_policy.clone())
-            .unwrap_or_else(default_job_retry_policy);
-        let mut retry_state = self.retry_state.clone();
-
         loop {
             if let (true, Some(cached_rows)) = (self.completed, self.cached_rows.take()) {
                 return Ok(CompleteQuery::from_query_creation_metadata(
@@ -160,7 +150,6 @@ impl Query {
 
             match poll_query_results(&self.job_service, &job_ref, polling_backoff_policy).await {
                 Ok(res) => {
-                    self.retry_state = retry_state;
                     return Ok(CompleteQuery::from_get_query_results_response(
                         self.job_service.clone(),
                         &job_ref,
@@ -168,28 +157,19 @@ impl Query {
                         self.max_results,
                     ));
                 }
-                Err(err) => match job_retry_policy.on_error(&retry_state, err) {
-                    JobRetryResult::Continue(delay, e) => {
-                        if let Some(query_template) = self.query_template.clone() {
-                            tokio::time::sleep(delay).await;
-                            retry_state.attempt_count += 1;
-
-                            self.retry_state = retry_state.clone();
-                            let new_query = query_template
-                                .run_with_retry_state(&mut retry_state, &job_retry_policy)
-                                .await?;
-                            self.completed = new_query.completed;
-                            self.cached_rows = new_query.cached_rows;
-                            self.metadata = new_query.metadata;
-                            self.retry_state = new_query.retry_state;
-                            continue;
+                Err(err) => {
+                    let Some(mut retry_ctx) = self.retry_context.take() else {
+                        return Err(err);
+                    };
+                    match retry_ctx.on_error(err) {
+                        JobRetryResult::Continue(delay, _) => {
+                            self = retry_ctx.reissue(delay).await?;
                         }
-                        return Err(e);
+                        JobRetryResult::Permanent(e) | JobRetryResult::Exhausted(e) => {
+                            return Err(e);
+                        }
                     }
-                    JobRetryResult::Permanent(e) | JobRetryResult::Exhausted(e) => {
-                        return Err(e);
-                    }
-                },
+                }
             }
         }
     }
@@ -400,8 +380,7 @@ mod tests {
             completed: false,
             cached_rows: None,
             metadata,
-            query_template: Some(RunQuery::new(job_service.clone(), "SELECT 1".to_string())),
-            retry_state: RetryState::new(true),
+            retry_context: None,
             max_results: None,
         };
 
@@ -423,12 +402,7 @@ mod tests {
             .set_rows([wkt::Struct::new()])
             .set_cache_hit(true);
 
-        let query = Query::from_query_response(
-            job_service.clone(),
-            query_res,
-            RunQuery::new(job_service.clone(), "SELECT 1".to_string()),
-            None,
-        );
+        let query = Query::from_query_response(job_service.clone(), query_res, None, None);
 
         let completed = query.until_done().await?;
         assert_eq!(completed.job_ref.as_ref().unwrap().job_id, "some_job_id");
@@ -454,12 +428,7 @@ mod tests {
             .set_job_reference(job_ref.clone())
             .set_schema(TableSchema::new());
 
-        let query = Query::from_query_response(
-            job_service.clone(),
-            query_res,
-            RunQuery::new(job_service.clone(), "SELECT 1".to_string()),
-            Some(42),
-        );
+        let query = Query::from_query_response(job_service.clone(), query_res, None, Some(42));
 
         let completed = query.until_done().await?;
         assert_eq!(completed.max_results, Some(42));
@@ -494,9 +463,8 @@ mod tests {
         let query_res = QueryResponse::new()
             .set_job_complete(false)
             .set_job_reference(job_ref);
-        let query_template = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
 
-        let query = Query::from_query_response(job_service, query_res, query_template, None);
+        let query = Query::from_query_response(job_service, query_res, None, None);
 
         let completed = query.until_done().await?;
         assert_eq!(completed.job_ref.as_ref().unwrap().job_id, "some_job_id");
@@ -572,9 +540,8 @@ mod tests {
         let query_res = QueryResponse::new()
             .set_job_complete(false)
             .set_job_reference(job_ref);
-        let query_template = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
 
-        let query = Query::from_query_response(job_service, query_res, query_template, None);
+        let query = Query::from_query_response(job_service, query_res, None, None);
 
         let err = query.until_done().await.unwrap_err();
         let errors = match err {
@@ -610,9 +577,8 @@ mod tests {
         let query_res = QueryResponse::new()
             .set_job_complete(false)
             .set_job_reference(job_ref);
-        let query_template = RunQuery::new(job_service.clone(), "SELECT 1".to_string());
 
-        let query = Query::from_query_response(job_service, query_res, query_template, None);
+        let query = Query::from_query_response(job_service, query_res, None, None);
 
         let err = query.until_done().await.unwrap_err();
         let source = match err {
@@ -710,8 +676,9 @@ mod tests {
 
         let run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string())
             .with_project_id("some_project");
+        let retry_context = Some(RetryContext::new(run_query));
 
-        let query = Query::from_query_response(job_service, query_res, run_query, None);
+        let query = Query::from_query_response(job_service, query_res, retry_context, None);
 
         let completed = query.until_done().await?;
         assert_eq!(
@@ -783,8 +750,9 @@ mod tests {
         let mut run_query = RunQuery::new(job_service.clone(), "SELECT 1".to_string())
             .with_project_id("some_project");
         run_query.job_retry_policy = Arc::new(RetryableJobErrors::default().with_attempt_limit(1));
+        let retry_context = Some(RetryContext::new(run_query));
 
-        let query = Query::from_query_response(job_service, query_res, run_query, None);
+        let query = Query::from_query_response(job_service, query_res, retry_context, None);
 
         let err = query.until_done().await.unwrap_err();
         let errors = match err {
