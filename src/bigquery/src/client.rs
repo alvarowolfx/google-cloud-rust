@@ -13,9 +13,9 @@
 // limitations under the License.
 
 use crate::ClientBuilderResult as BuilderResult;
-use crate::Result;
+use crate::QueryError;
 use crate::client_builder::ClientBuilder;
-use crate::query::{Query, RunQuery};
+use crate::query::{Query, Result, RunQuery};
 use crate::retry_policy::{default_backoff_policy, default_retry_policy};
 use google_cloud_bigquery_v2::client::JobService;
 use std::sync::Arc;
@@ -24,6 +24,7 @@ use std::sync::Arc;
 #[derive(Clone, Debug)]
 pub struct BigQuery {
     pub(crate) job_service: Arc<JobService>,
+    project_id: Option<String>,
 }
 
 impl BigQuery {
@@ -52,7 +53,10 @@ impl BigQuery {
             .with_retry_throttler(builder.config.retry_throttler);
         let job_service = Arc::new(job_service_builder.build().await?);
 
-        Ok(BigQuery { job_service })
+        Ok(BigQuery {
+            job_service,
+            project_id: builder.project_id,
+        })
     }
 
     /// Execute a SQL query.
@@ -68,15 +72,25 @@ impl BigQuery {
         job_ref: google_cloud_bigquery_v2::model::JobReference,
     ) -> Result<Query> {
         let project_id = job_ref.project_id.clone();
-        let mut req = self
+        let project_id = if project_id.is_empty() {
+            self.project_id.clone()
+        } else {
+            Some(project_id)
+        };
+        let project_id = project_id.ok_or(QueryError::MissingProjectId)?;
+
+        let req = self
             .job_service
             .get_job()
+            // maybe we don't even have to check for Job ID and just let it throws a 404 if Job Id is empty ?
+            // GCS does that and let it fail on the service level
             .set_job_id(job_ref.job_id.clone())
             .set_project_id(project_id.clone());
 
-        if let Some(location) = job_ref.location.clone() {
-            req = req.set_location(location);
-        }
+        let req = job_ref
+            .location
+            .into_iter()
+            .fold(req, |req, location| req.set_location(location));
 
         let job = req.send().await?;
 

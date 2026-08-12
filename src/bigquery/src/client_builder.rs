@@ -21,6 +21,7 @@ use google_cloud_gax::client_builder::Result;
 #[derive(Clone, Debug)]
 pub struct ClientBuilder {
     pub(crate) config: ClientConfig,
+    pub(crate) project_id: Option<String>,
     pub(crate) storage_endpoint: Option<String>,
 }
 
@@ -35,8 +36,26 @@ impl ClientBuilder {
     pub fn new() -> Self {
         Self {
             config: ClientConfig::default(),
+            project_id: None,
             storage_endpoint: None,
         }
+    }
+
+    /// Sets the default Google Cloud project ID for the client.
+    ///
+    /// # Example
+    /// ```
+    /// # use google_cloud_bigquery::client::BigQuery;
+    /// # async fn sample() -> anyhow::Result<()> {
+    /// let client = BigQuery::builder()
+    ///     .with_project_id("my-project-id")
+    ///     .build()
+    ///     .await?;
+    /// # Ok(()) }
+    /// ```
+    pub fn with_project_id<V: Into<String>>(mut self, project_id: V) -> Self {
+        self.project_id = Some(project_id.into());
+        self
     }
 
     /// Sets the [BigQuery v2] API endpoint.
