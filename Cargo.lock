@@ -2421,7 +2421,7 @@ version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.119",
+ "syn 3.0.3",
 ]
 
 [[package]]
@@ -5233,6 +5233,7 @@ dependencies = [
  "async-trait",
  "base64 0.23.1",
  "bytes",
+ "crc32c",
  "futures",
  "google-cloud-api",
  "google-cloud-auth",
@@ -5538,7 +5539,7 @@ version = "0.0.0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.119",
+ "syn 3.0.3",
 ]
 
 [[package]]
