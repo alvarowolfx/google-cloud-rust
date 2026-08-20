@@ -37,8 +37,10 @@ Benchmarks the Rust BigQuery client library (`google-cloud-bigquery`), measuring
 
 > [!NOTE]
 > **Query Caching is disabled by default (`--use-query-cache false`)** to force queries to always execute against storage and provide accurate, repeatable latency measurements. You can pass `--use-query-cache true` if you wish to benchmark cache hit performance.
+>
+> **Indefinite Execution by Default:** If neither `--iterations` nor `--duration` is specified, the benchmark runs indefinitely until interrupted with `Ctrl+C`.
 
-### 1. Zero-Setup Synthetic Benchmark (Default)
+### 1. Zero-Setup Synthetic Benchmark
 
 Runs 10 iterations per task with 4 concurrent tasks, generating and streaming 100,000 rows per query:
 
@@ -89,6 +91,77 @@ cargo run --release -p bigquery-benchmark-queries -- \
     --duration 1h \
     --output-dir ./results
 ```
+
+### Running as a Background Job
+
+To run a long endurance test in the background (similar to the Pub/Sub benchmark pattern) while capturing stdout reports to `.txt`, stderr tracing logs to `.log`, and real-time CSV/JSON samples to `./results`:
+
+```shell
+TS=$(date +%s); RUSTFLAGS="-C target-cpu=native" \
+  cargo run --release -p bigquery-benchmark-queries -- \
+  --project-id "${GOOGLE_CLOUD_PROJECT:-$(gcloud config get project)}" \
+  --scenario synthetic-100k \
+  --task-count 4 \
+  --duration 1h \
+  --output-dir ./results \
+  >bq-bm-${TS}.txt 2>bq-bm-${TS}.log </dev/null &
+```
+
+You can monitor the progress in real time with:
+```shell
+# Follow tracing & runtime logs
+tail -f bq-bm-${TS}.log
+
+# Follow raw per-query CSV rows as they arrive
+tail -f results/samples-synthetic-100k-*.csv
+```
+
+### Running on a Google Compute Engine (GCE) VM & Viewing Cloud Console Logs
+
+To execute endurance tests on a GCE VM and stream all logs directly into **Google Cloud Console (Cloud Logging)**:
+
+1. **Create the VM and Install Ops Agent**:
+   ```shell
+   # 1. Create a VM with full cloud-platform scope
+   gcloud compute instances create bq-benchmark-vm \
+     --zone=us-central1-a \
+     --machine-type=c2-standard-4 \
+     --scopes=cloud-platform \
+     --image-family=debian-12 \
+     --image-project=debian-cloud
+
+   # 2. Install the Google Cloud Ops Agent (streams journald logs to Cloud Logging)
+   gcloud compute ssh bq-benchmark-vm --zone=us-central1-a --command="
+     curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
+     sudo bash add-google-cloud-ops-agent-repo.sh --also-install
+   "
+   ```
+
+2. **Run in the Background via `systemd-cat`**:
+   Using `systemd-cat` tags the output in the system journal so the Ops Agent automatically forwards stdout and stderr to Cloud Logging:
+   ```shell
+   gcloud compute ssh bq-benchmark-vm --zone=us-central1-a
+
+   # Run benchmark in background: logs to local files AND streams to systemd-cat / Cloud Logging
+   TS=$(date +%s); RUSTFLAGS="-C target-cpu=native" \
+     cargo run --release -p bigquery-benchmark-queries -- \
+     --project-id "aviebrantz-testing" \
+     --scenario synthetic-100k \
+     --task-count 16 \
+     --duration 1h \
+     --output-dir ./results \
+     > >(tee bq-bm-${TS}.txt | systemd-cat -t bq-benchmark) \
+     2> >(tee bq-bm-${TS}.log | systemd-cat -t bq-benchmark) </dev/null &
+   ```
+
+3. **View Logs in Google Cloud Console**:
+   * Navigate to **Logging > Logs Explorer** in Google Cloud Console.
+   * Filter by your identifier:
+     ```log
+     resource.type="gce_instance"
+     jsonPayload.SYSLOG_IDENTIFIER="bq-benchmark"
+     ```
+   * Click **Stream logs** in the top right to watch real-time benchmark execution logs arrive in the console.
 
 > [!TIP]
 > **Real-Time Reporting & Graceful Shutdown (`Ctrl+C`):** When `--output-dir` is provided, the benchmark writes raw sample CSV rows and updates the summary report JSON on disk in **real-time** as each query iteration completes. You can press `Ctrl+C` at any point during a long endurance test to immediately stop worker tasks, output the summary report to stdout, flush all OpenTelemetry metrics to Google Cloud, and preserve the recorded samples and summary report on disk.

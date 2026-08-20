@@ -46,7 +46,7 @@ async fn main() -> anyhow::Result<()> {
         scenario = %scenario.name,
         description = %scenario.description,
         task_count = args.task_count,
-        effective_iterations = ?args.effective_iterations(),
+        iterations = ?args.iterations,
         duration = ?args.duration,
         use_query_cache = args.use_query_cache,
         "Starting BigQuery benchmark"

@@ -80,7 +80,7 @@ pub struct Args {
 
     /// Number of query iterations per worker task.
     ///
-    /// Defaults to 10 if `--duration` is not set.
+    /// If neither `--iterations` nor `--duration` is set, the benchmark runs indefinitely until interrupted (Ctrl+C).
     #[arg(long)]
     pub iterations: Option<u64>,
 
@@ -140,15 +140,6 @@ impl Args {
         }
         Ok(())
     }
-
-    /// Returns the effective iterations limit per worker (defaults to 10 if duration is not set).
-    pub fn effective_iterations(&self) -> Option<u64> {
-        match (self.iterations, self.duration) {
-            (Some(i), _) => Some(i),
-            (None, Some(_)) => None,
-            (None, None) => Some(10),
-        }
-    }
 }
 
 #[cfg(test)]
@@ -160,7 +151,7 @@ mod tests {
         let args = Args::parse_from(["bigquery-benchmark-queries"]);
         assert!(args.validate().is_ok());
         assert_eq!(args.task_count, 1);
-        assert_eq!(args.effective_iterations(), Some(10));
+        assert_eq!(args.iterations, None);
         assert!(!args.use_query_cache);
     }
 
@@ -183,7 +174,7 @@ mod tests {
     fn test_duration_mode() {
         let args = Args::parse_from(["bigquery-benchmark-queries", "--duration", "5m"]);
         assert!(args.validate().is_ok());
-        assert_eq!(args.effective_iterations(), None);
+        assert_eq!(args.iterations, None);
         assert_eq!(args.duration, Some(Duration::from_secs(300)));
     }
 }

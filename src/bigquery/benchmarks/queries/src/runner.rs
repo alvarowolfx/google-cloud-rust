@@ -39,11 +39,10 @@ impl TaskRunner<'_> {
             tokio::time::sleep(self.args.rampup_period * self.task_id as u32).await;
         }
 
-        let effective_iterations = self.args.effective_iterations();
         let mut iteration = 0_u64;
 
         loop {
-            if let Some(max_iter) = effective_iterations
+            if let Some(max_iter) = self.args.iterations
                 && iteration >= max_iter
             {
                 break;
