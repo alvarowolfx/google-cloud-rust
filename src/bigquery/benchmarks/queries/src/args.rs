@@ -98,6 +98,10 @@ pub struct Args {
     #[arg(long, default_value_t = true, action = clap::ArgAction::Set)]
     pub read_results: bool,
 
+    /// Whether to enable BigQuery query results cache. Defaults to false so queries always execute against storage.
+    #[arg(long, default_value_t = false, action = clap::ArgAction::Set)]
+    pub use_query_cache: bool,
+
     /// Ramp-up delay between spawning subsequent worker tasks to prevent thundering herd.
     #[arg(long, value_parser = parse_duration, default_value = "250ms")]
     pub rampup_period: Duration,
@@ -157,6 +161,7 @@ mod tests {
         assert!(args.validate().is_ok());
         assert_eq!(args.task_count, 1);
         assert_eq!(args.effective_iterations(), Some(10));
+        assert!(!args.use_query_cache);
     }
 
     #[test]

@@ -14,14 +14,49 @@
 
 use crate::args::Args;
 use google_cloud_auth::credentials::Credentials;
+use integration_tests_o11y::detector::GoogleCloudResourceDetector;
 use integration_tests_o11y::otlp::Uri;
+use opentelemetry::KeyValue;
+use opentelemetry_sdk::Resource;
 use opentelemetry_sdk::metrics::SdkMeterProvider;
+use opentelemetry_sdk::resource::ResourceDetector;
 use opentelemetry_sdk::trace::SdkTracerProvider;
 use std::str::FromStr;
 use tracing_subscriber::fmt::format::FmtSpan;
 use tracing_subscriber::prelude::*;
+use uuid::Uuid;
 
 const SERVICE_NAME: &str = "bigquery-benchmark-queries";
+
+#[derive(Clone, Debug)]
+struct GenericNodeDetector {
+    id: String,
+    location: String,
+    namespace: String,
+}
+
+impl GenericNodeDetector {
+    pub fn new() -> Self {
+        let id = Uuid::new_v4().to_string();
+        Self {
+            id,
+            location: "us-central1".to_string(),
+            namespace: "bigquery-benchmark-queries".to_string(),
+        }
+    }
+}
+
+impl ResourceDetector for GenericNodeDetector {
+    fn detect(&self) -> Resource {
+        Resource::builder_empty()
+            .with_attributes([
+                KeyValue::new("location", self.location.clone()),
+                KeyValue::new("namespace", self.namespace.clone()),
+                KeyValue::new("node_id", self.id.clone()),
+            ])
+            .build()
+    }
+}
 
 /// Holds providers that need graceful flush and shutdown upon completion.
 pub struct TelemetryGuard {
@@ -32,15 +67,17 @@ pub struct TelemetryGuard {
 impl TelemetryGuard {
     /// Flushes and shuts down telemetry providers.
     pub fn shutdown(self) {
-        if let Some(tp) = self.tracer_provider
-            && let Err(e) = tp.shutdown()
-        {
-            eprintln!("Error shutting down trace provider: {e:?}");
+        if let Some(tp) = self.tracer_provider {
+            let _ = tp.force_flush();
+            if let Err(e) = tp.shutdown() {
+                eprintln!("Error shutting down trace provider: {e:?}");
+            }
         }
-        if let Some(mp) = self.meter_provider
-            && let Err(e) = mp.shutdown()
-        {
-            eprintln!("Error shutting down meter provider: {e:?}");
+        if let Some(mp) = self.meter_provider {
+            let _ = mp.force_flush();
+            if let Err(e) = mp.shutdown() {
+                eprintln!("Error shutting down meter provider: {e:?}");
+            }
         }
     }
 }
@@ -65,13 +102,21 @@ pub async fn enable_telemetry(
     if let Some(project_id) = &args.project_id {
         tracing::info!("Enabling OpenTelemetry Cloud Trace & Monitoring for project {project_id}");
 
+        let node = GenericNodeDetector::new();
+        let detector = GoogleCloudResourceDetector::builder()
+            .with_fallback(node.detect())
+            .build()
+            .await?;
+
         let mut trace_builder =
             integration_tests_o11y::otlp::trace::Builder::new(project_id, SERVICE_NAME)
-                .with_credentials(credentials.clone());
+                .with_credentials(credentials.clone())
+                .with_detector(detector);
 
         let mut meter_builder =
             integration_tests_o11y::otlp::metrics::Builder::new(project_id, SERVICE_NAME)
-                .with_credentials(credentials.clone());
+                .with_credentials(credentials.clone())
+                .with_detector(node);
 
         if let Some(endpoint_str) = &args.otlp_endpoint {
             let uri = Uri::from_str(endpoint_str)?;

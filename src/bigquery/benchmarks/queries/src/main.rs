@@ -48,6 +48,7 @@ async fn main() -> anyhow::Result<()> {
         task_count = args.task_count,
         effective_iterations = ?args.effective_iterations(),
         duration = ?args.duration,
+        use_query_cache = args.use_query_cache,
         "Starting BigQuery benchmark"
     );
 
@@ -73,6 +74,7 @@ async fn main() -> anyhow::Result<()> {
 
     let client = client_builder.build().await?;
     let otel_metrics = OtelMetrics::new();
+    otel_metrics.init_scenario(&scenario.name);
 
     let channel_capacity = (1024 * args.task_count).max(64);
     let (tx, rx) = tokio::sync::mpsc::channel(channel_capacity);
@@ -112,18 +114,27 @@ async fn main() -> anyhow::Result<()> {
     // Drop main sender so receiver terminates after all tasks complete
     drop(tx);
 
-    while let Some(res) = tasks.join_next().await {
-        match res {
-            Ok((task_id, Ok(_))) => {
-                tracing::debug!(task_id, "Task worker completed successfully");
-            }
-            Ok((task_id, Err(err))) => {
-                tracing::error!(task_id, "Task worker encountered error: {err:?}");
-            }
-            Err(err) => {
-                tracing::error!("Failed to join task: {err:?}");
-            }
+    tokio::select! {
+        _ = tokio::signal::ctrl_c() => {
+            tracing::warn!("Ctrl+C received, stopping benchmark tasks and generating report...");
+            tasks.abort_all();
+            while (tasks.join_next().await).is_some() {}
         }
+        _ = async {
+            while let Some(res) = tasks.join_next().await {
+                match res {
+                    Ok((task_id, Ok(_))) => {
+                        tracing::debug!(task_id, "Task worker completed successfully");
+                    }
+                    Ok((task_id, Err(err))) => {
+                        tracing::error!(task_id, "Task worker encountered error: {err:?}");
+                    }
+                    Err(err) => {
+                        tracing::error!("Failed to join task: {err:?}");
+                    }
+                }
+            }
+        } => {}
     }
 
     // Wait for reporter to finish outputting summary and files

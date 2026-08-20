@@ -35,6 +35,9 @@ Benchmarks the Rust BigQuery client library (`google-cloud-bigquery`), measuring
 
 ## Running Benchmarks
 
+> [!NOTE]
+> **Query Caching is disabled by default (`--use-query-cache false`)** to force queries to always execute against storage and provide accurate, repeatable latency measurements. You can pass `--use-query-cache true` if you wish to benchmark cache hit performance.
+
 ### 1. Zero-Setup Synthetic Benchmark (Default)
 
 Runs 10 iterations per task with 4 concurrent tasks, generating and streaming 100,000 rows per query:
@@ -87,6 +90,9 @@ cargo run --release -p bigquery-benchmark-queries -- \
     --output-dir ./results
 ```
 
+> [!TIP]
+> **Real-Time Reporting & Graceful Shutdown (`Ctrl+C`):** When `--output-dir` is provided, the benchmark writes raw sample CSV rows and updates the summary report JSON on disk in **real-time** as each query iteration completes. You can press `Ctrl+C` at any point during a long endurance test to immediately stop worker tasks, output the summary report to stdout, flush all OpenTelemetry metrics to Google Cloud, and preserve the recorded samples and summary report on disk.
+
 ---
 
 ## OpenTelemetry & Cloud Observability
@@ -111,6 +117,70 @@ When `--project-id` is specified, the benchmark automatically connects to `telem
   - `bigquery.send`
   - `bigquery.until_done`
   - `bigquery.read_rows`
+
+### Monitoring with PromQL in Google Cloud Monitoring
+
+In the Google Cloud Console, navigate to **Monitoring** > **Metrics Explorer** and select the **PromQL** tab. You can use the following PromQL queries to visualize the benchmark metrics:
+
+#### 1. Query Throughput (QPS by Status and Scenario)
+Tracks the rate of queries executed per second:
+```promql
+sum by (scenario, status) (rate(workload_googleapis_com:bigquery_queries_total[1m]))
+```
+
+#### 2. Under-the-Hood Job Retries (Retry Rate & Count)
+Tracks how often queries triggered a backend job retry (where the job ID mutated between `Query::send()` and `Query::until_done()`):
+```promql
+sum by (scenario) (rate(workload_googleapis_com:bigquery_queries_retries_detected[1m]))
+```
+To calculate the **Percentage of Queries Retried**:
+```promql
+100 * sum(rate(workload_googleapis_com:bigquery_queries_retries_detected[1m]))
+  / sum(rate(workload_googleapis_com:bigquery_queries_total[1m]))
+```
+
+#### 3. Error Rate (%)
+Tracks the percentage of query executions that failed:
+```promql
+100 * sum(rate(workload_googleapis_com:bigquery_queries_error[1m]))
+  / sum(rate(workload_googleapis_com:bigquery_queries_total[1m]))
+```
+
+#### 4. End-to-End Query Latency Percentiles (P50, P90, P99)
+Calculates the 50th, 90th, and 99th percentile query latencies from histogram buckets:
+```promql
+# P99 Latency (seconds)
+histogram_quantile(0.99, sum by (le, scenario) (rate(workload_googleapis_com:bigquery_queries_duration_seconds_bucket[1m])))
+
+# P90 Latency (seconds)
+histogram_quantile(0.90, sum by (le, scenario) (rate(workload_googleapis_com:bigquery_queries_duration_seconds_bucket[1m])))
+
+# P50 (Median) Latency (seconds)
+histogram_quantile(0.50, sum by (le, scenario) (rate(workload_googleapis_com:bigquery_queries_duration_seconds_bucket[1m])))
+```
+
+#### 5. Query Phase Latency Breakdown (P95 comparison)
+Compare where time is spent across `send()`, `until_done()`, and `read()`:
+```promql
+# Query::send() P95 Latency
+histogram_quantile(0.95, sum by (le, scenario) (rate(workload_googleapis_com:bigquery_queries_send_duration_seconds_bucket[1m])))
+
+# Query::until_done() P95 Polling Latency
+histogram_quantile(0.95, sum by (le, scenario) (rate(workload_googleapis_com:bigquery_queries_poll_duration_seconds_bucket[1m])))
+
+# CompleteQuery::read() P95 Row Streaming Latency
+histogram_quantile(0.95, sum by (le, scenario) (rate(workload_googleapis_com:bigquery_queries_read_duration_seconds_bucket[1m])))
+```
+
+#### 6. Row and Byte Streaming Throughput
+Tracks data processing throughput (rows/sec and MiB/sec):
+```promql
+# Rows streamed per second
+sum by (scenario) (rate(workload_googleapis_com:bigquery_queries_rows_read[1m]))
+
+# MiB processed per second
+sum by (scenario) (rate(workload_googleapis_com:bigquery_queries_bytes_processed[1m])) / (1024 * 1024)
+```
 
 ---
 

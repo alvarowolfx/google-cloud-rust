@@ -86,7 +86,8 @@ impl TaskRunner<'_> {
         let mut query_builder = self
             .client
             .query(&self.scenario.sql)
-            .set_location(&self.args.location);
+            .set_location(&self.args.location)
+            .set_use_query_cache(self.args.use_query_cache);
 
         if let Some(max_results) = self.args.max_results {
             query_builder = query_builder.set_max_results(max_results);

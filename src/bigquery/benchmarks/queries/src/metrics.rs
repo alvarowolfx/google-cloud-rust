@@ -193,6 +193,27 @@ impl OtelMetrics {
         }
     }
 
+    /// Initializes all counter metrics with 0 so time series exist in Cloud Monitoring
+    /// even if no errors or retries occur during the benchmark run.
+    pub fn init_scenario(&self, scenario: &str) {
+        let ok_attrs = [
+            KeyValue::new("scenario", scenario.to_string()),
+            KeyValue::new("status", "ok"),
+        ];
+        let err_attrs = [
+            KeyValue::new("scenario", scenario.to_string()),
+            KeyValue::new("status", "error"),
+        ];
+
+        self.queries_total.add(0, &ok_attrs);
+        self.queries_total.add(0, &err_attrs);
+        self.queries_success.add(0, &ok_attrs);
+        self.queries_error.add(0, &err_attrs);
+        self.queries_retried.add(0, &ok_attrs);
+        self.rows_read.add(0, &ok_attrs);
+        self.bytes_processed.add(0, &ok_attrs);
+    }
+
     pub fn record_sample(&self, scenario: &str, sample: &crate::sample::Sample) {
         let is_ok = sample.status == crate::sample::SampleStatus::Ok;
         let attrs = [
@@ -203,14 +224,21 @@ impl OtelMetrics {
         self.queries_total.add(1, &attrs);
         if is_ok {
             self.queries_success.add(1, &attrs);
+            self.queries_error.add(
+                0,
+                &[
+                    KeyValue::new("scenario", scenario.to_string()),
+                    KeyValue::new("status", "error"),
+                ],
+            );
             if sample.retry_detected {
                 self.queries_retried.add(1, &attrs);
+            } else {
+                self.queries_retried.add(0, &attrs);
             }
             self.rows_read.add(sample.rows_count as u64, &attrs);
-            if sample.bytes_processed > 0 {
-                self.bytes_processed
-                    .add(sample.bytes_processed as u64, &attrs);
-            }
+            self.bytes_processed
+                .add(sample.bytes_processed.max(0) as u64, &attrs);
 
             self.send_duration.record(
                 Duration::from_micros(sample.send_duration_micros as u64).as_secs_f64(),
@@ -226,6 +254,13 @@ impl OtelMetrics {
             );
         } else {
             self.queries_error.add(1, &attrs);
+            self.queries_success.add(
+                0,
+                &[
+                    KeyValue::new("scenario", scenario.to_string()),
+                    KeyValue::new("status", "ok"),
+                ],
+            );
         }
 
         self.query_duration.record(
