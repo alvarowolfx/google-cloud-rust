@@ -97,7 +97,35 @@ pub async fn enable_telemetry(
         .with_writer(std::io::stderr)
         .with_filter(env_filter);
 
-    let registry = tracing_subscriber::Registry::default().with(fmt_layer);
+    let error_file_layer = if let Some(output_dir) = &args.output_dir {
+        let _ = std::fs::create_dir_all(output_dir);
+        let error_log_path = output_dir.join("tracing-errors.log");
+        match std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&error_log_path)
+        {
+            Ok(file) => {
+                let layer = tracing_subscriber::fmt::layer()
+                    .with_level(true)
+                    .with_thread_ids(true)
+                    .with_ansi(false)
+                    .with_writer(std::sync::Mutex::new(file))
+                    .with_filter(tracing_subscriber::filter::LevelFilter::ERROR);
+                Some(layer)
+            }
+            Err(e) => {
+                eprintln!("Could not open tracing error log file: {e:?}");
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    let registry = tracing_subscriber::Registry::default()
+        .with(fmt_layer)
+        .with(error_file_layer);
 
     if let Some(project_id) = &args.project_id {
         tracing::info!("Enabling OpenTelemetry Cloud Trace & Monitoring for project {project_id}");

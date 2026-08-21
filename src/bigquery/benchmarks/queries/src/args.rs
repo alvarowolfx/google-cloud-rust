@@ -106,6 +106,10 @@ pub struct Args {
     #[arg(long, value_parser = parse_duration, default_value = "250ms")]
     pub rampup_period: Duration,
 
+    /// Timeout for an individual query iteration (including send, until_done, and row streaming).
+    #[arg(long, value_parser = parse_duration, default_value = "120s")]
+    pub query_timeout: Duration,
+
     /// Directory where raw CSV samples and summary JSON metrics will be written.
     #[arg(long)]
     pub output_dir: Option<PathBuf>,

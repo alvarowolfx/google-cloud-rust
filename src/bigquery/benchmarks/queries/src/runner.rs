@@ -64,10 +64,46 @@ impl TaskRunner<'_> {
                 scenario = %self.scenario.name
             );
 
-            let sample = self
+            let sample_fut = self
                 .execute_iteration(iteration, start_offset_micros, iter_start)
-                .instrument(iteration_span)
-                .await;
+                .instrument(iteration_span);
+
+            let sample = match tokio::time::timeout(self.args.query_timeout, sample_fut).await {
+                Ok(sample) => sample,
+                Err(_) => {
+                    let total_duration = iter_start.elapsed();
+                    metrics::inc_total_queries();
+                    metrics::inc_error_queries();
+                    tracing::error!(
+                        task_id = self.task_id,
+                        iteration,
+                        "Query iteration timed out after {:?}",
+                        self.args.query_timeout
+                    );
+                    let sample = Sample {
+                        task_id: self.task_id,
+                        iteration,
+                        start_offset_micros,
+                        send_duration_micros: 0,
+                        poll_duration_micros: 0,
+                        read_duration_micros: 0,
+                        total_duration_micros: total_duration.as_micros(),
+                        rows_count: 0,
+                        bytes_processed: 0,
+                        cache_hit: false,
+                        initial_job_id: String::new(),
+                        final_job_id: String::new(),
+                        retry_detected: false,
+                        status: SampleStatus::Timeout,
+                        error_message: format!(
+                            "Query iteration timed out after {:?}",
+                            self.args.query_timeout
+                        ),
+                    };
+                    self.metrics.record_sample(&self.scenario.name, &sample);
+                    sample
+                }
+            };
 
             let _ = self.tx.send(sample).await;
             iteration += 1;
@@ -124,7 +160,7 @@ impl TaskRunner<'_> {
                     final_job_id: String::new(),
                     retry_detected: false,
                     status: SampleStatus::Error,
-                    error_message: err.to_string(),
+                    error_message: format!("Query::send: {err:#}"),
                 };
                 self.metrics.record_sample(&self.scenario.name, &sample);
                 return sample;
@@ -178,7 +214,7 @@ impl TaskRunner<'_> {
                     final_job_id: String::new(),
                     retry_detected: false,
                     status: SampleStatus::Error,
-                    error_message: err.to_string(),
+                    error_message: format!("Query::until_done: {err:#}"),
                 };
                 self.metrics.record_sample(&self.scenario.name, &sample);
                 return sample;
@@ -230,7 +266,7 @@ impl TaskRunner<'_> {
                     }
                     Err(err) => {
                         tracing::error!(self.task_id, iteration, "Error streaming rows: {err:?}");
-                        read_error = Some(err.to_string());
+                        read_error = Some(format!("CompleteQuery::read: {err:#}"));
                         break;
                     }
                 }
