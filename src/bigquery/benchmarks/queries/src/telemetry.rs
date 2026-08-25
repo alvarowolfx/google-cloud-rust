@@ -93,7 +93,7 @@ pub async fn enable_telemetry(
     let fmt_layer = tracing_subscriber::fmt::layer()
         .with_level(true)
         .with_thread_ids(true)
-        .with_span_events(FmtSpan::NEW | FmtSpan::CLOSE)
+        .with_span_events(FmtSpan::NONE)
         .with_writer(std::io::stderr)
         .with_filter(env_filter);
 
