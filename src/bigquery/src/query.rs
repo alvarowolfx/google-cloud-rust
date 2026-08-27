@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+pub(crate) mod arrow;
 pub(super) mod builder;
 pub(super) mod client;
 pub(super) mod client_builder;
@@ -22,8 +23,9 @@ mod query_handle;
 mod retry_policy;
 mod row;
 mod schema;
+pub(crate) mod storage_reader;
 
-pub use iterator::RowIterator;
+pub use iterator::{RecordBatchIterator, RowIterator};
 pub use query_handle::{CompleteQuery, Query};
 pub(crate) use schema::Schema;
 

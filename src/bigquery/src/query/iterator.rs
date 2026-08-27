@@ -13,7 +13,10 @@
 // limitations under the License.
 
 use crate::error::RowError;
+use crate::query::arrow::record_batch_to_rows;
+use crate::query::storage_reader::StorageReader;
 use crate::query::{CompleteQuery, Row, Schema};
+use arrow::record_batch::RecordBatch;
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{GetQueryResultsRequest, JobReference};
 use std::collections::VecDeque;
@@ -54,18 +57,38 @@ pub struct RowIterator {
     schema: Arc<Schema>,
     page_token: Option<String>,
     rows: VecDeque<wkt::Struct>,
+    buffered_rows: VecDeque<Row>,
     max_results: Option<u32>,
+    storage_reader: Option<StorageReader>,
 }
 
 impl RowIterator {
     pub(crate) fn new(q: CompleteQuery) -> Self {
+        let storage_reader =
+            if let (Some(read_client), Some(job_ref)) = (q.read_client, q.job_ref.clone()) {
+                if q.page_token.is_some() || q.cached_rows.is_empty() {
+                    Some(StorageReader::new(
+                        read_client,
+                        q.job_service.clone(),
+                        job_ref,
+                        None,
+                    ))
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
+
         Self {
             job_service: q.job_service,
             job_ref: q.job_ref,
             schema: q.schema,
             page_token: q.page_token,
             rows: q.cached_rows,
+            buffered_rows: VecDeque::new(),
             max_results: q.max_results,
+            storage_reader,
         }
     }
 
@@ -111,6 +134,28 @@ impl RowIterator {
     /// ```
     pub async fn next(&mut self) -> Option<Result<Row>> {
         loop {
+            if let Some(row) = self.buffered_rows.pop_front() {
+                return Some(Ok(row));
+            }
+
+            if let Some(ref mut storage_reader) = self.storage_reader {
+                match storage_reader.next_batch().await {
+                    Ok(Some(batch)) => match record_batch_to_rows(&batch, &self.schema) {
+                        Ok(rows) => {
+                            self.buffered_rows.extend(rows);
+                            continue;
+                        }
+                        Err(e) => return Some(Err(e)),
+                    },
+                    Ok(None) => return None,
+                    Err(_err) if !storage_reader.initialized => {
+                        // Fall back to JSON pagination if read session initialization failed
+                        self.storage_reader = None;
+                    }
+                    Err(err) => return Some(Err(err)),
+                }
+            }
+
             if let Some(raw_row) = self.rows.pop_front() {
                 return Some(Row::try_new(raw_row, &self.schema));
             }
@@ -169,6 +214,104 @@ impl RowIterator {
         };
 
         Ok((res.rows, page_token))
+    }
+}
+
+/// An iterator over Arrow [`RecordBatch`]es returned by a query.
+///
+/// [`CompleteQuery::read_record_batches()`](crate::query::CompleteQuery::read_record_batches) returns a
+/// `RecordBatchIterator`.
+///
+/// This iterator reads query results using the BigQuery Storage Read API directly as Arrow [`RecordBatch`]es.
+///
+/// # Example
+///
+/// ```
+/// # use google_cloud_bigquery::client::BigQuery;
+/// # async fn sample(client: BigQuery) -> anyhow::Result<()> {
+/// let mut batches = client
+///     .query("SELECT name, state FROM `bigquery-public-data.usa_names.usa_1910_2013` LIMIT 10")
+///     .until_done()
+///     .await?
+///     .read_record_batches();
+///
+/// while let Some(batch) = batches.next().await.transpose()? {
+///     println!("Received batch with {} rows", batch.num_rows());
+/// }
+/// # Ok(())
+/// # }
+/// ```
+#[derive(Debug)]
+pub struct RecordBatchIterator {
+    reader: Option<Result<StorageReader>>,
+}
+
+impl RecordBatchIterator {
+    pub(crate) fn new(q: CompleteQuery) -> Self {
+        let reader = match (q.read_client, q.job_ref) {
+            (Some(read_client), Some(job_ref)) => Ok(StorageReader::new(
+                read_client,
+                q.job_service,
+                job_ref,
+                None,
+            )),
+            (None, _) => Err(RowError::InvalidRowFormat(
+                "BigQuery Storage Read API is not enabled on this client. Enable it via ClientBuilder::with_storage_read(true)".into(),
+            )),
+            (_, None) => Err(RowError::InvalidRowFormat(
+                "Query completed without a JobReference and cannot be read via Storage Read API".into(),
+            )),
+        };
+
+        Self {
+            reader: Some(reader),
+        }
+    }
+
+    /// Returns the Arrow [`SchemaRef`](arrow::datatypes::SchemaRef) for this query result set, if the session has been initialized.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use google_cloud_bigquery::query::RecordBatchIterator;
+    /// # fn check_schema(batches: &RecordBatchIterator) {
+    /// if let Some(schema) = batches.schema() {
+    ///     println!("Schema has {} fields", schema.fields().len());
+    /// }
+    /// # }
+    /// ```
+    pub fn schema(&self) -> Option<arrow::datatypes::SchemaRef> {
+        match &self.reader {
+            Some(Ok(reader)) => reader.arrow_schema.clone(),
+            _ => None,
+        }
+    }
+
+    /// Fetches the next [`RecordBatch`] from the query result set.
+    ///
+    /// Returns `None` when all batches have been retrieved.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use google_cloud_bigquery::query::RecordBatchIterator;
+    /// # async fn sample(mut batches: RecordBatchIterator) -> anyhow::Result<()> {
+    /// while let Some(batch) = batches.next().await.transpose()? {
+    ///     println!("Batch rows: {}", batch.num_rows());
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn next(&mut self) -> Option<Result<RecordBatch>> {
+        match self.reader.as_mut()? {
+            Ok(reader) => reader.next_batch().await.transpose(),
+            Err(_) => {
+                let Err(err) = self.reader.take().unwrap() else {
+                    unreachable!()
+                };
+                Some(Err(err))
+            }
+        }
     }
 }
 
@@ -415,6 +558,23 @@ mod tests {
             err.to_string().contains("temporary service error"),
             "{err:?}"
         );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_record_batch_iterator_not_enabled() -> TestResult {
+        let job_service = create_job_service(MockJobService::new());
+        let q = create_test_complete_query(
+            job_service,
+            Some(create_test_job_ref()),
+            vec![],
+            Some("token_1".to_string()),
+        );
+        let mut iter = q.read_record_batches();
+        let err = iter.next().await.expect("should return error").unwrap_err();
+        assert!(matches!(err, RowError::InvalidRowFormat(_)));
+        assert!(err.to_string().contains("Storage Read API is not enabled"));
+        assert!(iter.next().await.is_none());
         Ok(())
     }
 }

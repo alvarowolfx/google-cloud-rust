@@ -189,6 +189,7 @@ impl RetryContext {
             job,
             Some(self.clone()),
             max_results,
+            self.template.read_client.clone(),
         ))
     }
 
@@ -217,6 +218,7 @@ impl RetryContext {
             res,
             Some(self.clone()),
             max_results,
+            self.template.read_client.clone(),
         ))
     }
 }
@@ -254,7 +256,7 @@ mod tests {
         let request = PostQueryRequest::new();
         let executor = PostQueryExecutor::new(job_service.clone(), request);
         let res = executor.execute().await?;
-        let query = QueryHandle::from_query_response(job_service, res, None, None);
+        let query = QueryHandle::from_query_response(job_service, res, None, None, None);
 
         assert!(query.completed, "{query:?}");
         let job_ref = query
@@ -409,7 +411,7 @@ mod tests {
         let req = InsertJobRequest::new().set_job(job);
         let executor = InsertJobExecutor::new(job_service.clone(), req);
         let job = executor.execute().await?;
-        let query = QueryHandle::from_job(job_service, job, None, None);
+        let query = QueryHandle::from_job(job_service, job, None, None, None);
 
         assert_eq!(query.completed, completed);
         assert_eq!(query.metadata.job_reference, Some(job_ref));
@@ -428,7 +430,7 @@ mod tests {
         mock.expect_query().never();
 
         let job_service = create_job_service(mock);
-        let query = Query::new(job_service, "SELECT 1".to_string())
+        let query = Query::new(job_service, None, "SELECT 1".to_string())
             .with_project_id("my-project")
             .set_dry_run(true);
 
@@ -453,7 +455,7 @@ mod tests {
         mock.expect_insert_job().never();
 
         let job_service = create_job_service(mock);
-        let query = Query::new(job_service, "SELECT 1".to_string())
+        let query = Query::new(job_service, None, "SELECT 1".to_string())
             .with_project_id("my-project")
             .set_dry_run(false);
 

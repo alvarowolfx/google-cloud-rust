@@ -16,7 +16,7 @@ use crate::error::QueryError;
 use crate::generated::{CompleteQueryMetadata, QueryMetadata};
 use crate::query::execution::RetryContext;
 use crate::query::retry_policy::JobRetryResult;
-use crate::query::{Result, RowIterator, Schema};
+use crate::query::{RecordBatchIterator, Result, RowIterator, Schema};
 use google_cloud_bigquery_v2::builder::job_service::GetJob;
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{
@@ -54,6 +54,7 @@ use std::sync::Arc;
 #[derive(Clone, Debug)]
 pub struct Query {
     pub(crate) job_service: Arc<JobService>,
+    pub(crate) read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
     pub(crate) completed: bool,
     pub(crate) metadata: QueryMetadata,
     pub(crate) cached_rows: Option<VecDeque<wkt::Struct>>,
@@ -67,6 +68,7 @@ impl Query {
         initial_job: Job,
         retry_context: Option<RetryContext>,
         max_results: Option<u32>,
+        read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
     ) -> Self {
         let completed = initial_job
             .status
@@ -75,6 +77,7 @@ impl Query {
             .unwrap_or(false);
         Self {
             job_service,
+            read_client,
             completed,
             cached_rows: None,
             metadata: QueryMetadata::from(initial_job),
@@ -88,12 +91,14 @@ impl Query {
         mut query_response: QueryResponse,
         retry_context: Option<RetryContext>,
         max_results: Option<u32>,
+        read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
     ) -> Self {
         let completed = query_response.job_complete.unwrap_or(false);
         let cached_rows = VecDeque::from(std::mem::take(&mut query_response.rows));
         let metadata = QueryMetadata::from(query_response);
         Self {
             job_service,
+            read_client,
             completed,
             cached_rows: Some(cached_rows),
             metadata,
@@ -199,6 +204,7 @@ impl Query {
         loop {
             let Query {
                 job_service,
+                read_client,
                 completed,
                 metadata,
                 cached_rows,
@@ -212,6 +218,7 @@ impl Query {
                     metadata,
                     cached_rows,
                     max_results,
+                    read_client,
                 ));
             }
 
@@ -234,6 +241,7 @@ impl Query {
                         job_ref,
                         res,
                         max_results,
+                        read_client,
                     ));
                 }
                 Err(err) => {
@@ -279,6 +287,7 @@ impl Query {
 #[derive(Clone, Debug)]
 pub struct CompleteQuery {
     pub(crate) job_service: Arc<JobService>,
+    pub(crate) read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
     pub(crate) job_ref: Option<JobReference>,
     pub(crate) cached_rows: VecDeque<wkt::Struct>,
     pub(crate) schema: Arc<Schema>,
@@ -293,6 +302,7 @@ impl CompleteQuery {
         job_ref: &JobReference,
         mut res: GetQueryResultsResponse,
         max_results: Option<u32>,
+        read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
     ) -> Self {
         let cached_rows = VecDeque::from(std::mem::take(&mut res.rows));
         let metadata = CompleteQueryMetadata::from(res);
@@ -306,6 +316,7 @@ impl CompleteQuery {
         };
         Self {
             job_service,
+            read_client,
             job_ref: Some(job_ref.clone()),
             cached_rows,
             page_token,
@@ -320,6 +331,7 @@ impl CompleteQuery {
         metadata: QueryMetadata,
         cached_rows: VecDeque<wkt::Struct>,
         max_results: Option<u32>,
+        read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
     ) -> Self {
         let job_ref = metadata.job_reference.clone();
         let metadata = CompleteQueryMetadata::from(metadata);
@@ -333,6 +345,7 @@ impl CompleteQuery {
         };
         Self {
             job_service,
+            read_client,
             job_ref,
             cached_rows,
             page_token,
@@ -364,6 +377,32 @@ impl CompleteQuery {
     /// ```
     pub fn read(self) -> RowIterator {
         RowIterator::new(self)
+    }
+
+    /// Read the result set of the query as Arrow [`RecordBatch`](arrow::record_batch::RecordBatch)es directly using the Storage Read API.
+    ///
+    /// This requires BigQuery Storage Read API acceleration to be enabled via
+    /// [`ClientBuilder::with_storage_read(true)`](crate::query::ClientBuilder::with_storage_read).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use google_cloud_bigquery::client::BigQuery;
+    /// # async fn sample(client: BigQuery) -> anyhow::Result<()> {
+    /// let mut batches = client
+    ///     .query("SELECT 100 AS score")
+    ///     .until_done()
+    ///     .await?
+    ///     .read_record_batches();
+    ///
+    /// while let Some(batch) = batches.next().await.transpose()? {
+    ///     println!("Batch rows: {}", batch.num_rows());
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub fn read_record_batches(self) -> RecordBatchIterator {
+        RecordBatchIterator::new(self)
     }
 
     /// Returns a reference to the cached summary metadata for this query.
@@ -519,7 +558,7 @@ mod tests {
         ) -> Self {
             let cached_rows = std::mem::take(&mut query_res.rows).into();
             let metadata = QueryMetadata::from(query_res);
-            Self::from_query_metadata(job_service, metadata, cached_rows, max_results)
+            Self::from_query_metadata(job_service, metadata, cached_rows, max_results, None)
         }
     }
 
@@ -537,7 +576,7 @@ mod tests {
             .set_rows([wkt::Struct::new()])
             .set_cache_hit(true);
 
-        let query = Query::from_query_response(job_service, query_res, None, None);
+        let query = Query::from_query_response(job_service, query_res, None, None, None);
 
         let completed = query.until_done().await?;
         assert_eq!(completed.job_ref.as_ref().unwrap().job_id, "some_job_id");
@@ -563,7 +602,7 @@ mod tests {
             .set_job_reference(job_ref.clone())
             .set_schema(TableSchema::new());
 
-        let query = Query::from_query_response(job_service, query_res, None, Some(42));
+        let query = Query::from_query_response(job_service, query_res, None, Some(42), None);
 
         let completed = query.until_done().await?;
         assert_eq!(completed.max_results, Some(42));
@@ -599,7 +638,7 @@ mod tests {
             .set_job_complete(false)
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(job_service, query_res, None, None);
+        let query = Query::from_query_response(job_service, query_res, None, None, None);
 
         let completed = query.until_done().await?;
         assert_eq!(completed.job_ref.as_ref().unwrap().job_id, "some_job_id");
@@ -676,7 +715,7 @@ mod tests {
             .set_job_complete(false)
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(job_service, query_res, None, None);
+        let query = Query::from_query_response(job_service, query_res, None, None, None);
 
         let err = query.until_done().await.unwrap_err();
         let errors = match err {
@@ -713,7 +752,7 @@ mod tests {
             .set_job_complete(false)
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(job_service, query_res, None, None);
+        let query = Query::from_query_response(job_service, query_res, None, None, None);
 
         let err = query.until_done().await.unwrap_err();
         let source = match err {
@@ -809,11 +848,11 @@ mod tests {
             .set_job_complete(false)
             .set_job_reference(job_ref);
 
-        let query_builder = QueryBuilder::new(job_service.clone(), "SELECT 1".to_string())
+        let query_builder = QueryBuilder::new(job_service.clone(), None, "SELECT 1".to_string())
             .with_project_id("some_project");
         let retry_context = Some(RetryContext::new(query_builder));
 
-        let query = Query::from_query_response(job_service, query_res, retry_context, None);
+        let query = Query::from_query_response(job_service, query_res, retry_context, None, None);
 
         let completed = query.until_done().await?;
         assert_eq!(
@@ -882,13 +921,14 @@ mod tests {
             .set_job_complete(false)
             .set_job_reference(job_ref)
             .set_schema(TableSchema::new());
-        let mut query_builder = QueryBuilder::new(job_service.clone(), "SELECT 1".to_string())
-            .with_project_id("some_project");
+        let mut query_builder =
+            QueryBuilder::new(job_service.clone(), None, "SELECT 1".to_string())
+                .with_project_id("some_project");
         query_builder.job_retry_policy =
             Arc::new(RetryableJobErrors::default().with_attempt_limit(1));
         let retry_context = Some(RetryContext::new(query_builder));
 
-        let query = Query::from_query_response(job_service, query_res, retry_context, None);
+        let query = Query::from_query_response(job_service, query_res, retry_context, None, None);
 
         let err = query.until_done().await.unwrap_err();
         let errors = match err {
@@ -923,7 +963,8 @@ mod tests {
             .set_schema(TableSchema::new())
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(job_service.clone(), query_res.clone(), None, None);
+        let query =
+            Query::from_query_response(job_service.clone(), query_res.clone(), None, None, None);
         let job = query.get_job().unwrap().send().await?;
         assert_eq!(job.user_email, "test@example.com");
 
@@ -944,7 +985,8 @@ mod tests {
             .set_schema(TableSchema::new())
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(job_service.clone(), query_res.clone(), None, None);
+        let query =
+            Query::from_query_response(job_service.clone(), query_res.clone(), None, None, None);
         assert!(query.get_job().is_none(), "{query:?}");
 
         let complete_query = CompleteQuery::from_query_response(job_service, query_res, None);
@@ -971,7 +1013,8 @@ mod tests {
             .set_schema(TableSchema::new())
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(job_service.clone(), query_res.clone(), None, None);
+        let query =
+            Query::from_query_response(job_service.clone(), query_res.clone(), None, None, None);
         let req = query.get_job().unwrap();
         let err = req.send().await.unwrap_err();
         assert_eq!(err.status().unwrap().code, Code::NotFound);
@@ -993,7 +1036,7 @@ mod tests {
             .set_job_reference(job_ref)
             .set_configuration(JobConfiguration::new().set_dry_run(true));
 
-        let query = Query::from_job(job_service, job, None, None);
+        let query = Query::from_job(job_service, job, None, None, None);
         let err = query.until_done().await.unwrap_err();
         assert!(
             matches!(err, QueryError::DryRun),

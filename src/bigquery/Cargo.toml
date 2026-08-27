@@ -26,6 +26,7 @@ categories.workspace   = true
 rust-version.workspace = true
 
 [dependencies]
+arrow                        = { workspace = true, features = ["ipc"] }
 async-trait.workspace        = true
 base64.workspace             = true
 bytes.workspace              = true
@@ -39,6 +40,7 @@ google-cloud-auth.workspace  = true
 google-cloud-gax.workspace   = true
 gaxi                         = { workspace = true, features = ["_internal-common", "_internal-grpc-client", "_internal-http-client"] }
 google-cloud-bigquery-derive = { workspace = true }
+google-cloud-bigquery-read   = { workspace = true }
 google-cloud-bigquery-v2     = { workspace = true }
 google-cloud-rpc.workspace   = true
 google-cloud-type.workspace  = true

@@ -34,6 +34,8 @@ use google_cloud_gax::client_builder::Result;
 pub struct ClientBuilder {
     pub(crate) config: ClientConfig,
     pub(crate) project_id: Option<String>,
+    pub(crate) storage_read_enabled: bool,
+    pub(crate) storage_read_endpoint: Option<String>,
 }
 
 impl Default for ClientBuilder {
@@ -48,6 +50,8 @@ impl ClientBuilder {
         Self {
             config: ClientConfig::default(),
             project_id: None,
+            storage_read_enabled: false,
+            storage_read_endpoint: None,
         }
     }
 
@@ -154,6 +158,44 @@ impl ClientBuilder {
     /// [tracing]: https://docs.rs/tracing/latest/tracing/
     pub fn with_tracing(mut self) -> Self {
         self.config.tracing = true;
+        self
+    }
+
+    /// Enables or disables BigQuery Storage Read API acceleration for query result reading.
+    ///
+    /// When enabled, large query result sets will be streamed directly using the high-performance
+    /// gRPC Storage Read API in Arrow format, using the same [`Row`][crate::query::Row] interface.
+    ///
+    /// # Example
+    /// ```
+    /// # use google_cloud_bigquery::client::BigQuery;
+    /// # async fn sample() -> anyhow::Result<()> {
+    /// let client = BigQuery::builder()
+    ///     .with_storage_read(true)
+    ///     .build()
+    ///     .await?;
+    /// # Ok(()) }
+    /// ```
+    pub fn with_storage_read(mut self, enabled: bool) -> Self {
+        self.storage_read_enabled = enabled;
+        self
+    }
+
+    /// Sets the endpoint for the BigQuery Storage Read API.
+    ///
+    /// # Example
+    /// ```
+    /// # use google_cloud_bigquery::client::BigQuery;
+    /// # async fn sample() -> anyhow::Result<()> {
+    /// let client = BigQuery::builder()
+    ///     .with_storage_read(true)
+    ///     .with_storage_read_endpoint("https://bigquerystorage.googleapis.com")
+    ///     .build()
+    ///     .await?;
+    /// # Ok(()) }
+    /// ```
+    pub fn with_storage_read_endpoint<V: Into<String>>(mut self, endpoint: V) -> Self {
+        self.storage_read_endpoint = Some(endpoint.into());
         self
     }
 

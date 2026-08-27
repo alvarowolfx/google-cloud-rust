@@ -64,6 +64,7 @@ use std::sync::Arc;
 #[derive(Clone, Debug)]
 pub struct BigQuery {
     job_service: Arc<JobService>,
+    read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
     project_id: Option<String>,
 }
 
@@ -86,13 +87,13 @@ impl BigQuery {
 
     pub(crate) async fn new(builder: ClientBuilder) -> BuilderResult<Self> {
         let mut job_service_builder = JobService::builder();
-        if let Some(creds) = builder.config.cred {
+        if let Some(creds) = builder.config.cred.clone() {
             job_service_builder = job_service_builder.with_credentials(creds);
         }
-        if let Some(endpoint) = builder.config.endpoint {
+        if let Some(endpoint) = builder.config.endpoint.clone() {
             job_service_builder = job_service_builder.with_endpoint(endpoint);
         }
-        if let Some(universe_domain) = builder.config.universe_domain {
+        if let Some(universe_domain) = builder.config.universe_domain.clone() {
             job_service_builder = job_service_builder.with_universe_domain(universe_domain);
         }
         if builder.config.tracing {
@@ -108,10 +109,34 @@ impl BigQuery {
             job_service_builder.with_retry_throttler(builder.config.retry_throttler);
         let job_service = Arc::new(job_service_builder.build().await?);
 
+        let read_client = if builder.storage_read_enabled {
+            let mut read_builder = google_cloud_bigquery_read::client::Read::builder();
+            if let Some(creds) = builder.config.cred {
+                read_builder = read_builder.with_credentials(creds);
+            }
+            if let Some(endpoint) = builder.storage_read_endpoint {
+                read_builder = read_builder.with_endpoint(endpoint);
+            } else if let Some(universe_domain) = builder.config.universe_domain {
+                read_builder = read_builder.with_universe_domain(universe_domain);
+            }
+            if builder.config.tracing {
+                read_builder = read_builder.with_tracing();
+            }
+            Some(Arc::new(read_builder.build().await?))
+        } else {
+            None
+        };
+
         Ok(BigQuery {
             job_service,
+            read_client,
             project_id: builder.project_id,
         })
+    }
+
+    /// Returns `true` if BigQuery Storage Read API acceleration is enabled on this client.
+    pub fn is_storage_read_enabled(&self) -> bool {
+        self.read_client.is_some()
     }
 
     /// Creates a request builder to configure and execute a SQL query.
@@ -152,7 +177,11 @@ impl BigQuery {
     /// # }
     /// ```
     pub fn query<S: Into<String>>(&self, sql: S) -> Query {
-        let builder = Query::new(self.job_service.clone(), sql.into());
+        let builder = Query::new(
+            self.job_service.clone(),
+            self.read_client.clone(),
+            sql.into(),
+        );
         self.project_id
             .as_deref()
             .into_iter()
@@ -223,6 +252,7 @@ impl BigQuery {
             job,
             None,
             None,
+            self.read_client.clone(),
         ))
     }
 }
@@ -244,6 +274,7 @@ mod tests {
         fn from_job_service(job_service: Arc<JobService>, project_id: Option<String>) -> Self {
             Self {
                 job_service,
+                read_client: None,
                 project_id,
             }
         }
