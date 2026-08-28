@@ -13,13 +13,16 @@
 // limitations under the License.
 
 use crate::error::RowError;
-use crate::query::arrow::record_batch_to_rows;
+use crate::query::query_handle::CachedData;
+#[cfg(google_cloud_unstable_gapic_streaming)]
 use crate::query::storage_reader::StorageReader;
 use crate::query::{CompleteQuery, Row, Schema};
+use arrow::ipc::reader::StreamReader;
 use arrow::record_batch::RecordBatch;
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{GetQueryResultsRequest, JobReference};
 use std::collections::VecDeque;
+use std::io::{Cursor, Read};
 use std::sync::Arc;
 
 pub type Result<T> = std::result::Result<T, RowError>;
@@ -56,23 +59,44 @@ pub struct RowIterator {
     job_ref: Option<JobReference>,
     schema: Arc<Schema>,
     page_token: Option<String>,
+    record_batches: VecDeque<Arc<RecordBatch>>,
+    row_index: usize,
     rows: VecDeque<wkt::Struct>,
-    buffered_rows: VecDeque<Row>,
     max_results: Option<u32>,
+    #[cfg(google_cloud_unstable_gapic_streaming)]
     storage_reader: Option<StorageReader>,
 }
 
 impl RowIterator {
     pub(crate) fn new(q: CompleteQuery) -> Self {
+        let (rows, record_batches, _has_cached) = match q.cached_data {
+            CachedData::Rows(rows) => {
+                let has = !rows.is_empty();
+                (rows, VecDeque::new(), has)
+            }
+            CachedData::Arrow {
+                serialized_record_batch,
+                serialized_schema,
+            } => {
+                let reader = StreamReader::try_new(
+                    Cursor::new(serialized_schema).chain(Cursor::new(serialized_record_batch)),
+                    None,
+                )
+                .expect("valid arrow IPC stream"); // TODO: convert error
+                let batches = reader
+                    .map(|res| res.map(Arc::new))
+                    .collect::<std::result::Result<VecDeque<_>, _>>()
+                    .expect("valid record batches"); // TODO: convert error
+                let has = !batches.is_empty();
+                (VecDeque::new(), batches, has)
+            }
+        };
+
+        #[cfg(google_cloud_unstable_gapic_streaming)]
         let storage_reader =
             if let (Some(read_client), Some(job_ref)) = (q.read_client, q.job_ref.clone()) {
-                if q.page_token.is_some() || q.cached_rows.is_empty() {
-                    Some(StorageReader::new(
-                        read_client,
-                        q.job_service.clone(),
-                        job_ref,
-                        None,
-                    ))
+                if q.page_token.is_some() || !_has_cached {
+                    Some(StorageReader::new(read_client, job_ref))
                 } else {
                     None
                 }
@@ -85,9 +109,11 @@ impl RowIterator {
             job_ref: q.job_ref,
             schema: q.schema,
             page_token: q.page_token,
-            rows: q.cached_rows,
-            buffered_rows: VecDeque::new(),
+            record_batches,
+            row_index: 0,
+            rows,
             max_results: q.max_results,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
             storage_reader,
         }
     }
@@ -134,22 +160,27 @@ impl RowIterator {
     /// ```
     pub async fn next(&mut self) -> Option<Result<Row>> {
         loop {
-            if let Some(row) = self.buffered_rows.pop_front() {
-                return Some(Ok(row));
+            while let Some(batch) = self.record_batches.front() {
+                if self.row_index < batch.num_rows() {
+                    let idx = self.row_index;
+                    self.row_index += 1;
+                    return Some(Row::try_new_from_arrow(batch, idx, &self.schema));
+                }
+                self.record_batches.pop_front();
+                self.row_index = 0;
             }
 
+            #[cfg(google_cloud_unstable_gapic_streaming)]
             if let Some(ref mut storage_reader) = self.storage_reader {
                 match storage_reader.next_batch().await {
-                    Ok(Some(batch)) => match record_batch_to_rows(&batch, &self.schema) {
-                        Ok(rows) => {
-                            self.buffered_rows.extend(rows);
-                            continue;
-                        }
-                        Err(e) => return Some(Err(e)),
-                    },
+                    Ok(Some(batch)) => {
+                        self.record_batches.push_back(Arc::new(batch));
+                        self.row_index = 0;
+                        continue;
+                    }
                     Ok(None) => return None,
-                    Err(_err) if !storage_reader.initialized => {
-                        // Fall back to JSON pagination if read session initialization failed
+                    Err(_err) if !storage_reader.stream_opened => {
+                        // Fall back to JSON pagination if read stream opening failed
                         self.storage_reader = None;
                     }
                     Err(err) => return Some(Err(err)),
@@ -164,7 +195,7 @@ impl RowIterator {
                 return Some(Err(e));
             }
 
-            if self.rows.is_empty() && self.page_token.is_none() {
+            if self.record_batches.is_empty() && self.rows.is_empty() && self.page_token.is_none() {
                 return None;
             }
         }
@@ -229,6 +260,8 @@ impl RowIterator {
 /// ```
 /// # use google_cloud_bigquery::client::BigQuery;
 /// # async fn sample(client: BigQuery) -> anyhow::Result<()> {
+/// # #[cfg(google_cloud_unstable_gapic_streaming)]
+/// # {
 /// let mut batches = client
 ///     .query("SELECT name, state FROM `bigquery-public-data.usa_names.usa_1910_2013` LIMIT 10")
 ///     .until_done()
@@ -238,23 +271,21 @@ impl RowIterator {
 /// while let Some(batch) = batches.next().await.transpose()? {
 ///     println!("Received batch with {} rows", batch.num_rows());
 /// }
+/// # }
 /// # Ok(())
 /// # }
 /// ```
+#[cfg(google_cloud_unstable_gapic_streaming)]
 #[derive(Debug)]
 pub struct RecordBatchIterator {
     reader: Option<Result<StorageReader>>,
 }
 
+#[cfg(google_cloud_unstable_gapic_streaming)]
 impl RecordBatchIterator {
     pub(crate) fn new(q: CompleteQuery) -> Self {
         let reader = match (q.read_client, q.job_ref) {
-            (Some(read_client), Some(job_ref)) => Ok(StorageReader::new(
-                read_client,
-                q.job_service,
-                job_ref,
-                None,
-            )),
+            (Some(read_client), Some(job_ref)) => Ok(StorageReader::new(read_client, job_ref)),
             (None, _) => Err(RowError::InvalidRowFormat(
                 "BigQuery Storage Read API is not enabled on this client. Enable it via ClientBuilder::with_storage_read(true)".into(),
             )),
@@ -273,7 +304,9 @@ impl RecordBatchIterator {
     /// # Example
     ///
     /// ```
+    /// # #[cfg(google_cloud_unstable_gapic_streaming)]
     /// # use google_cloud_bigquery::query::RecordBatchIterator;
+    /// # #[cfg(google_cloud_unstable_gapic_streaming)]
     /// # fn check_schema(batches: &RecordBatchIterator) {
     /// if let Some(schema) = batches.schema() {
     ///     println!("Schema has {} fields", schema.fields().len());
@@ -294,7 +327,9 @@ impl RecordBatchIterator {
     /// # Example
     ///
     /// ```
+    /// # #[cfg(google_cloud_unstable_gapic_streaming)]
     /// # use google_cloud_bigquery::query::RecordBatchIterator;
+    /// # #[cfg(google_cloud_unstable_gapic_streaming)]
     /// # async fn sample(mut batches: RecordBatchIterator) -> anyhow::Result<()> {
     /// while let Some(batch) = batches.next().await.transpose()? {
     ///     println!("Batch rows: {}", batch.num_rows());
@@ -561,6 +596,7 @@ mod tests {
         Ok(())
     }
 
+    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[tokio::test]
     async fn test_record_batch_iterator_not_enabled() -> TestResult {
         let job_service = create_job_service(MockJobService::new());
@@ -574,6 +610,63 @@ mod tests {
         let err = iter.next().await.expect("should return error").unwrap_err();
         assert!(matches!(err, RowError::InvalidRowFormat(_)));
         assert!(err.to_string().contains("Storage Read API is not enabled"));
+        assert!(iter.next().await.is_none());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_row_iterator_cached_arrow() -> TestResult {
+        use arrow::array::{Int64Array, StringArray};
+        use arrow::datatypes::{DataType, Field, Schema as ArrowSchema};
+        use arrow::ipc::writer::StreamWriter;
+
+        let arrow_schema = Arc::new(ArrowSchema::new(vec![
+            Field::new("col", DataType::Utf8, false),
+            Field::new("num", DataType::Int64, false),
+        ]));
+
+        let mut schema_buf = Vec::new();
+        let _ = StreamWriter::try_new(&mut schema_buf, &arrow_schema)?;
+
+        let col = StringArray::from(vec!["hello", "world"]);
+        let num = Int64Array::from(vec![42, 100]);
+        let batch = RecordBatch::try_new(arrow_schema.clone(), vec![Arc::new(col), Arc::new(num)])?;
+
+        let mut batch_buf = Vec::new();
+        let mut writer = StreamWriter::try_new(&mut batch_buf, &arrow_schema)?;
+        writer.write(&batch)?;
+        let batch_buf = batch_buf[schema_buf.len()..].to_vec();
+
+        let table_schema = TableSchema::new().set_fields([
+            TableFieldSchema::new().set_name("col").set_type("STRING"),
+            TableFieldSchema::new().set_name("num").set_type("INTEGER"),
+        ]);
+        let schema = Arc::new(Schema::new(table_schema));
+
+        let job_service = create_job_service(MockJobService::new());
+        let q = CompleteQuery {
+            job_service,
+            read_client: None,
+            job_ref: None,
+            cached_data: CachedData::Arrow {
+                serialized_schema: schema_buf.into(),
+                serialized_record_batch: batch_buf.into(),
+            },
+            schema,
+            page_token: None,
+            metadata: crate::generated::CompleteQueryMetadata::default(),
+            max_results: None,
+        };
+
+        let mut iter = q.read();
+        let row1 = iter.next().await.expect("row 1")?;
+        assert_eq!(row1.get::<String, _>("col"), "hello");
+        assert_eq!(row1.get::<i64, _>("num"), 42);
+
+        let row2 = iter.next().await.expect("row 2")?;
+        assert_eq!(row2.get::<String, _>("col"), "world");
+        assert_eq!(row2.get::<i64, _>("num"), 100);
+
         assert!(iter.next().await.is_none());
         Ok(())
     }

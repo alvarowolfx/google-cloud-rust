@@ -101,6 +101,8 @@ enum Scenario {
     Wikipedia10k,
     #[value(name = "wikipedia-100k")]
     Wikipedia100k,
+    #[value(name = "wikipedia-500k")]
+    Wikipedia500k,
     #[value(name = "custom")]
     Custom,
 }
@@ -117,6 +119,7 @@ impl Scenario {
             Scenario::Synthetic500k => Self::synthetic_query(500_000),
             Scenario::Wikipedia10k => Self::wikipedia_query(10_000),
             Scenario::Wikipedia100k => Self::wikipedia_query(100_000),
+            Scenario::Wikipedia500k => Self::wikipedia_query(500_000),
             Scenario::Custom => custom_query
                 .expect("custom query must be provided when scenario is 'custom'")
                 .to_string(),
@@ -156,7 +159,10 @@ impl Scenario {
     }
 
     fn is_wikipedia(&self) -> bool {
-        matches!(self, Scenario::Wikipedia10k | Scenario::Wikipedia100k)
+        matches!(
+            self,
+            Scenario::Wikipedia10k | Scenario::Wikipedia100k | Scenario::Wikipedia500k
+        )
     }
 }
 

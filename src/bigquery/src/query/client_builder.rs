@@ -50,7 +50,7 @@ impl ClientBuilder {
         Self {
             config: ClientConfig::default(),
             project_id: None,
-            storage_read_enabled: false,
+            storage_read_enabled: true,
             storage_read_endpoint: None,
         }
     }
@@ -226,6 +226,7 @@ mod tests {
         assert!(builder.config.cred.is_none(), "{builder:?}");
         assert!(!builder.config.tracing);
         assert!(builder.project_id.is_none(), "{builder:?}");
+        assert!(builder.storage_read_enabled, "{builder:?}");
 
         Ok(())
     }

@@ -23,15 +23,19 @@ mod query_handle;
 mod retry_policy;
 mod row;
 mod schema;
+#[cfg(google_cloud_unstable_gapic_streaming)]
 pub(crate) mod storage_reader;
 
-pub use iterator::{RecordBatchIterator, RowIterator};
+pub use arrow::ArrowCell;
+#[cfg(google_cloud_unstable_gapic_streaming)]
+pub use iterator::RecordBatchIterator;
+pub use iterator::RowIterator;
 pub use query_handle::{CompleteQuery, Query};
 pub(crate) use schema::Schema;
 
 pub use from_sql::FromSql;
 pub use google_cloud_bigquery_derive::{FromRow, FromSql};
-pub use row::Row;
+pub use row::{ColumnIndex, Row};
 
 /// Result type for query execution.
 pub(super) type Result<T> = std::result::Result<T, crate::error::QueryError>;
