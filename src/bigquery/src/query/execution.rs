@@ -19,6 +19,11 @@ use crate::query::builder::{
 use crate::query::retry_policy::JobRetryResult;
 use crate::query::{Query as QueryHandle, Result};
 use google_cloud_bigquery_v2::client::JobService;
+#[cfg(google_cloud_unstable_bigquery_arrow)]
+use google_cloud_bigquery_v2::model::{
+    ArrowSerializationOptions, arrow_serialization_options::CompressionCodec,
+    query_request::QueryResultsFormat, query_request::ResultsFormatSerializationOptions,
+};
 use google_cloud_bigquery_v2::model::{
     DataFormatOptions, InsertJobRequest, Job, JobConfiguration, PostQueryRequest, QueryRequest,
     QueryResponse,
@@ -205,15 +210,12 @@ impl RetryContext {
             .set_format_options(DataFormatOptions::new().set_use_int64_timestamp(true));
         #[cfg(google_cloud_unstable_bigquery_arrow)]
         let query_request = query_request
-            .set_query_results_format(google_cloud_bigquery_v2::model::query_request::QueryResultsFormat::Arrow)
+            .set_query_results_format(QueryResultsFormat::Arrow)
             .set_results_format_serialization_options(
-                google_cloud_bigquery_v2::model::query_request::ResultsFormatSerializationOptions::ArrowSerializationOptions(
-                    Box::new(
-                        google_cloud_bigquery_v2::model::ArrowSerializationOptions::new().set_buffer_compression(
-                            google_cloud_bigquery_v2::model::arrow_serialization_options::CompressionCodec::Zstd,
-                        ),
-                    ),
-                ),
+                ResultsFormatSerializationOptions::ArrowSerializationOptions(Box::new(
+                    ArrowSerializationOptions::new()
+                        .set_buffer_compression(CompressionCodec::Lz4Frame),
+                )),
             );
         let query_request = query_request.set_request_id(query_request_id);
         let req = PostQueryRequest::new()

@@ -17,6 +17,7 @@ use crate::generated::QueryRequest;
 use crate::query::execution::RetryContext;
 use crate::query::retry_policy::{JobRetryPolicy, default_job_retry_policy};
 use crate::query::{CompleteQuery, Query as QueryHandle, Result};
+use google_cloud_bigquery_read::client::Read as ReadClient;
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::JobReference;
 use google_cloud_bigquery_v2::model::query_request::JobCreationMode;
@@ -57,7 +58,7 @@ pub(crate) const QUERY_REQUEST_ID_PREFIX: &str = "req_";
 #[derive(Clone, Debug)]
 pub struct Query {
     pub(crate) job_service: Arc<JobService>,
-    pub(crate) read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
+    pub(crate) read_client: Option<Arc<ReadClient>>,
     pub(crate) request: QueryRequest,
     pub(crate) project_id: Option<String>,
     pub(crate) job_retry_policy: Arc<dyn JobRetryPolicy>,
@@ -67,7 +68,7 @@ impl Query {
     /// Creates a new `Query` builder for the given SQL query.
     pub(crate) fn new(
         job_service: Arc<JobService>,
-        read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
+        read_client: Option<Arc<ReadClient>>,
         sql: String,
     ) -> Self {
         Self {

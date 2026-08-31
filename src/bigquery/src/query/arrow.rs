@@ -18,24 +18,41 @@ use crate::error::RowError;
 use crate::query::ColumnIndex;
 #[cfg(google_cloud_unstable_gapic_streaming)]
 use arrow::record_batch::RecordBatch;
+/// Stream decoder wrapper for Arrow record batches from BigQuery Storage Read API.
 #[cfg(google_cloud_unstable_gapic_streaming)]
-use std::io::{Cursor, Read};
+#[derive(Debug)]
+pub(crate) struct ArrowStreamDecoder {
+    decoder: arrow::ipc::reader::StreamDecoder,
+    schema: Option<arrow::datatypes::SchemaRef>,
+}
 
-/// Decodes serialized Arrow schema and batch bytes into an Arrow [`RecordBatch`].
 #[cfg(google_cloud_unstable_gapic_streaming)]
-pub(crate) fn decode_arrow_batch(
-    serialized_schema: &[u8],
-    serialized_batch: &[u8],
-) -> Result<RecordBatch, RowError> {
-    let cursor = Cursor::new(serialized_schema).chain(Cursor::new(serialized_batch));
-    let mut reader = arrow::ipc::reader::StreamReader::try_new(cursor, None)
-        .map_err(|e| RowError::InvalidRowFormat(format!("failed to parse arrow stream: {e}")))?;
-    let batch = reader
-        .next()
-        .transpose()
-        .map_err(|e| RowError::InvalidRowFormat(format!("failed to read arrow record batch: {e}")))?
-        .ok_or_else(|| RowError::InvalidRowFormat("empty arrow record batch".into()))?;
-    Ok(batch)
+impl ArrowStreamDecoder {
+    pub(crate) fn new() -> Self {
+        Self {
+            decoder: arrow::ipc::reader::StreamDecoder::new(),
+            schema: None,
+        }
+    }
+
+    pub(crate) fn set_schema_bytes(&mut self, schema_bytes: &[u8]) -> Result<(), RowError> {
+        let mut buf = arrow::buffer::Buffer::from_slice_ref(schema_bytes);
+        while let Some(_msg) = self.decoder.decode(&mut buf).map_err(|e| {
+            RowError::InvalidRowFormat(format!("failed to decode arrow schema: {e}"))
+        })? {}
+        self.schema = self.decoder.schema();
+        Ok(())
+    }
+
+    pub(crate) fn decode_batch(
+        &mut self,
+        batch_bytes: &[u8],
+    ) -> Result<Option<RecordBatch>, RowError> {
+        let mut buf = arrow::buffer::Buffer::from_slice_ref(batch_bytes);
+        self.decoder
+            .decode(&mut buf)
+            .map_err(|e| RowError::InvalidRowFormat(format!("failed to decode arrow batch: {e}")))
+    }
 }
 
 /// A reference to a single cell within an Arrow array.

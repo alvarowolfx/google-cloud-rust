@@ -13,13 +13,16 @@
 // limitations under the License.
 
 use crate::error::QueryError;
+#[cfg(google_cloud_unstable_gapic_streaming)]
+use crate::error::RowError;
 use crate::generated::{CompleteQueryMetadata, QueryMetadata};
 #[cfg(google_cloud_unstable_gapic_streaming)]
-use crate::query::RecordBatchIterator;
+use crate::query::ArrowArrayStream;
 use crate::query::execution::RetryContext;
 use crate::query::retry_policy::JobRetryResult;
 use crate::query::{Result, RowIterator, Schema};
 use bytes::Bytes;
+use google_cloud_bigquery_read::client::Read as ReadClient;
 use google_cloud_bigquery_v2::builder::job_service::GetJob;
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::query_response::{Results, ResultsSchema};
@@ -58,7 +61,7 @@ use std::sync::Arc;
 #[derive(Clone, Debug)]
 pub struct Query {
     pub(crate) job_service: Arc<JobService>,
-    pub(crate) read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
+    pub(crate) read_client: Option<Arc<ReadClient>>,
     pub(crate) completed: bool,
     pub(crate) metadata: QueryMetadata,
     pub(crate) cached_data: Option<CachedData>,
@@ -81,7 +84,7 @@ impl Query {
         initial_job: Job,
         retry_context: Option<RetryContext>,
         max_results: Option<u32>,
-        read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
+        read_client: Option<Arc<ReadClient>>,
     ) -> Self {
         let completed = initial_job
             .status
@@ -104,7 +107,7 @@ impl Query {
         mut query_response: QueryResponse,
         retry_context: Option<RetryContext>,
         max_results: Option<u32>,
-        read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
+        read_client: Option<Arc<ReadClient>>,
     ) -> Self {
         let completed = query_response.job_complete.unwrap_or(false);
         let cached_data = if let (
@@ -315,7 +318,7 @@ impl Query {
 pub struct CompleteQuery {
     pub(crate) job_service: Arc<JobService>,
     #[allow(dead_code)]
-    pub(crate) read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
+    pub(crate) read_client: Option<Arc<ReadClient>>,
     pub(crate) job_ref: Option<JobReference>,
     pub(crate) cached_data: CachedData,
     pub(crate) schema: Arc<Schema>,
@@ -330,7 +333,7 @@ impl CompleteQuery {
         job_ref: &JobReference,
         mut res: GetQueryResultsResponse,
         max_results: Option<u32>,
-        read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
+        read_client: Option<Arc<ReadClient>>,
     ) -> Self {
         let cached_rows = VecDeque::from(std::mem::take(&mut res.rows));
         let metadata = CompleteQueryMetadata::from(res);
@@ -359,7 +362,7 @@ impl CompleteQuery {
         metadata: QueryMetadata,
         cached_data: CachedData,
         max_results: Option<u32>,
-        read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
+        read_client: Option<Arc<ReadClient>>,
     ) -> Self {
         let job_ref = metadata.job_reference.clone();
         let metadata = CompleteQueryMetadata::from(metadata);
@@ -436,22 +439,19 @@ impl CompleteQuery {
     /// # async fn sample(client: BigQuery) -> anyhow::Result<()> {
     /// # #[cfg(google_cloud_unstable_gapic_streaming)]
     /// # {
-    /// let mut batches = client
+    /// let stream = client
     ///     .query("SELECT 100 AS score")
     ///     .until_done()
     ///     .await?
-    ///     .read_record_batches();
-    ///
-    /// while let Some(batch) = batches.next().await.transpose()? {
-    ///     println!("Batch rows: {}", batch.num_rows());
-    /// }
+    ///     .to_arrow_c_stream()
+    ///     .await?;
     /// # }
     /// # Ok(())
     /// # }
     /// ```
     #[cfg(google_cloud_unstable_gapic_streaming)]
-    pub fn read_record_batches(self) -> RecordBatchIterator {
-        RecordBatchIterator::new(self)
+    pub async fn to_arrow_c_stream(self) -> std::result::Result<ArrowArrayStream, RowError> {
+        crate::query::c_stream::query_to_arrow_c_stream(self).await
     }
 
     /// Returns a reference to the cached summary metadata for this query.

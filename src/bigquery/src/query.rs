@@ -14,6 +14,8 @@
 
 pub(crate) mod arrow;
 pub(super) mod builder;
+#[cfg(google_cloud_unstable_gapic_streaming)]
+pub(crate) mod c_stream;
 pub(super) mod client;
 pub(super) mod client_builder;
 mod execution;
@@ -28,7 +30,7 @@ pub(crate) mod storage_reader;
 
 pub use arrow::ArrowCell;
 #[cfg(google_cloud_unstable_gapic_streaming)]
-pub use iterator::RecordBatchIterator;
+pub use c_stream::ArrowArrayStream;
 pub use iterator::RowIterator;
 pub use query_handle::{CompleteQuery, Query};
 pub(crate) use schema::Schema;

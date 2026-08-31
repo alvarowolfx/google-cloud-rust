@@ -16,6 +16,7 @@ use crate::builder::bigquery::Query;
 use crate::error::QueryError;
 use crate::query::client_builder::ClientBuilder;
 use crate::query::{Query as QueryHandle, Result as QueryResult};
+use google_cloud_bigquery_read::client::Read as ReadClient;
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::JobReference;
 use google_cloud_gax::client_builder::Result as BuilderResult;
@@ -64,7 +65,7 @@ use std::sync::Arc;
 #[derive(Clone, Debug)]
 pub struct BigQuery {
     job_service: Arc<JobService>,
-    read_client: Option<Arc<google_cloud_bigquery_read::client::Read>>,
+    read_client: Option<Arc<ReadClient>>,
     project_id: Option<String>,
 }
 
@@ -110,7 +111,7 @@ impl BigQuery {
         let job_service = Arc::new(job_service_builder.build().await?);
 
         let read_client = if builder.storage_read_enabled {
-            let mut read_builder = google_cloud_bigquery_read::client::Read::builder();
+            let mut read_builder = ReadClient::builder();
             if let Some(creds) = builder.config.cred {
                 read_builder = read_builder.with_credentials(creds);
             }
