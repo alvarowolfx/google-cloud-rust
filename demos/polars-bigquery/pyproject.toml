@@ -1,0 +1,26 @@
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "polars-bigquery"
+version = "0.1.0"
+description = "BigQuery I/O Plugin for Polars using Arrow C Stream FFI and Storage Read API acceleration"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "polars>=1.0.0",
+    "google-auth>=2.0.0",
+]
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: 3",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+module-name = "polars_bigquery._polars_bigquery"
+python-source = "."

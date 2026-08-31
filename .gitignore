@@ -33,3 +33,7 @@ coverage.out
 # Ignore cargo-mutants directories.
 mutants.out/
 mutants.out.old/
+
+# Ignore python files
+*.pyc
+*.so

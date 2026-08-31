@@ -65,6 +65,7 @@ default-members = [
 
 members = [
   "demos/cloud-run-o11y",
+  "demos/polars-bigquery",
   "guide/samples",
   "src/auth",
   "src/bigquery",
