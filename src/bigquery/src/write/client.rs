@@ -16,6 +16,7 @@ use super::arrow::WriterBuilder as ArrowWriterBuilder;
 use super::client_builder::ClientBuilder;
 use super::transport::Transport;
 use crate::ClientBuilderResult as BuilderResult;
+use crate::Result;
 use crate::model::ArrowSchema;
 use std::sync::Arc;
 
@@ -59,6 +60,40 @@ impl Write {
     /// [arrow]: https://arrow.apache.org/
     pub fn arrow(&self, schema: ArrowSchema) -> ArrowWriterBuilder {
         ArrowWriterBuilder::new(self.inner.clone(), schema)
+    }
+
+    /// Commits write streams to a table atomically.
+    ///
+    /// # Example
+    /// ```
+    /// # use google_cloud_bigquery::client::Write;
+    /// # async fn sample(client: Write) -> anyhow::Result<()> {
+    /// let resp = client
+    ///     .batch_commit(
+    ///         "projects/my-project/datasets/my-dataset/tables/my-table",
+    ///         vec!["projects/my-project/datasets/my-dataset/tables/my-table/streams/stream1"],
+    ///     )
+    ///     .await?;
+    /// # Ok(()) }
+    /// ```
+    pub async fn batch_commit<P, S>(
+        &self,
+        parent: P,
+        write_streams: Vec<S>,
+    ) -> Result<crate::model::BatchCommitWriteStreamsResponse>
+    where
+        P: Into<String>,
+        S: Into<String>,
+    {
+        let client = super::generated::gapic_storage::client::BigQueryWrite::from_stub::<
+            super::transport::Transport,
+        >(self.inner.clone());
+        client
+            .batch_commit_write_streams()
+            .set_parent(parent)
+            .set_write_streams(write_streams)
+            .send()
+            .await
     }
 }
 

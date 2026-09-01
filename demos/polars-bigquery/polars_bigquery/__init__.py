@@ -200,4 +200,257 @@ def read_bigquery(
     return pl.scan_arrow_c_stream(stream_capsule).collect()
 
 
-__all__ = ["scan_bigquery", "read_bigquery"]
+AppendResult = getattr(_polars_bigquery, "AppendResult", None)
+PendingStream = getattr(_polars_bigquery, "PendingStream", None)
+CommittedStream = getattr(_polars_bigquery, "CommittedStream", None)
+
+
+def _normalize_table_name(table: str, project_id: str | None = None) -> str:
+    """Normalizes dataset.table or project.dataset.table to standard resource URI."""
+    table = table.strip().strip("`")
+    if table.startswith("projects/") and "/datasets/" in table and "/tables/" in table:
+        return table
+    parts = table.split(".")
+    if len(parts) == 3:
+        return f"projects/{parts[0]}/datasets/{parts[1]}/tables/{parts[2]}"
+    elif len(parts) == 2:
+        proj = _resolve_project_id(project_id)
+        if not proj:
+            raise ValueError(
+                f"Cannot resolve project ID for table '{table}'. "
+                f"Please supply `project_id` or set GOOGLE_CLOUD_PROJECT."
+            )
+        return f"projects/{proj}/datasets/{parts[0]}/tables/{parts[1]}"
+    else:
+        raise ValueError(
+            f"Invalid BigQuery table name format: '{table}'. "
+            f"Expected 'dataset.table', 'project.dataset.table', or 'projects/.../datasets/.../tables/...'"
+        )
+
+
+def _extract_arrow_stream_capsule(data: Any) -> Any:
+    """Extracts Arrow C Stream PyCapsule from a Polars DataFrame or Arrow-compatible object."""
+    if hasattr(data, "__arrow_c_stream__"):
+        return data.__arrow_c_stream__()
+    if hasattr(data, "to_arrow"):
+        arrow_obj = data.to_arrow()
+        if hasattr(arrow_obj, "__arrow_c_stream__"):
+            return arrow_obj.__arrow_c_stream__()
+    if isinstance(data, pl.LazyFrame):
+        return data.collect().__arrow_c_stream__()
+    raise TypeError(
+        f"Expected pl.DataFrame, pl.LazyFrame, or Arrow C Stream-compatible object, got {type(data)}"
+    )
+
+
+def write_bigquery(
+    data: pl.DataFrame | pl.LazyFrame | Any,
+    table: str,
+    *,
+    stream_type: str = "default",
+    offset: int | None = None,
+    project_id: str | None = None,
+    credential_provider: Any | None = None,
+) -> int:
+    """Ingests a Polars DataFrame or LazyFrame into a BigQuery table using the Storage Write API.
+
+    Parameters
+    ----------
+    data : pl.DataFrame or pl.LazyFrame
+        The data to ingest into BigQuery.
+    table : str
+        Target table in 'dataset.table', 'project.dataset.table', or full resource path format.
+    stream_type : {"default", "pending", "committed"}, default "default"
+        The BigQuery write stream type to use:
+        - "default": High-throughput, at-least-once ingestion without explicit commit step.
+        - "pending": Exactly-once transactional write that commits atomically upon completion.
+        - "committed": Sequential exactly-once write with immediate commit per batch.
+    offset : int, optional
+        Starting row offset. If None, offset verification is omitted (appends to end of stream).
+        If specified, guarantees idempotent retries and validates sequence alignment.
+    project_id : str, optional
+        Google Cloud Project ID for query billing and execution.
+    credential_provider : CredentialProvider, optional
+        A Polars credential provider such as `pl.CredentialProviderGCP()`.
+
+    Returns
+    -------
+    int
+        Total number of rows successfully written.
+    """
+    resolved_proj = _resolve_project_id(project_id)
+    norm_table = _normalize_table_name(table, resolved_proj)
+
+    capsule = _extract_arrow_stream_capsule(data)
+
+    if stream_type == "default":
+        if offset is not None:
+            raise ValueError(
+                "BigQuery default stream does not support explicit offsets. "
+                "Use stream_type='pending' or stream_type='committed' for offset controls."
+            )
+        return _polars_bigquery.write_default_stream(
+            stream_capsule=capsule,
+            table=norm_table,
+            project_id=resolved_proj,
+            credential_provider=credential_provider,
+        )
+    elif stream_type == "pending":
+        stream = _polars_bigquery.create_pending_stream(
+            stream_capsule=capsule,
+            table=norm_table,
+            project_id=resolved_proj,
+            credential_provider=credential_provider,
+        )
+        res = stream.write(capsule, offset=offset)
+        stream.finalize()
+        stream.commit()
+        return res.rows_written
+    elif stream_type == "committed":
+        stream = _polars_bigquery.create_committed_stream(
+            stream_capsule=capsule,
+            table=norm_table,
+            project_id=resolved_proj,
+            credential_provider=credential_provider,
+        )
+        res = stream.write(capsule, offset=offset)
+        stream.finalize()
+        return res.rows_written
+    else:
+        raise ValueError(
+            f"Invalid stream_type '{stream_type}'. Expected 'default', 'pending', or 'committed'."
+        )
+
+
+class WriteClient:
+    """Client for fine-grained BigQuery Storage Write API stream lifecycle and offset controls."""
+
+    def __init__(
+        self,
+        *,
+        project_id: str | None = None,
+        credential_provider: Any | None = None,
+    ) -> None:
+        self.project_id = _resolve_project_id(project_id)
+        self.credential_provider = credential_provider
+
+    def create_pending_stream(self, table: str, sample_data: Any) -> Any:
+        """Creates a new pending write stream for the table based on sample data schema."""
+        norm_table = _normalize_table_name(table, self.project_id)
+        capsule = _extract_arrow_stream_capsule(sample_data)
+        return _polars_bigquery.create_pending_stream(
+            stream_capsule=capsule,
+            table=norm_table,
+            project_id=self.project_id,
+            credential_provider=self.credential_provider,
+        )
+
+    def create_committed_stream(self, table: str, sample_data: Any) -> Any:
+        """Creates a new committed write stream for the table based on sample data schema."""
+        norm_table = _normalize_table_name(table, self.project_id)
+        capsule = _extract_arrow_stream_capsule(sample_data)
+        return _polars_bigquery.create_committed_stream(
+            stream_capsule=capsule,
+            table=norm_table,
+            project_id=self.project_id,
+            credential_provider=self.credential_provider,
+        )
+
+    def batch_commit(
+        self, table: str, streams: Sequence[str | Any]
+    ) -> None:
+        """Atomically commits a batch of pending streams to the destination table."""
+        norm_table = _normalize_table_name(table, self.project_id)
+        stream_names = [
+            s.name if hasattr(s, "name") else str(s) for s in streams
+        ]
+        _polars_bigquery.batch_commit_streams(
+            table=norm_table,
+            stream_names=stream_names,
+            project_id=self.project_id,
+            credential_provider=self.credential_provider,
+        )
+
+
+class WriteTransaction:
+    """ACID transactional context manager for BigQuery writes.
+
+    Creates a pending stream, allows streaming appends with or without offset controls,
+    and automatically finalizes and commits all streams upon successful exit of the block.
+    If an exception occurs within the block, the transaction aborts without committing.
+    """
+
+    def __init__(
+        self,
+        table: str,
+        *,
+        project_id: str | None = None,
+        credential_provider: Any | None = None,
+    ) -> None:
+        self.table = table
+        self.project_id = _resolve_project_id(project_id)
+        self.credential_provider = credential_provider
+        self.client = WriteClient(
+            project_id=self.project_id,
+            credential_provider=self.credential_provider,
+        )
+        self.streams: list[Any] = []
+        self._default_stream: Any = None
+
+    def __enter__(self) -> "WriteTransaction":
+        return self
+
+    def write(self, data: Any, *, offset: int | None = None) -> Any:
+        """Appends data to the transaction's primary stream."""
+        capsule = _extract_arrow_stream_capsule(data)
+        if self._default_stream is None:
+            self._default_stream = self.client.create_pending_stream(
+                self.table, data
+            )
+            self.streams.append(self._default_stream)
+        return self._default_stream.write(capsule, offset=offset)
+
+    def create_stream(self, sample_data: Any) -> Any:
+        """Creates an additional concurrent pending stream for parallel workers."""
+        stream = self.client.create_pending_stream(self.table, sample_data)
+        self.streams.append(stream)
+        return stream
+
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        if exc_type is not None:
+            # Transaction failed: abort without committing
+            return
+        # Finalize and batch commit all streams atomically
+        for s in self.streams:
+            s.finalize()
+        if self.streams:
+            self.client.batch_commit(self.table, self.streams)
+
+
+def _register_dataframe_extensions() -> None:
+    if not hasattr(pl.DataFrame, "write_bigquery"):
+        setattr(
+            pl.DataFrame,
+            "write_bigquery",
+            lambda self, table, **kwargs: write_bigquery(self, table, **kwargs),
+        )
+    if not hasattr(pl.LazyFrame, "sink_bigquery"):
+        setattr(
+            pl.LazyFrame,
+            "sink_bigquery",
+            lambda self, table, **kwargs: write_bigquery(self, table, **kwargs),
+        )
+
+
+_register_dataframe_extensions()
+
+__all__ = [
+    "scan_bigquery",
+    "read_bigquery",
+    "write_bigquery",
+    "WriteClient",
+    "WriteTransaction",
+    "AppendResult",
+    "PendingStream",
+    "CommittedStream",
+]

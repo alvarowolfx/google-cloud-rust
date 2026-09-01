@@ -29,6 +29,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 anyhow.workspace      = true
 arrow                 = { workspace = true, features = ["ffi", "ipc", "ipc_compression"] }
+arrow-cast            = { version = "59.2", default-features = false }
 google-cloud-auth     = { workspace = true, features = ["default"] }
 google-cloud-bigquery = { workspace = true, features = ["default"] }
 google-cloud-gax      = { workspace = true, features = ["unstable-stream"] }
