@@ -23,12 +23,11 @@ pub trait Read: std::fmt::Debug + Send + Sync {
         options: crate::RequestOptions,
     ) -> crate::Result<crate::Response<crate::model::ReadSession>>;
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     async fn read_rows(
         &self,
         req: crate::model::ReadRowsRequest,
         options: crate::RequestOptions,
-    ) -> crate::Result<google_cloud_gax::streaming::ResponseReceiver<crate::model::ReadRowsResponse>>;
+    ) -> crate::Result<google_cloud_gax::streaming::ResponseStream<crate::model::ReadRowsResponse>>;
 
     async fn split_read_stream(
         &self,
@@ -50,12 +49,11 @@ impl<T: super::Read> Read for T {
     }
 
     /// Forwards the call to the implementation provided by `T`.
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     async fn read_rows(
         &self,
         req: crate::model::ReadRowsRequest,
         options: crate::RequestOptions,
-    ) -> crate::Result<google_cloud_gax::streaming::ResponseReceiver<crate::model::ReadRowsResponse>>
+    ) -> crate::Result<google_cloud_gax::streaming::ResponseStream<crate::model::ReadRowsResponse>>
     {
         T::read_rows(self, req, options).await
     }

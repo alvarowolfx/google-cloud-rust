@@ -22,6 +22,7 @@ where
     T: super::stub::HiveMetastoreService + std::fmt::Debug + Send + Sync,
 {
     inner: T,
+    #[allow(dead_code)]
     duration: gaxi::observability::DurationMetric,
 }
 
@@ -291,6 +292,15 @@ where
             method: "client::HiveMetastoreService::batch_update_partitions",
             self.inner.batch_update_partitions(req, options));
         pending.await
+    }
+
+    async fn list_partitions(
+        &self,
+        req: crate::model::ListPartitionsRequest,
+        options: crate::RequestOptions,
+    ) -> Result<google_cloud_gax::streaming::ResponseStream<crate::model::ListPartitionsResponse>>
+    {
+        self.inner.list_partitions(req, options).await
     }
 
     #[tracing::instrument(level = tracing::Level::DEBUG, ret)]

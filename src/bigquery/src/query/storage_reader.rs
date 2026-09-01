@@ -22,7 +22,7 @@ use google_cloud_bigquery_read::model::{
 };
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::JobReference;
-use google_cloud_gax::streaming::ResponseReceiver;
+use google_cloud_gax::streaming::ResponseStream;
 use std::collections::VecDeque;
 use std::sync::Arc;
 use tokio::sync::mpsc;
@@ -51,7 +51,7 @@ pub(crate) fn multi_stream_threshold() -> u64 {
 pub(crate) enum ReaderState {
     Unopened,
     SingleStream {
-        stream: ResponseReceiver<ReadRowsResponse>,
+        stream: ResponseStream<ReadRowsResponse>,
     },
     MultiStream {
         rx: mpsc::UnboundedReceiver<Result<RecordBatch, RowError>>,
@@ -148,7 +148,7 @@ impl StorageReader {
                     self.state = ReaderState::SingleStream { stream };
                 }
                 ReaderState::SingleStream { stream } => {
-                    match stream.recv().await {
+                    match stream.next().await {
                         Some(Ok(response)) => {
                             if let Some(ReadRowsResponseSchema::ArrowSchema(arrow_schema)) =
                                 response.schema
@@ -311,7 +311,7 @@ impl StorageReader {
                 };
 
                 let mut decoder = crate::query::arrow::ArrowStreamDecoder::new();
-                while let Some(res) = s.recv().await {
+                while let Some(res) = s.next().await {
                     match res {
                         Ok(response) => {
                             if let Some(ReadRowsResponseSchema::ArrowSchema(arrow_schema)) =

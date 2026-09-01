@@ -36,6 +36,7 @@
     feature = "user-event-service",
     feature = "user-license-service",
 ))]
+#[allow(unused_imports)]
 use crate::Result;
 
 /// Implements a [AssistantService](super::stub::AssistantService) decorator for logging and tracing.
@@ -46,6 +47,7 @@ where
     T: super::stub::AssistantService + std::fmt::Debug + Send + Sync,
 {
     inner: T,
+    #[allow(dead_code)]
     duration: gaxi::observability::DurationMetric,
 }
 
@@ -67,6 +69,15 @@ impl<T> super::stub::AssistantService for AssistantService<T>
 where
     T: super::stub::AssistantService + std::fmt::Debug + Send + Sync,
 {
+    async fn stream_assist(
+        &self,
+        req: crate::model::StreamAssistRequest,
+        options: crate::RequestOptions,
+    ) -> Result<google_cloud_gax::streaming::ResponseStream<crate::model::StreamAssistResponse>>
+    {
+        self.inner.stream_assist(req, options).await
+    }
+
     #[tracing::instrument(level = tracing::Level::DEBUG, ret)]
     async fn list_operations(
         &self,
@@ -740,6 +751,7 @@ where
     T: super::stub::ConversationalSearchService + std::fmt::Debug + Send + Sync,
 {
     inner: T,
+    #[allow(dead_code)]
     duration: gaxi::observability::DurationMetric,
 }
 
@@ -857,6 +869,15 @@ where
             method: "client::ConversationalSearchService::answer_query",
             self.inner.answer_query(req, options));
         pending.await
+    }
+
+    async fn stream_answer_query(
+        &self,
+        req: crate::model::AnswerQueryRequest,
+        options: crate::RequestOptions,
+    ) -> Result<google_cloud_gax::streaming::ResponseStream<crate::model::AnswerQueryResponse>>
+    {
+        self.inner.stream_answer_query(req, options).await
     }
 
     #[tracing::instrument(level = tracing::Level::DEBUG, ret)]
@@ -1697,6 +1718,7 @@ where
     T: super::stub::GroundedGenerationService + std::fmt::Debug + Send + Sync,
 {
     inner: T,
+    #[allow(dead_code)]
     duration: gaxi::observability::DurationMetric,
 }
 
@@ -1718,6 +1740,16 @@ impl<T> super::stub::GroundedGenerationService for GroundedGenerationService<T>
 where
     T: super::stub::GroundedGenerationService + std::fmt::Debug + Send + Sync,
 {
+    fn stream_generate_grounded_content(
+        &self,
+        options: crate::RequestOptions,
+    ) -> (
+        google_cloud_gax::streaming::RequestSender<crate::model::GenerateGroundedContentRequest>,
+        google_cloud_gax::streaming::ResponseStream<crate::model::GenerateGroundedContentResponse>,
+    ) {
+        self.inner.stream_generate_grounded_content(options)
+    }
+
     #[tracing::instrument(level = tracing::Level::DEBUG, ret)]
     async fn generate_grounded_content(
         &self,

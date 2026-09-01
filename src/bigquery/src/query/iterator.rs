@@ -46,8 +46,8 @@ pub type Result<T> = std::result::Result<T, RowError>;
 ///     .read();
 ///
 /// while let Some(row) = rows.next().await.transpose()? {
-///     let name: String = row.get("name");
-///     let state: String = row.get("state");
+///     let name: String = row.get("name")?;
+///     let state: String = row.get("state")?;
 ///     println!("{name} from {state}");
 /// }
 /// # Ok(())
@@ -161,7 +161,7 @@ impl RowIterator {
     /// # use google_cloud_bigquery::query::RowIterator;
     /// # async fn sample(mut rows: RowIterator) -> anyhow::Result<()> {
     /// while let Some(row) = rows.next().await.transpose()? {
-    ///     let msg: String = row.get("msg");
+    ///     let msg: String = row.get("msg")?;
     ///     println!("Message: {msg}");
     /// }
     /// # Ok(())
@@ -326,10 +326,10 @@ mod tests {
         let mut iter = q.read();
 
         let row1 = iter.next().await.expect("should have row 1")?;
-        assert_eq!(row1.get::<String, _>("col"), "first");
+        assert_eq!(row1.get::<String, _>("col")?, "first");
 
         let row2 = iter.next().await.expect("should have row 2")?;
-        assert_eq!(row2.get::<String, _>("col"), "second");
+        assert_eq!(row2.get::<String, _>("col")?, "second");
 
         assert!(iter.next().await.is_none(), "{iter:?}");
         Ok(())
@@ -393,16 +393,16 @@ mod tests {
         let mut iter = q.read();
 
         let row1 = iter.next().await.expect("should have row 1")?;
-        assert_eq!(row1.get::<String, _>("col"), "cached_row");
+        assert_eq!(row1.get::<String, _>("col")?, "cached_row");
 
         let row2 = iter.next().await.expect("should have row 2")?;
-        assert_eq!(row2.get::<String, _>("col"), "page_1_row_1");
+        assert_eq!(row2.get::<String, _>("col")?, "page_1_row_1");
 
         let row3 = iter.next().await.expect("should have row 3")?;
-        assert_eq!(row3.get::<String, _>("col"), "page_1_row_2");
+        assert_eq!(row3.get::<String, _>("col")?, "page_1_row_2");
 
         let row4 = iter.next().await.expect("should have row 4")?;
-        assert_eq!(row4.get::<String, _>("col"), "page_2_row_1");
+        assert_eq!(row4.get::<String, _>("col")?, "page_2_row_1");
 
         assert!(iter.next().await.is_none(), "{iter:?}");
         Ok(())
@@ -439,7 +439,7 @@ mod tests {
         let mut iter = q.read().set_max_results(50);
 
         let row = iter.next().await.expect("should have row")?;
-        assert_eq!(row.get::<String, _>("col"), "page_row");
+        assert_eq!(row.get::<String, _>("col")?, "page_row");
 
         assert!(iter.next().await.is_none(), "{iter:?}");
         Ok(())
@@ -467,7 +467,7 @@ mod tests {
         let mut iter = q.read();
 
         let row = iter.next().await.expect("should have row")?;
-        assert_eq!(row.get::<String, _>("col"), "page_row");
+        assert_eq!(row.get::<String, _>("col")?, "page_row");
         assert!(iter.next().await.is_none(), "{iter:?}");
         Ok(())
     }
@@ -546,12 +546,12 @@ mod tests {
 
         let mut iter = q.read();
         let row1 = iter.next().await.expect("row 1")?;
-        assert_eq!(row1.get::<String, _>("col"), "hello");
-        assert_eq!(row1.get::<i64, _>("num"), 42);
+        assert_eq!(row1.get::<String, _>("col")?, "hello");
+        assert_eq!(row1.get::<i64, _>("num")?, 42);
 
         let row2 = iter.next().await.expect("row 2")?;
-        assert_eq!(row2.get::<String, _>("col"), "world");
-        assert_eq!(row2.get::<i64, _>("num"), 100);
+        assert_eq!(row2.get::<String, _>("col")?, "world");
+        assert_eq!(row2.get::<i64, _>("num")?, 100);
 
         assert!(iter.next().await.is_none());
         Ok(())

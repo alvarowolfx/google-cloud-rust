@@ -22,6 +22,7 @@ where
     T: super::stub::Read + std::fmt::Debug + Send + Sync,
 {
     inner: T,
+    #[allow(dead_code)]
     duration: gaxi::observability::DurationMetric,
 }
 
@@ -55,12 +56,11 @@ where
         pending.await
     }
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     async fn read_rows(
         &self,
         req: crate::model::ReadRowsRequest,
         options: crate::RequestOptions,
-    ) -> Result<google_cloud_gax::streaming::ResponseReceiver<crate::model::ReadRowsResponse>> {
+    ) -> Result<google_cloud_gax::streaming::ResponseStream<crate::model::ReadRowsResponse>> {
         self.inner.read_rows(req, options).await
     }
 

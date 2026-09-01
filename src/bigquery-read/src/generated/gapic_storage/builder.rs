@@ -181,11 +181,9 @@ pub mod read {
     ///   // ... details omitted ...
     /// }
     /// ```
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[derive(Clone, Debug)]
     pub struct ReadRows(RequestBuilder<crate::model::ReadRowsRequest>);
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     impl ReadRows {
         pub(crate) fn new(stub: std::sync::Arc<dyn super::super::stub::dynamic::Read>) -> Self {
             Self(RequestBuilder::new(stub))
@@ -206,7 +204,7 @@ pub mod read {
         /// Initiates the server stream.
         pub async fn send(
             self,
-        ) -> Result<google_cloud_gax::streaming::ResponseReceiver<crate::model::ReadRowsResponse>>
+        ) -> Result<google_cloud_gax::streaming::ResponseStream<crate::model::ReadRowsResponse>>
         {
             (*self.0.stub)
                 .read_rows(self.0.request, self.0.options)
@@ -257,7 +255,6 @@ pub mod read {
         }
     }
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[doc(hidden)]
     impl crate::RequestBuilder for ReadRows {
         fn request_options(&mut self) -> &mut crate::RequestOptions {

@@ -126,12 +126,11 @@ impl super::stub::Read for Read {
             .and_then(gaxi::grpc::to_gax_response::<TR, crate::model::ReadSession>)
     }
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     async fn read_rows(
         &self,
         req: crate::model::ReadRowsRequest,
         options: crate::RequestOptions,
-    ) -> Result<google_cloud_gax::streaming::ResponseReceiver<crate::model::ReadRowsResponse>> {
+    ) -> Result<google_cloud_gax::streaming::ResponseStream<crate::model::ReadRowsResponse>> {
         let extensions = {
             let mut e = gaxi::grpc::tonic::Extensions::new();
             e.insert(gaxi::grpc::tonic::GrpcMethod::new(

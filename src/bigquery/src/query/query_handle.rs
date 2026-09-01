@@ -417,7 +417,7 @@ impl CompleteQuery {
     ///     .read();
     ///
     /// while let Some(row) = rows.next().await.transpose()? {
-    ///     let score: i64 = row.get("score");
+    ///     let score: i64 = row.get("score")?;
     ///     println!("Score: {score}");
     /// }
     /// # Ok(())
@@ -675,7 +675,7 @@ mod tests {
                     .set_job_complete(true)
                     .set_job_reference(JobReference::new().set_job_id(req.job_id))
                     .set_schema(TableSchema::new())
-                    .set_page_token("")
+                    .set_page_token("some_page_token")
                     .set_rows(vec![wkt::Struct::new(), wkt::Struct::new()])
                     .set_cache_hit(false);
                 Ok(Response::from(res))
@@ -694,16 +694,16 @@ mod tests {
 
         let completed = query.until_done().await?;
         assert_eq!(completed.job_ref.as_ref().unwrap().job_id, "some_job_id");
-        assert_eq!(completed.page_token, None);
         match &completed.cached_data {
             CachedData::Rows(rows) => assert_eq!(rows.len(), 2),
             _ => panic!("expected rows"),
         }
+        assert_eq!(completed.page_token, Some("some_page_token".to_string()));
 
         let metadata = completed.metadata();
         assert_eq!(metadata.cache_hit, Some(false));
         assert_eq!(metadata.job_complete, Some(true));
-        assert_eq!(metadata.page_token, "".to_string());
+        assert_eq!(metadata.page_token, "some_page_token");
 
         Ok(())
     }
@@ -843,7 +843,7 @@ mod tests {
 
         let mut iter = complete_query.read();
         let row = iter.next().await.expect("should return first row")?;
-        assert_eq!(row.get::<String, _>("name"), "test_name");
+        assert_eq!(row.get::<String, _>("name")?, "test_name");
         assert!(iter.next().await.is_none(), "{iter:?}");
 
         Ok(())

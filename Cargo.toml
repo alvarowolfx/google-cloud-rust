@@ -61,6 +61,7 @@ default-members = [
   "tests/showcase",
   "tests/spanner",
   "tests/storage",
+  "tests/streaming",
 ]
 
 members = [
@@ -117,6 +118,7 @@ members = [
   "src/generated/cloud/apihub/v1",
   "src/generated/cloud/apiregistry/v1",
   "src/generated/cloud/apphub/v1",
+  "src/generated/cloud/apptopology/v1",
   "src/generated/cloud/asset/v1",
   "src/generated/cloud/assuredworkloads/v1",
   "src/generated/cloud/auditmanager/v1",
@@ -397,6 +399,7 @@ members = [
   "tests/showcase",
   "tests/spanner",
   "tests/storage",
+  "tests/streaming",
   "tools/check-copyright",
   "tools/check-versions",
   "tools/minimal-version-helper",
@@ -423,6 +426,7 @@ incremental = false
 
 [workspace.dependencies]
 arrow                 = { default-features = false, version = "59.2" }
+arrow-json            = { default-features = false, version = "59.2" }
 async-trait           = { default-features = false, version = "0.1.85" }
 base64                = { default-features = false, version = "0.23", features = ["std"] }
 bytes                 = { default-features = false, version = "1.10", features = ["serde"] }
@@ -530,8 +534,8 @@ tokio-stream      = { default-features = false, version = "0.1.16" }
 
 # Local packages used as dependencies.
 google-cloud-auth        = { default-features = false, version = "1.16.0", path = "src/auth" }
-google-cloud-gax         = { default-features = false, version = "1.14.0", path = "src/gax" }
-gaxi                     = { default-features = false, version = "0.7.18", path = "src/gax-internal", package = "google-cloud-gax-internal" }
+google-cloud-gax         = { default-features = false, version = "1.15.0", path = "src/gax" }
+gaxi                     = { default-features = false, version = "0.7.19", path = "src/gax-internal", package = "google-cloud-gax-internal" }
 wkt                      = { default-features = false, version = "1.7.0", path = "src/wkt", package = "google-cloud-wkt" }
 google-cloud-wkt         = { default-features = false, version = "1.7.0", path = "src/wkt", package = "google-cloud-wkt" }
 google-cloud-api         = { default-features = false, version = "1.7.0", path = "src/generated/api/types" }

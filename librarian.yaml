@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 language: rust
-version: v0.39.1-0.20260826211627-9acd367c5252
+version: v0.39.1-0.20260901024919-4770d3c581cb
 repo: googleapis/google-cloud-rust
 sources:
   conformance:
@@ -145,6 +145,8 @@ default:
     generate_rpc_samples: "true"
     detailed_tracing_attributes: true
     lro_stub_options: true
+    include_bidi_streaming_methods: true
+    include_server_streaming_methods: true
 libraries:
   - name: bigquery-grpc-mock
     copyright_year: "2026"
@@ -219,6 +221,8 @@ libraries:
     version: 1.16.0
     copyright_year: "2025"
     rust:
+      allow_streaming_any_types:
+        - .google.api.HttpBody.extensions
       per_service_features: true
       default_features:
         - data-foundry-service
@@ -344,6 +348,8 @@ libraries:
   - name: google-cloud-apigeeconnect-v1
     version: 1.11.0
     copyright_year: "2025"
+    rust:
+      include_bidi_streaming_methods: false
   - name: google-cloud-apihub-v1
     version: 1.14.0
     copyright_year: "2025"
@@ -437,6 +443,9 @@ libraries:
         - name: google-cloud-apps-script-type
           package: google-cloud-apps-script-type
           source: google.apps.script.type
+  - name: google-cloud-apptopology-v1
+    version: 1.0.0
+    copyright_year: "2026"
   - name: google-cloud-artifactregistry-v1
     version: 1.13.0
     apis:
@@ -503,6 +512,8 @@ libraries:
     copyright_year: "2026"
     output: src/bigquery
     rust:
+      include_bidi_streaming_methods: false
+      include_server_streaming_methods: false
       modules:
         - module_path: crate::write::generated::gapic_storage::model
           output: src/bigquery/src/write/generated/convert/storage
@@ -654,6 +665,9 @@ libraries:
   - name: google-cloud-ces-v1
     version: 1.5.0
     copyright_year: "2026"
+    rust:
+      allow_streaming_any_types:
+        - .google.cloud.ces.v1.SessionOutput.context
   - name: google-cloud-chronicle-v1
     version: 1.14.0
     copyright_year: "2025"
@@ -909,6 +923,8 @@ libraries:
     output: src/firestore
     skip_release: true
     rust:
+      include_bidi_streaming_methods: false
+      include_server_streaming_methods: false
       modules:
         - module_path: crate::generated::gapic::model
           output: src/firestore/src/generated/convert/firestore
@@ -948,11 +964,11 @@ libraries:
     version: 1.14.0
     copyright_year: "2025"
   - name: google-cloud-gax
-    version: 1.14.0
+    version: 1.15.0
     copyright_year: "2025"
     output: src/gax
   - name: google-cloud-gax-internal
-    version: 0.7.18
+    version: 0.7.19
     copyright_year: "2025"
     output: src/gax-internal
     rust:
@@ -1137,6 +1153,8 @@ libraries:
     copyright_year: "2025"
     rust:
       generate_rpc_samples: "false"
+      allow_streaming_any_types:
+        - .google.logging.v2.LogEntry.proto_payload
   - name: google-cloud-longrunning
     version: 1.13.0
     apis:
@@ -1301,6 +1319,8 @@ libraries:
     copyright_year: "2025"
     output: src/pubsub
     rust:
+      include_bidi_streaming_methods: false
+      include_server_streaming_methods: false
       modules:
         - included_ids:
             - .google.pubsub.v1.Publisher.Publish
@@ -1475,6 +1495,8 @@ libraries:
     copyright_year: "2026"
     output: src/spanner
     rust:
+      include_bidi_streaming_methods: false
+      include_server_streaming_methods: false
       modules:
         - module_path: crate::generated::gapic_dataplane::model
           output: src/spanner/src/generated/convert/spanner
@@ -1537,6 +1559,8 @@ libraries:
   - name: google-cloud-speech-v2
     version: 1.14.0
     copyright_year: "2025"
+    rust:
+      include_bidi_streaming_methods: true
   - name: google-cloud-sql-v1
     version: 2.10.0
     copyright_year: "2025"
@@ -1552,6 +1576,8 @@ libraries:
     output: src/storage
     rust:
       resource_name_heuristic: true
+      include_bidi_streaming_methods: false
+      include_server_streaming_methods: false
       modules:
         - module_path: crate::generated::gapic_control::model
           name_overrides: .google.storage.control.v2.IntelligenceConfig.Filter.cloud_storage_buckets=CloudStorageBucketsOneOf,.google.storage.control.v2.IntelligenceConfig.Filter.cloud_storage_locations=CloudStorageLocationsOneOf
