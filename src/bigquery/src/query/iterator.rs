@@ -44,8 +44,8 @@ pub type Result<T> = std::result::Result<T, RowError>;
 ///     .read();
 ///
 /// while let Some(row) = rows.next().await.transpose()? {
-///     let name: String = row.get("name");
-///     let state: String = row.get("state");
+///     let name: String = row.get("name")?;
+///     let state: String = row.get("state")?;
 ///     println!("{name} from {state}");
 /// }
 /// # Ok(())
@@ -60,19 +60,24 @@ pub struct RowIterator {
     record_batches: VecDeque<Arc<RecordBatch>>,
     row_index: usize,
     rows: VecDeque<wkt::Struct>,
-    max_results: Option<u32>,
+    page_size: Option<u32>,
 }
 
 impl RowIterator {
     pub(crate) fn new(q: CompleteQuery) -> Self {
-        let (rows, record_batches) = match q.cached_data {
-            CachedData::Rows(rows) => (rows, VecDeque::new()),
+        let (rows, record_batches, schema) = match q.cached_data {
+            CachedData::Rows(rows) => {
+                // DDL/DML queries have no schema.
+                let schema = q.metadata.schema.clone().unwrap_or_default();
+                (rows, VecDeque::new(), Arc::new(Schema::new(schema)))
+            }
             CachedData::Arrow {
                 serialized_record_batch,
                 serialized_schema,
             } => {
                 let reader = StreamReader::try_new(
-                    Cursor::new(serialized_schema).chain(Cursor::new(serialized_record_batch)),
+                    Cursor::new(serialized_schema.clone())
+                        .chain(Cursor::new(serialized_record_batch)),
                     None,
                 )
                 .expect("valid arrow IPC stream"); // TODO: convert error
@@ -80,19 +85,22 @@ impl RowIterator {
                     .map(|res| res.map(Arc::new))
                     .collect::<std::result::Result<VecDeque<_>, _>>()
                     .expect("valid record batches"); // TODO: convert error
-                (VecDeque::new(), batches)
+
+                let schema =
+                    Schema::try_from_arrow_ipc(&serialized_schema).expect("valid arrow ipc schema"); // TODO: convert error
+
+                (VecDeque::new(), batches, Arc::new(schema))
             }
         };
-
         Self {
             job_service: q.job_service,
             job_ref: q.job_ref,
-            schema: q.schema,
+            schema,
             page_token: q.page_token,
             record_batches,
             row_index: 0,
             rows,
-            max_results: q.max_results,
+            page_size: q.page_size,
         }
     }
 
@@ -111,12 +119,12 @@ impl RowIterator {
     ///     .until_done()
     ///     .await?
     ///     .read()
-    ///     .set_max_results(500);
+    ///     .set_page_size(500);
     /// # Ok(())
     /// # }
     /// ```
-    pub fn set_max_results(mut self, max_results: u32) -> Self {
-        self.max_results = Some(max_results);
+    pub fn set_page_size(mut self, page_size: u32) -> Self {
+        self.page_size = Some(page_size);
         self
     }
 
@@ -130,7 +138,7 @@ impl RowIterator {
     /// # use google_cloud_bigquery::query::RowIterator;
     /// # async fn sample(mut rows: RowIterator) -> anyhow::Result<()> {
     /// while let Some(row) = rows.next().await.transpose()? {
-    ///     let msg: String = row.get("msg");
+    ///     let msg: String = row.get("msg")?;
     ///     println!("Message: {msg}");
     /// }
     /// # Ok(())
@@ -168,8 +176,12 @@ impl RowIterator {
         };
 
         let (fetched_rows, next_token) = self.fetch_page(token).await?;
-        self.page_token = next_token;
-        self.rows.extend(fetched_rows);
+        if fetched_rows.is_empty() && next_token.as_deref() == Some(token) {
+            self.page_token = None;
+        } else {
+            self.page_token = next_token;
+            self.rows.extend(fetched_rows);
+        }
         Ok(())
     }
 
@@ -181,7 +193,7 @@ impl RowIterator {
 
         let mut req = GetQueryResultsRequest::new()
             .set_project_id(job_ref.project_id.clone())
-            .set_or_clear_max_results(self.max_results)
+            .set_or_clear_max_results(self.page_size)
             .set_job_id(job_ref.job_id.clone())
             .set_page_token(token)
             .set_format_options(
@@ -281,10 +293,10 @@ mod tests {
         let mut iter = q.read();
 
         let row1 = iter.next().await.expect("should have row 1")?;
-        assert_eq!(row1.get::<String, _>("col"), "first");
+        assert_eq!(row1.get::<String, _>("col")?, "first");
 
         let row2 = iter.next().await.expect("should have row 2")?;
-        assert_eq!(row2.get::<String, _>("col"), "second");
+        assert_eq!(row2.get::<String, _>("col")?, "second");
 
         assert!(iter.next().await.is_none(), "{iter:?}");
         Ok(())
@@ -348,16 +360,16 @@ mod tests {
         let mut iter = q.read();
 
         let row1 = iter.next().await.expect("should have row 1")?;
-        assert_eq!(row1.get::<String, _>("col"), "cached_row");
+        assert_eq!(row1.get::<String, _>("col")?, "cached_row");
 
         let row2 = iter.next().await.expect("should have row 2")?;
-        assert_eq!(row2.get::<String, _>("col"), "page_1_row_1");
+        assert_eq!(row2.get::<String, _>("col")?, "page_1_row_1");
 
         let row3 = iter.next().await.expect("should have row 3")?;
-        assert_eq!(row3.get::<String, _>("col"), "page_1_row_2");
+        assert_eq!(row3.get::<String, _>("col")?, "page_1_row_2");
 
         let row4 = iter.next().await.expect("should have row 4")?;
-        assert_eq!(row4.get::<String, _>("col"), "page_2_row_1");
+        assert_eq!(row4.get::<String, _>("col")?, "page_2_row_1");
 
         assert!(iter.next().await.is_none(), "{iter:?}");
         Ok(())
@@ -391,17 +403,17 @@ mod tests {
             vec![],
             Some("token_1".to_string()),
         );
-        let mut iter = q.read().set_max_results(50);
+        let mut iter = q.read().set_page_size(50);
 
         let row = iter.next().await.expect("should have row")?;
-        assert_eq!(row.get::<String, _>("col"), "page_row");
+        assert_eq!(row.get::<String, _>("col")?, "page_row");
 
         assert!(iter.next().await.is_none(), "{iter:?}");
         Ok(())
     }
 
     #[tokio::test]
-    async fn test_row_iterator_inherits_max_results() -> TestResult {
+    async fn test_row_iterator_inherits_page_size() -> TestResult {
         let mut mock = MockJobService::new();
         mock.expect_get_query_results()
             .times(1)
@@ -422,7 +434,7 @@ mod tests {
         let mut iter = q.read();
 
         let row = iter.next().await.expect("should have row")?;
-        assert_eq!(row.get::<String, _>("col"), "page_row");
+        assert_eq!(row.get::<String, _>("col")?, "page_row");
         assert!(iter.next().await.is_none(), "{iter:?}");
         Ok(())
     }
@@ -482,9 +494,12 @@ mod tests {
             TableFieldSchema::new().set_name("col").set_type("STRING"),
             TableFieldSchema::new().set_name("num").set_type("INTEGER"),
         ]);
-        let schema = Arc::new(Schema::new(table_schema));
 
         let job_service = create_job_service(MockJobService::new());
+        let metadata = crate::generated::CompleteQueryMetadata {
+            schema: Some(table_schema),
+            ..Default::default()
+        };
         let q = CompleteQuery {
             job_service,
             job_ref: None,
@@ -492,22 +507,79 @@ mod tests {
                 serialized_schema: schema_buf.into(),
                 serialized_record_batch: batch_buf.into(),
             },
-            schema,
             page_token: None,
-            metadata: crate::generated::CompleteQueryMetadata::default(),
-            max_results: None,
+            metadata,
+            page_size: None,
         };
 
         let mut iter = q.read();
         let row1 = iter.next().await.expect("row 1")?;
-        assert_eq!(row1.get::<String, _>("col"), "hello");
-        assert_eq!(row1.get::<i64, _>("num"), 42);
+        assert_eq!(row1.get::<String, _>("col")?, "hello");
+        assert_eq!(row1.get::<i64, _>("num")?, 42);
 
         let row2 = iter.next().await.expect("row 2")?;
-        assert_eq!(row2.get::<String, _>("col"), "world");
-        assert_eq!(row2.get::<i64, _>("num"), 100);
+        assert_eq!(row2.get::<String, _>("col")?, "world");
+        assert_eq!(row2.get::<i64, _>("num")?, 100);
 
         assert!(iter.next().await.is_none());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_row_iterator_empty_page_handling() -> TestResult {
+        let mut mock = MockJobService::new();
+        let mut seq = mockall::Sequence::new();
+
+        // empty page with a new token: should continue fetching
+        mock.expect_get_query_results()
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|req, _| {
+                assert_eq!(req.page_token, "token_1");
+                let res = GetQueryResultsResponse::new()
+                    .set_rows(Vec::<wkt::Struct>::new())
+                    .set_page_token("token_2");
+                Ok(Response::from(res))
+            });
+
+        // next page returns rows and advances to token_3
+        mock.expect_get_query_results()
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|req, _| {
+                assert_eq!(req.page_token, "token_2");
+                let res = GetQueryResultsResponse::new()
+                    .set_rows(vec![create_test_row("page2_row")])
+                    .set_page_token("token_3");
+                Ok(Response::from(res))
+            });
+
+        // empty page with the same token: should terminate pagination
+        mock.expect_get_query_results()
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|req, _| {
+                assert_eq!(req.page_token, "token_3");
+                let res = GetQueryResultsResponse::new()
+                    .set_rows(Vec::<wkt::Struct>::new())
+                    .set_page_token("token_3");
+                Ok(Response::from(res))
+            });
+
+        let job_service = create_job_service(mock);
+        let q = create_test_complete_query(
+            job_service,
+            Some(create_test_job_ref()),
+            vec![],
+            Some("token_1".to_string()),
+        );
+        let mut iter = q.read();
+
+        let row = iter.next().await.expect("should have row")?;
+        assert_eq!(row.get::<String, _>("col")?, "page2_row");
+        assert!(iter.next().await.is_none(), "{iter:?}");
+
         Ok(())
     }
 }

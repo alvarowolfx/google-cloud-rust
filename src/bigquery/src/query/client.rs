@@ -15,6 +15,7 @@
 use crate::builder::bigquery::Query;
 use crate::error::QueryError;
 use crate::query::client_builder::ClientBuilder;
+use crate::query::execution::check_job_status;
 use crate::query::{Query as QueryHandle, Result as QueryResult};
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::JobReference;
@@ -48,16 +49,16 @@ use std::sync::Arc;
 /// # async fn sample() -> anyhow::Result<()> {
 /// let client = BigQuery::builder().build().await?;
 /// let mut rows = client
-///     .query("SELECT name, count FROM `bigquery-public-data.usa_names.usa_1910_2013` WHERE state = 'WA' ORDER BY count DESC LIMIT 5")
+///     .query("SELECT name, number FROM `bigquery-public-data.usa_names.usa_1910_2013` WHERE state = 'WA' ORDER BY number DESC LIMIT 5")
 ///     .with_project_id("my-project-id")
 ///     .until_done()
 ///     .await?
 ///     .read();
 ///
 /// while let Some(row) = rows.next().await.transpose()? {
-///     let name: String = row.get("name");
-///     let count: i64 = row.get("count");
-///     println!("{name}: {count}");
+///     let name: String = row.get("name")?;
+///     let number: i64 = row.get("number")?;
+///     println!("{name}: {number}");
 /// }
 /// # Ok(()) }
 /// ```
@@ -65,6 +66,11 @@ use std::sync::Arc;
 pub struct BigQuery {
     job_service: Arc<JobService>,
     project_id: Option<String>,
+}
+
+pub(super) mod info {
+    pub(crate) const NAME: &str = env!("CARGO_PKG_NAME");
+    pub(crate) const VERSION: &str = env!("CARGO_PKG_VERSION");
 }
 
 impl BigQuery {
@@ -98,14 +104,27 @@ impl BigQuery {
         if builder.config.tracing {
             job_service_builder = job_service_builder.with_tracing();
         }
-        if let Some(retry_policy) = builder.config.retry_policy {
-            job_service_builder = job_service_builder.with_retry_policy(retry_policy);
-        }
-        if let Some(backoff_policy) = builder.config.backoff_policy {
-            job_service_builder = job_service_builder.with_backoff_policy(backoff_policy);
-        }
+        let retry_policy = builder
+            .config
+            .retry_policy
+            .unwrap_or_else(crate::query::retry_policy::default_retry_policy);
+        job_service_builder = job_service_builder.with_retry_policy(retry_policy);
+
+        let backoff_policy = builder
+            .config
+            .backoff_policy
+            .unwrap_or_else(crate::query::retry_policy::default_backoff_policy);
+        job_service_builder = job_service_builder.with_backoff_policy(backoff_policy);
         job_service_builder =
             job_service_builder.with_retry_throttler(builder.config.retry_throttler);
+
+        job_service_builder =
+            job_service_builder.with_extension(gaxi::api_header::XGoogApiClient {
+                name: info::NAME,
+                version: info::VERSION,
+                library_type: gaxi::api_header::GCCL,
+            });
+
         let job_service = Arc::new(job_service_builder.build().await?);
 
         Ok(BigQuery {
@@ -144,8 +163,8 @@ impl BigQuery {
     ///     .read();
     ///
     /// while let Some(row) = rows.next().await.transpose()? {
-    ///     let name: String = row.get("name");
-    ///     let count: i64 = row.get("count");
+    ///     let name: String = row.get("name")?;
+    ///     let count: i64 = row.get("count")?;
     ///     println!("{name}: {count}");
     /// }
     /// # Ok(())
@@ -220,7 +239,7 @@ impl BigQuery {
 
         Ok(QueryHandle::from_job(
             self.job_service.clone(),
-            job,
+            check_job_status(job)?,
             None,
             None,
         ))
@@ -413,6 +432,94 @@ mod tests {
             matches!(&err, QueryError::UnsupportedJobType),
             "expected UnsupportedJobType, got {err:?}"
         );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_bigquery_attach_job_failed_job() -> anyhow::Result<()> {
+        use google_cloud_bigquery_v2::model::{ErrorProto, JobConfigurationQuery, JobStatus};
+
+        let mut mock = MockJobService::new();
+        mock.expect_get_job().returning(|_, _| {
+            let err_proto = ErrorProto::new()
+                .set_reason("invalidQuery")
+                .set_message("Syntax error");
+            let job = Job::new()
+                .set_configuration(
+                    JobConfiguration::new()
+                        .set_query(JobConfigurationQuery::new().set_query("SELECT * FROM")),
+                )
+                .set_status(
+                    JobStatus::new()
+                        .set_state("DONE")
+                        .set_error_result(err_proto.clone())
+                        .set_errors(vec![err_proto]),
+                );
+            Ok(Response::from(job))
+        });
+        let client =
+            BigQuery::from_job_service(create_job_service(mock), Some("client-proj".to_string()));
+        let job_ref = JobReference::new().set_job_id("job_failed");
+        let err = client
+            .attach_job(job_ref)
+            .await
+            .expect_err("should return an error for failed query job");
+        assert!(
+            matches!(&err, QueryError::JobFailed { errors } if errors.len() == 1 && errors[0].reason == "invalidQuery"),
+            "expected JobFailed, got {err:?}"
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_bigquery_calls_send_veneer_header_not_gapic() -> anyhow::Result<()> {
+        use httptest::{Expectation, Server, all_of, matchers::*, responders::*};
+        use serde_json::json;
+
+        let server = Server::run();
+        server.expect(
+            Expectation::matching(all_of![
+                request::method_path("GET", "/bigquery/v2/projects/test-proj/jobs/job_123"),
+                request::headers(contains((
+                    "x-goog-api-client",
+                    matches(format!("gccl/{}", env!("CARGO_PKG_VERSION"))),
+                ))),
+                not(request::headers(contains((
+                    "x-goog-api-client",
+                    matches("gapic/"),
+                )))),
+            ])
+            .respond_with(json_encoded(json!({
+                "jobReference": {
+                    "projectId": "test-proj",
+                    "jobId": "job_123"
+                },
+                "configuration": {
+                    "query": {
+                        "query": "SELECT 1"
+                    }
+                },
+                "status": {
+                    "state": "DONE"
+                }
+            }))),
+        );
+
+        let client = BigQuery::builder()
+            .with_endpoint(server.url_str(""))
+            .with_credentials(Anonymous::new().build())
+            .with_project_id("test-proj")
+            .build()
+            .await?;
+
+        let job_ref = JobReference::new().set_job_id("job_123");
+        let query = client.attach_job(job_ref).await?;
+        let metadata = query.metadata();
+        assert_eq!(
+            metadata.job_reference.as_ref().map(|j| j.job_id.as_str()),
+            Some("job_123")
+        );
+
         Ok(())
     }
 }

@@ -41,11 +41,12 @@ use crate::Error;
 ))]
 use crate::Result;
 
-/// Implements [AssistantService](super::stub::AssistantService) using a [gaxi::http::ReqwestClient].
+/// Implements [AssistantService](super::stub::AssistantService) using a [gaxi::http::ReqwestClient] and a [gaxi::grpc::Client].
 #[cfg(feature = "assistant-service")]
 #[derive(Clone)]
 pub struct AssistantService {
     inner: gaxi::http::ReqwestClient,
+    grpc_inner: gaxi::grpc::Client,
 }
 
 #[cfg(feature = "assistant-service")]
@@ -53,6 +54,7 @@ impl std::fmt::Debug for AssistantService {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         f.debug_struct("AssistantService")
             .field("inner", &self.inner)
+            .field("grpc_inner", &self.grpc_inner)
             .finish()
     }
 }
@@ -61,18 +63,71 @@ impl std::fmt::Debug for AssistantService {
 impl AssistantService {
     pub async fn new(config: gaxi::options::ClientConfig) -> crate::ClientBuilderResult<Self> {
         let tracing_is_enabled = gaxi::options::tracing_enabled(&config);
-        let inner = gaxi::http::ReqwestClient::new(config, crate::DEFAULT_HOST).await?;
+        let inner = gaxi::http::ReqwestClient::new(config.clone(), crate::DEFAULT_HOST).await?;
         let inner = if tracing_is_enabled {
             inner.with_instrumentation(&super::tracing::info::INSTRUMENTATION_CLIENT_INFO)
         } else {
             inner
         };
-        Ok(Self { inner })
+        let grpc_inner = if tracing_is_enabled {
+            gaxi::grpc::Client::new_with_instrumentation(
+                config,
+                crate::DEFAULT_HOST,
+                &super::tracing::info::INSTRUMENTATION_CLIENT_INFO,
+            )
+            .await?
+        } else {
+            gaxi::grpc::Client::new(config, crate::DEFAULT_HOST).await?
+        };
+        Ok(Self { inner, grpc_inner })
     }
 }
 
 #[cfg(feature = "assistant-service")]
 impl super::stub::AssistantService for AssistantService {
+    async fn stream_assist(
+        &self,
+        req: crate::model::StreamAssistRequest,
+        options: crate::RequestOptions,
+    ) -> Result<google_cloud_gax::streaming::ResponseStream<crate::model::StreamAssistResponse>>
+    {
+        let x_goog_request_params = [Some(&req)
+            .map(|m| &m.name)
+            .map(|s| s.as_str())
+            .map(|v| format!("name={v}"))]
+        .into_iter()
+        .flatten()
+        .fold(String::new(), |b, p| b + "&" + &p);
+
+        let extensions = {
+            let mut e = gaxi::grpc::tonic::Extensions::new();
+            e.insert(gaxi::grpc::tonic::GrpcMethod::new(
+                "google.cloud.discoveryengine.v1.AssistantService",
+                "StreamAssist",
+            ));
+            e
+        };
+        let path = http::uri::PathAndQuery::from_static(
+            "/google.cloud.discoveryengine.v1.AssistantService/StreamAssist",
+        );
+
+        self.grpc_inner
+            .execute_server_streaming::<
+                crate::model::StreamAssistRequest,
+                crate::model::StreamAssistResponse,
+                crate::prost::google::cloud::discoveryengine::v1::StreamAssistRequest,
+                crate::prost::google::cloud::discoveryengine::v1::StreamAssistResponse,
+            >(
+                extensions,
+                path,
+                req,
+                options,
+                &crate::info::X_GOOG_API_CLIENT_GRPC_HEADER,
+                &x_goog_request_params,
+            )
+            .await
+    }
+
     async fn list_operations(
         &self,
         req: google_cloud_longrunning::model::ListOperationsRequest,
@@ -6105,11 +6160,12 @@ impl super::stub::ControlService for ControlService {
     }
 }
 
-/// Implements [ConversationalSearchService](super::stub::ConversationalSearchService) using a [gaxi::http::ReqwestClient].
+/// Implements [ConversationalSearchService](super::stub::ConversationalSearchService) using a [gaxi::http::ReqwestClient] and a [gaxi::grpc::Client].
 #[cfg(feature = "conversational-search-service")]
 #[derive(Clone)]
 pub struct ConversationalSearchService {
     inner: gaxi::http::ReqwestClient,
+    grpc_inner: gaxi::grpc::Client,
 }
 
 #[cfg(feature = "conversational-search-service")]
@@ -6117,6 +6173,7 @@ impl std::fmt::Debug for ConversationalSearchService {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         f.debug_struct("ConversationalSearchService")
             .field("inner", &self.inner)
+            .field("grpc_inner", &self.grpc_inner)
             .finish()
     }
 }
@@ -6125,13 +6182,23 @@ impl std::fmt::Debug for ConversationalSearchService {
 impl ConversationalSearchService {
     pub async fn new(config: gaxi::options::ClientConfig) -> crate::ClientBuilderResult<Self> {
         let tracing_is_enabled = gaxi::options::tracing_enabled(&config);
-        let inner = gaxi::http::ReqwestClient::new(config, crate::DEFAULT_HOST).await?;
+        let inner = gaxi::http::ReqwestClient::new(config.clone(), crate::DEFAULT_HOST).await?;
         let inner = if tracing_is_enabled {
             inner.with_instrumentation(&super::tracing::info::INSTRUMENTATION_CLIENT_INFO)
         } else {
             inner
         };
-        Ok(Self { inner })
+        let grpc_inner = if tracing_is_enabled {
+            gaxi::grpc::Client::new_with_instrumentation(
+                config,
+                crate::DEFAULT_HOST,
+                &super::tracing::info::INSTRUMENTATION_CLIENT_INFO,
+            )
+            .await?
+        } else {
+            gaxi::grpc::Client::new(config, crate::DEFAULT_HOST).await?
+        };
+        Ok(Self { inner, grpc_inner })
     }
 }
 
@@ -7354,6 +7421,49 @@ impl super::stub::ConversationalSearchService for ConversationalSearchService {
         );
         let body = gaxi::http::handle_empty(Some(req), &method);
         self.inner.execute(builder, body, options).await
+    }
+
+    async fn stream_answer_query(
+        &self,
+        req: crate::model::AnswerQueryRequest,
+        options: crate::RequestOptions,
+    ) -> Result<google_cloud_gax::streaming::ResponseStream<crate::model::AnswerQueryResponse>>
+    {
+        let x_goog_request_params = [Some(&req)
+            .map(|m| &m.serving_config)
+            .map(|s| s.as_str())
+            .map(|v| format!("serving_config={v}"))]
+        .into_iter()
+        .flatten()
+        .fold(String::new(), |b, p| b + "&" + &p);
+
+        let extensions = {
+            let mut e = gaxi::grpc::tonic::Extensions::new();
+            e.insert(gaxi::grpc::tonic::GrpcMethod::new(
+                "google.cloud.discoveryengine.v1.ConversationalSearchService",
+                "StreamAnswerQuery",
+            ));
+            e
+        };
+        let path = http::uri::PathAndQuery::from_static(
+            "/google.cloud.discoveryengine.v1.ConversationalSearchService/StreamAnswerQuery",
+        );
+
+        self.grpc_inner
+            .execute_server_streaming::<
+                crate::model::AnswerQueryRequest,
+                crate::model::AnswerQueryResponse,
+                crate::prost::google::cloud::discoveryengine::v1::AnswerQueryRequest,
+                crate::prost::google::cloud::discoveryengine::v1::AnswerQueryResponse,
+            >(
+                extensions,
+                path,
+                req,
+                options,
+                &crate::info::X_GOOG_API_CLIENT_GRPC_HEADER,
+                &x_goog_request_params,
+            )
+            .await
     }
 
     async fn get_answer(
@@ -14733,11 +14843,12 @@ impl super::stub::EngineService for EngineService {
     }
 }
 
-/// Implements [GroundedGenerationService](super::stub::GroundedGenerationService) using a [gaxi::http::ReqwestClient].
+/// Implements [GroundedGenerationService](super::stub::GroundedGenerationService) using a [gaxi::http::ReqwestClient] and a [gaxi::grpc::Client].
 #[cfg(feature = "grounded-generation-service")]
 #[derive(Clone)]
 pub struct GroundedGenerationService {
     inner: gaxi::http::ReqwestClient,
+    grpc_inner: gaxi::grpc::Client,
 }
 
 #[cfg(feature = "grounded-generation-service")]
@@ -14745,6 +14856,7 @@ impl std::fmt::Debug for GroundedGenerationService {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         f.debug_struct("GroundedGenerationService")
             .field("inner", &self.inner)
+            .field("grpc_inner", &self.grpc_inner)
             .finish()
     }
 }
@@ -14753,18 +14865,64 @@ impl std::fmt::Debug for GroundedGenerationService {
 impl GroundedGenerationService {
     pub async fn new(config: gaxi::options::ClientConfig) -> crate::ClientBuilderResult<Self> {
         let tracing_is_enabled = gaxi::options::tracing_enabled(&config);
-        let inner = gaxi::http::ReqwestClient::new(config, crate::DEFAULT_HOST).await?;
+        let inner = gaxi::http::ReqwestClient::new(config.clone(), crate::DEFAULT_HOST).await?;
         let inner = if tracing_is_enabled {
             inner.with_instrumentation(&super::tracing::info::INSTRUMENTATION_CLIENT_INFO)
         } else {
             inner
         };
-        Ok(Self { inner })
+        let grpc_inner = if tracing_is_enabled {
+            gaxi::grpc::Client::new_with_instrumentation(
+                config,
+                crate::DEFAULT_HOST,
+                &super::tracing::info::INSTRUMENTATION_CLIENT_INFO,
+            )
+            .await?
+        } else {
+            gaxi::grpc::Client::new(config, crate::DEFAULT_HOST).await?
+        };
+        Ok(Self { inner, grpc_inner })
     }
 }
 
 #[cfg(feature = "grounded-generation-service")]
 impl super::stub::GroundedGenerationService for GroundedGenerationService {
+    fn stream_generate_grounded_content(
+        &self,
+        options: crate::RequestOptions,
+    ) -> (
+        google_cloud_gax::streaming::RequestSender<crate::model::GenerateGroundedContentRequest>,
+        google_cloud_gax::streaming::ResponseStream<crate::model::GenerateGroundedContentResponse>,
+    ) {
+        let x_goog_request_params = "";
+
+        let extensions = {
+            let mut e = gaxi::grpc::tonic::Extensions::new();
+            e.insert(gaxi::grpc::tonic::GrpcMethod::new(
+                "google.cloud.discoveryengine.v1.GroundedGenerationService",
+                "StreamGenerateGroundedContent",
+            ));
+            e
+        };
+        let path = http::uri::PathAndQuery::from_static(
+            "/google.cloud.discoveryengine.v1.GroundedGenerationService/StreamGenerateGroundedContent",
+        );
+
+        self.grpc_inner
+            .execute_bidi_streaming::<
+                crate::model::GenerateGroundedContentRequest,
+                crate::model::GenerateGroundedContentResponse,
+                crate::prost::google::cloud::discoveryengine::v1::GenerateGroundedContentRequest,
+                crate::prost::google::cloud::discoveryengine::v1::GenerateGroundedContentResponse,
+            >(
+                extensions,
+                path,
+                options,
+                &crate::info::X_GOOG_API_CLIENT_GRPC_HEADER,
+                x_goog_request_params,
+            )
+    }
+
     async fn generate_grounded_content(
         &self,
         req: crate::model::GenerateGroundedContentRequest,

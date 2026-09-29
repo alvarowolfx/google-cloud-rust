@@ -16,9 +16,8 @@ use anyhow::Result;
 use bigquery_samples::{
     cleanup_stale_datasets, create_dataset, create_table, delete_dataset, random_dataset_id,
 };
-use google_cloud_bigquery::client::BigQuery;
-use google_cloud_bigquery_read::client::Read;
-use google_cloud_bigquery_read::model::{DataFormat, ReadSession};
+use google_cloud_bigquery::client::{BigQuery, Read};
+use google_cloud_bigquery::model::{DataFormat, ReadSession};
 use google_cloud_bigquery_v2::client::{DatasetService, TableService};
 use google_cloud_bigquery_v2::model::{TableFieldSchema, TableSchema};
 use google_cloud_test_utils::runtime_config::project_id;
@@ -84,22 +83,19 @@ pub async fn read_rows(project_id: &str, dataset_id: &str, table_id: &str) -> Re
         "expected at least one stream in read session"
     );
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
-    {
-        let stream_name = &session.streams[0].name;
-        let mut stream = client
-            .read_rows()
-            .set_read_stream(stream_name)
-            .send()
-            .await?;
+    let stream_name = &session.streams[0].name;
+    let mut stream = client
+        .read_rows()
+        .set_read_stream(stream_name)
+        .send()
+        .await?;
 
-        let mut total_rows = 0;
-        while let Some(response) = stream.recv().await {
-            let response = response?;
-            total_rows += response.row_count;
-        }
-        assert_eq!(total_rows, 3, "expected 3 rows to be read from stream");
+    let mut total_rows = 0;
+    while let Some(response) = stream.next().await {
+        let response = response?;
+        total_rows += response.row_count;
     }
+    assert_eq!(total_rows, 3, "expected 3 rows to be read from stream");
 
     Ok(())
 }

@@ -154,6 +154,30 @@ pub trait DataAgentService: std::fmt::Debug + Send + Sync {
         gaxi::unimplemented::unimplemented_stub()
     }
 
+    /// Implements [super::client::DataAgentService::set_agent_ops_observability].
+    fn set_agent_ops_observability(
+        &self,
+        _req: crate::model::SetAgentOpsObservabilityRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<crate::Response<google_cloud_longrunning::model::Operation>>,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::DataAgentService::retrieve_agent_ops_observability].
+    fn retrieve_agent_ops_observability(
+        &self,
+        _req: crate::model::RetrieveAgentOpsObservabilityRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<
+            crate::Response<crate::model::RetrieveAgentOpsObservabilityResponse>,
+        >,
+    > + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
     /// Implements [super::client::DataAgentService::list_locations].
     fn list_locations(
         &self,
@@ -267,6 +291,17 @@ pub trait DataAgentService: std::fmt::Debug + Send + Sync {
 /// implementation of each method. Most of these implementations just return an
 /// error.
 pub trait DataChatService: std::fmt::Debug + Send + Sync {
+    /// Implements [super::client::DataChatService::chat].
+    fn chat(
+        &self,
+        _req: crate::model::ChatRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<google_cloud_gax::streaming::ResponseStream<crate::model::Message>>,
+    > + Send {
+        gaxi::unimplemented::unimplemented_server_streaming_stub()
+    }
+
     /// Implements [super::client::DataChatService::create_conversation].
     fn create_conversation(
         &self,
@@ -284,6 +319,17 @@ pub trait DataChatService: std::fmt::Debug + Send + Sync {
         _req: crate::model::DeleteConversationRequest,
         _options: crate::RequestOptions,
     ) -> impl std::future::Future<Output = crate::Result<crate::Response<()>>> + Send {
+        gaxi::unimplemented::unimplemented_stub()
+    }
+
+    /// Implements [super::client::DataChatService::update_conversation].
+    fn update_conversation(
+        &self,
+        _req: crate::model::UpdateConversationRequest,
+        _options: crate::RequestOptions,
+    ) -> impl std::future::Future<
+        Output = crate::Result<crate::Response<crate::model::Conversation>>,
+    > + Send {
         gaxi::unimplemented::unimplemented_stub()
     }
 

@@ -69,6 +69,31 @@ export SPANNER_EMULATOR_HOST=localhost:9010
 The client builder automatically detects this variable, connects to the emulator
 endpoint, and configures anonymous credentials.
 
+### Configuring the Channel Pool
+
+By default, the client uses a static pool of 4 gRPC channels. You can configure
+the channel pool using `with_channel_pool`:
+
+```rust
+use google_cloud_spanner::client::{Spanner, SpannerBuilderExt};
+use google_cloud_spanner::channel_pool::{DynamicChannelPoolConfig, StaticChannelPoolConfig};
+
+# async fn sample() -> Result<(), google_cloud_spanner::Error> {
+// Custom static pool:
+let spanner = Spanner::builder()
+    .with_channel_pool(StaticChannelPoolConfig::new(8))
+    .build()
+    .await?;
+
+// Or dynamic load-based channel pool:
+let spanner = Spanner::builder()
+    .with_channel_pool(DynamicChannelPoolConfig::new())
+    .build()
+    .await?;
+# Ok(())
+# }
+```
+
 ## Session Management and Client Lifecycle
 
 The Spanner Rust client manages a long-lived multiplexed session under the hood.
@@ -333,6 +358,32 @@ async fn create_tables_batch(spanner: &Spanner) -> Result<(), Error> {
     Ok(())
 }
 ```
+
+## Using with AI Coding Assistants
+
+This crate provides an [`llms.txt`](llms.txt) file conforming to the
+[llms.txt standard](https://llmstxt.org/). It contains the complete mental
+model, transaction selection guide, golden recipes (including custom type
+decoding and parallel query partitioning), and critical anti-patterns for AI
+assistants such as Google Antigravity, Gemini Code Assist / Gemini CLI, Cursor,
+Claude Code, GitHub Copilot, and Windsurf.
+
+To configure your AI assistant to generate idiomatic, leak-free Spanner Rust
+code:
+
+- **Google Antigravity**: Add
+  `See src/spanner/llms.txt for Cloud Spanner Rust client rules and golden recipes.`
+  to `GEMINI.md`, `AGENTS.md`, or create a rule in `.gemini/rules/spanner.md`.
+- **Gemini Code Assist / Gemini CLI**: Add
+  `See src/spanner/llms.txt for Cloud Spanner Rust client rules and golden recipes.`
+  to your `GEMINI.md`, or reference `@src/spanner/llms.txt` in your prompt.
+- **Cursor**: Reference `@src/spanner/llms.txt` in your chat context or add it
+  to `.cursorrules`.
+- **Claude Code**: Add
+  `See src/spanner/llms.txt for Cloud Spanner Rust client rules and golden recipes.`
+  to your `CLAUDE.md`.
+- **GitHub Copilot**: Reference `src/spanner/llms.txt` in
+  `.github/copilot-instructions.md`.
 
 ## Features
 

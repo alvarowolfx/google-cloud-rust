@@ -13,36 +13,40 @@
 // limitations under the License.
 
 use crate::error::ConvertError;
-use crate::query::ColumnIndex;
+use crate::query::from_sql::SqlValueInner;
+use crate::query::{ColumnIndex, FromSql, SqlValue};
+use arrow::array::ArrayRef;
+use std::sync::Arc;
 
 /// A reference to a single cell within an Arrow array.
 #[doc(hidden)]
-#[derive(Clone, Copy, Debug)]
-pub struct ArrowCell<'a> {
-    array: &'a dyn arrow::array::Array,
+#[derive(Clone, Debug)]
+pub struct ArrowCell {
+    array: ArrayRef,
     pub(crate) row_idx: usize,
 }
 
-impl<'a> ArrowCell<'a> {
+impl PartialEq for ArrowCell {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.array, &other.array) && self.row_idx == other.row_idx
+    }
+}
+
+impl ArrowCell {
     /// Creates a new `ArrowCell`.
-    pub(crate) fn new(array: &'a dyn arrow::array::Array, row_idx: usize) -> Self {
+    pub(crate) fn new(array: ArrayRef, row_idx: usize) -> Self {
         Self { array, row_idx }
     }
 
-    /// Returns true if the cell is null.
-    #[doc(hidden)]
-    pub fn is_null(&self) -> bool {
+    /// Returns true if the cell is null.    
+    pub(crate) fn is_null(&self) -> bool {
         self.array.is_null(self.row_idx)
     }
 
-    /// Extracts a field from a struct array cell by column index or name and converts it to `T`.
-    #[doc(hidden)]
-    pub fn take<T: crate::query::FromSql, I: ColumnIndex>(
-        &self,
-        index: I,
-    ) -> Result<T, ConvertError> {
+    /// Extracts a field from a struct array cell by column index or name and converts it to `T`.    
+    pub(crate) fn take<T: FromSql, I: ColumnIndex>(&self, index: I) -> Result<T, ConvertError> {
         let field_cell = self.struct_field_cell(&index)?;
-        T::from_arrow(field_cell)
+        T::from_value(SqlValue::from_inner(SqlValueInner::Arrow(field_cell)))
     }
 
     fn resolve_index<I: ColumnIndex>(
@@ -64,25 +68,57 @@ impl<'a> ArrowCell<'a> {
         format!("{:?}", self.array.data_type())
     }
 
-    /// Extracts a child `ArrowCell` from a struct array cell by column index or name.
-    fn struct_field_cell<I: ColumnIndex>(&self, index: &I) -> Result<ArrowCell<'_>, ConvertError> {
+    /// Extracts a child `ArrowCell` from a struct or list array cell by column index or name.
+    pub(crate) fn struct_field_cell<I: ColumnIndex>(
+        &self,
+        index: &I,
+    ) -> Result<ArrowCell, ConvertError> {
         if self.is_null() {
             return Err(ConvertError::NotNull);
         }
 
         let Some(struct_arr) = self.downcast_ref::<arrow::array::StructArray>() else {
             return Err(ConvertError::TypeMismatch {
-                expected: "struct array",
-                got: wkt::Value::String(self.data_type_str()),
+                expected: "struct or list array".to_string(),
+                got: self.data_type_str(),
             });
         };
 
         let idx = self.resolve_index(index, struct_arr)?;
         let col = struct_arr.column(idx);
         Ok(ArrowCell {
-            array: col.as_ref(),
+            array: col.clone(),
             row_idx: self.row_idx,
         })
+    }
+
+    pub(crate) fn list_element_cell(&self, index: usize) -> Result<ArrowCell, ConvertError> {
+        if self.is_null() {
+            return Err(ConvertError::NotNull);
+        }
+
+        if let Some(arr) = self.downcast_ref::<arrow::array::ListArray>() {
+            let value_arr = arr.value(self.row_idx);
+            if index < value_arr.len() {
+                return Ok(ArrowCell::new(value_arr, index));
+            } else {
+                return Err(ConvertError::MissingField(index.to_string()));
+            }
+        }
+
+        if let Some(arr) = self.downcast_ref::<arrow::array::LargeListArray>() {
+            let value_arr = arr.value(self.row_idx);
+            if index < value_arr.len() {
+                return Ok(ArrowCell::new(value_arr, index));
+            } else {
+                return Err(ConvertError::MissingField(index.to_string()));
+            }
+        }
+
+        return Err(ConvertError::TypeMismatch {
+            expected: "struct or list array".to_string(),
+            got: self.data_type_str(),
+        });
     }
 
     /// Downcasts the underlying Arrow array to a specific type.
@@ -102,8 +138,8 @@ impl<'a> ArrowCell<'a> {
         let arr = self
             .downcast_ref::<T>()
             .ok_or_else(|| ConvertError::TypeMismatch {
-                expected: std::any::type_name::<T>(),
-                got: wkt::Value::String(self.data_type_str()),
+                expected: std::any::type_name::<T>().to_string(),
+                got: self.data_type_str(),
             })?;
         Ok(f(arr, self.row_idx))
     }
@@ -131,8 +167,8 @@ impl<'a> ArrowCell<'a> {
             return Ok(arr.value(self.row_idx));
         }
         Err(ConvertError::TypeMismatch {
-            expected: "Int64Array or Int32Array",
-            got: wkt::Value::String(self.data_type_str()),
+            expected: "Int64Array or Int32Array".to_string(),
+            got: self.data_type_str(),
         })
     }
 
@@ -153,8 +189,8 @@ impl<'a> ArrowCell<'a> {
             return Ok(arr.value(self.row_idx));
         }
         Err(ConvertError::TypeMismatch {
-            expected: "Float64Array or Float32Array",
-            got: wkt::Value::String(self.data_type_str()),
+            expected: "Float64Array or Float32Array".to_string(),
+            got: self.data_type_str(),
         })
     }
 
@@ -169,8 +205,8 @@ impl<'a> ArrowCell<'a> {
             Ok(arr.value(self.row_idx))
         } else {
             Err(ConvertError::TypeMismatch {
-                expected: "StringArray or LargeStringArray",
-                got: wkt::Value::String(self.data_type_str()),
+                expected: "StringArray or LargeStringArray".to_string(),
+                got: self.data_type_str(),
             })
         }
     }
@@ -186,8 +222,8 @@ impl<'a> ArrowCell<'a> {
             Ok(arr.value(self.row_idx))
         } else {
             Err(ConvertError::TypeMismatch {
-                expected: "BinaryArray or LargeBinaryArray",
-                got: wkt::Value::String(self.data_type_str()),
+                expected: "BinaryArray or LargeBinaryArray".to_string(),
+                got: self.data_type_str(),
             })
         }
     }

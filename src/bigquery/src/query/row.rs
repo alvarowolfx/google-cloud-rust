@@ -13,7 +13,7 @@
 // limitations under the License.
 
 use crate::error::{ConvertError, RowError};
-use crate::query::from_sql::ArrowCell;
+use crate::query::from_sql::{ArrowCell, SqlValueInner};
 use crate::query::{FromSql, Schema};
 use arrow::record_batch::RecordBatch;
 use google_cloud_bigquery_v2::model::TableFieldSchema;
@@ -51,15 +51,15 @@ pub type Result<T> = std::result::Result<T, RowError>;
 /// # Field Extraction by Name or Index
 ///
 /// Retrieve individual cell values by column name (`&str`) or index (`usize`)
-/// using [`get()`](Row::get), [`try_get()`](Row::try_get), or
-/// [`take()`](Row::take):
+/// using [`get()`](Row::get) or [`take()`](Row::take):
 ///
 /// ```
 /// # use google_cloud_bigquery::query::Row;
-/// # fn sample(row: Row) {
-/// let name: String = row.get("name");
-/// let age: i64 = row.get(1);
+/// # fn sample(row: Row) -> anyhow::Result<()> {
+/// let name: String = row.get("name")?;
+/// let age: i64 = row.get(1)?;
 /// println!("{name} is {age} years old");
+/// # Ok(())
 /// # }
 /// ```
 #[derive(Clone, Debug)]
@@ -70,7 +70,7 @@ pub struct Row {
 
 #[derive(Clone, Debug)]
 pub(crate) enum RowInner {
-    Json(ListValue),
+    Json(Vec<SqlValueInner>),
     Arrow {
         batch: Arc<RecordBatch>,
         row_idx: usize,
@@ -78,57 +78,172 @@ pub(crate) enum RowInner {
 }
 
 mod sealed {
+    use super::{Row, SqlValueInner};
+    use crate::error::ConvertError;
+    use crate::query::SqlValue;
+
     /// A sealed trait to prevent external implementation of `ColumnIndex`.
-    pub trait ColumnIndex {}
-    impl ColumnIndex for usize {}
-    impl ColumnIndex for &str {}
-    impl ColumnIndex for String {}
-}
+    pub trait ColumnIndex {
+        /// Returns the index of the column in the given row, if it exists.
+        fn index(&self, row: &Row) -> Option<usize>;
 
-/// A trait for types that can be used to index into a [`Row`].
-///
-/// This trait is sealed and cannot be implemented for types outside of this crate.
-pub trait ColumnIndex: sealed::ColumnIndex + std::fmt::Display {
-    /// Returns the index of the column in the given row, if it exists.
-    fn index(&self, row: &Row) -> Option<usize>;
+        /// Returns the index of the column in the given arrow struct array, if it exists.
+        fn arrow_index(&self, struct_arr: &arrow::array::StructArray) -> Option<usize>;
 
-    /// Returns the index of the column in the given arrow struct array, if it exists.
-    fn arrow_index(&self, struct_arr: &arrow::array::StructArray) -> Option<usize>;
-}
-
-impl ColumnIndex for usize {
-    fn index(&self, row: &Row) -> Option<usize> {
-        row.schema.get_field_by_index(*self).map(|_| *self)
+        /// Takes a value by column index or field name from `SqlValue`.
+        fn take_sql_value(
+            &self,
+            value: &mut SqlValue,
+        ) -> std::result::Result<SqlValue, ConvertError>;
     }
 
-    fn arrow_index(&self, struct_arr: &arrow::array::StructArray) -> Option<usize> {
-        if *self < struct_arr.num_columns() {
-            Some(*self)
-        } else {
-            None
+    impl ColumnIndex for usize {
+        fn index(&self, row: &Row) -> Option<usize> {
+            row.schema.get_field_by_index(*self).map(|_| *self)
+        }
+
+        fn arrow_index(&self, struct_arr: &arrow::array::StructArray) -> Option<usize> {
+            if *self < struct_arr.num_columns() {
+                Some(*self)
+            } else {
+                None
+            }
+        }
+
+        fn take_sql_value(
+            &self,
+            value: &mut SqlValue,
+        ) -> std::result::Result<SqlValue, ConvertError> {
+            match &mut value.inner {
+                SqlValueInner::Struct(entries) => {
+                    let (_, slot) = entries
+                        .get_mut(*self)
+                        .ok_or_else(|| ConvertError::MissingField(self.to_string()))?;
+                    Ok(SqlValue::from_inner(std::mem::replace(
+                        slot,
+                        SqlValueInner::Null,
+                    )))
+                }
+                SqlValueInner::Array(arr) => {
+                    let slot = arr
+                        .get_mut(*self)
+                        .ok_or_else(|| ConvertError::MissingField(self.to_string()))?;
+                    Ok(SqlValue::from_inner(std::mem::replace(
+                        slot,
+                        SqlValueInner::Null,
+                    )))
+                }
+                SqlValueInner::String(s) => {
+                    let arr: Vec<wkt::Value> =
+                        serde_json::from_str(s).map_err(|e| ConvertError::Convert(Box::new(e)))?;
+                    value.inner = SqlValueInner::from_wkt(wkt::Value::Array(arr));
+                    self.take_sql_value(value)
+                }
+                SqlValueInner::Null => Err(ConvertError::NotNull),
+                SqlValueInner::Arrow(cell) => {
+                    if let Ok(val) = cell.struct_field_cell(self) {
+                        return Ok(SqlValue::from_inner(SqlValueInner::Arrow(val)));
+                    }
+
+                    if let Ok(val) = cell.list_element_cell(*self) {
+                        return Ok(SqlValue::from_inner(SqlValueInner::Arrow(val)));
+                    }
+
+                    if let Ok(s) = cell.as_str() {
+                        value.inner = SqlValueInner::from_wkt(wkt::Value::String(s.to_string()));
+                        return self.take_sql_value(value);
+                    }
+
+                    Err(ConvertError::TypeMismatch {
+                        expected: "struct, array, or string".to_string(),
+                        got: cell.data_type_str(),
+                    })
+                }
+                other => Err(ConvertError::type_mismatch(
+                    "struct, array, or string",
+                    other,
+                )),
+            }
+        }
+    }
+
+    impl ColumnIndex for &str {
+        fn index(&self, row: &Row) -> Option<usize> {
+            row.schema.get_field_index_by_name(self)
+        }
+
+        fn arrow_index(&self, struct_arr: &arrow::array::StructArray) -> Option<usize> {
+            struct_arr.fields().iter().position(|f| f.name() == self)
+        }
+
+        fn take_sql_value(
+            &self,
+            value: &mut SqlValue,
+        ) -> std::result::Result<SqlValue, ConvertError> {
+            match &mut value.inner {
+                SqlValueInner::Struct(entries) => {
+                    let (_, slot) = entries
+                        .iter_mut()
+                        .find(|(name, _)| name == *self)
+                        .ok_or_else(|| ConvertError::MissingField((*self).to_string()))?;
+                    Ok(SqlValue::from_inner(std::mem::replace(
+                        slot,
+                        SqlValueInner::Null,
+                    )))
+                }
+                SqlValueInner::String(s) => {
+                    let obj: wkt::Struct =
+                        serde_json::from_str(s).map_err(|e| ConvertError::Convert(Box::new(e)))?;
+                    value.inner = SqlValueInner::from_wkt(wkt::Value::Object(obj));
+                    self.take_sql_value(value)
+                }
+                SqlValueInner::Null => Err(ConvertError::NotNull),
+                SqlValueInner::Arrow(cell) => {
+                    if let Ok(val) = cell.struct_field_cell(self) {
+                        return Ok(SqlValue::from_inner(SqlValueInner::Arrow(val)));
+                    }
+
+                    if let Ok(s) = cell.as_str() {
+                        value.inner = SqlValueInner::from_wkt(wkt::Value::String(s.to_string()));
+                        return self.take_sql_value(value);
+                    }
+
+                    Err(ConvertError::TypeMismatch {
+                        expected: "object or string".to_string(),
+                        got: cell.data_type_str(),
+                    })
+                }
+                other => Err(ConvertError::type_mismatch("object or string", other)),
+            }
+        }
+    }
+
+    impl ColumnIndex for String {
+        fn index(&self, row: &Row) -> Option<usize> {
+            <&str as ColumnIndex>::index(&self.as_str(), row)
+        }
+
+        fn arrow_index(&self, struct_arr: &arrow::array::StructArray) -> Option<usize> {
+            self.as_str().arrow_index(struct_arr)
+        }
+
+        fn take_sql_value(
+            &self,
+            value: &mut SqlValue,
+        ) -> std::result::Result<SqlValue, ConvertError> {
+            self.as_str().take_sql_value(value)
         }
     }
 }
 
-impl ColumnIndex for &str {
-    fn index(&self, row: &Row) -> Option<usize> {
-        row.schema.get_field_index_by_name(self)
-    }
+/// A trait for types that can be used to index into a [`Row`] or [`SqlValue`](crate::query::SqlValue).
+///
+/// This trait is sealed and cannot be implemented for types outside of this crate.
+pub trait ColumnIndex: sealed::ColumnIndex + std::fmt::Display {}
 
-    fn arrow_index(&self, struct_arr: &arrow::array::StructArray) -> Option<usize> {
-        struct_arr.fields().iter().position(|f| f.name() == self)
-    }
-}
-
-impl ColumnIndex for String {
-    fn index(&self, row: &Row) -> Option<usize> {
-        self.as_str().index(row)
-    }
-
-    fn arrow_index(&self, struct_arr: &arrow::array::StructArray) -> Option<usize> {
-        self.as_str().arrow_index(struct_arr)
-    }
-}
+impl ColumnIndex for usize {}
+impl ColumnIndex for &str {}
+impl ColumnIndex for String {}
 
 impl Row {
     pub(crate) fn try_new(row: Struct, schema: &Arc<Schema>) -> Result<Self> {
@@ -163,49 +278,44 @@ impl Row {
     }
 
     fn resolve_index<I: ColumnIndex>(&self, col: &I) -> Result<usize> {
-        col.index(self)
+        sealed::ColumnIndex::index(col, self)
             .ok_or_else(|| RowError::ColumnNotFound(format!("{col}")))
     }
 
-    fn convert_value_at<T: FromSql>(&self, idx: usize, val: Value) -> Result<T> {
-        T::from_sql(val).map_err(|e| {
-            let field_name = self
+    fn convert_value_at<T: FromSql>(&self, idx: usize, val: SqlValueInner) -> Result<T> {
+        T::from_value(crate::query::SqlValue::from_inner(val)).map_err(|e| {
+            let (column, sql_type) = self
                 .schema
                 .get_field_by_index(idx)
-                .map(|f| f.name.clone())
-                .unwrap_or_else(|| idx.to_string());
+                .map(|f| (f.name.clone(), f.r#type.clone()))
+                .unwrap_or_else(|| (idx.to_string(), "UNKNOWN".to_string()));
             RowError::TypeConversion {
-                column: field_name,
+                column,
+                sql_type,
                 source: e,
             }
         })
     }
 
-    /// Attempts to retrieve a value from the row by column name or zero-based
-    /// index.
+    /// Retrieves a value from the row by column name or zero-based index.
     ///
     /// The return type must implement [`FromSql`](crate::query::FromSql).
     ///
-    /// # Errors
-    ///
-    /// Returns [`RowError::ColumnNotFound`](crate::error::RowError::ColumnNotFound)
-    /// if the column does not exist,
-    /// [`RowError::IndexOutOfRange`](crate::error::RowError::IndexOutOfRange) if
-    /// the index exceeds schema bounds, or
-    /// [`RowError::TypeConversion`](crate::error::RowError::TypeConversion) if
-    /// the value cannot be converted to `T`.
+    /// The cell value is cloned from the row data without modifying `self`. If
+    /// you want to take ownership and avoid cloning large values, see
+    /// [`take()`](Row::take).
     ///
     /// # Example
     ///
     /// ```
     /// # use google_cloud_bigquery::query::Row;
     /// # fn sample(row: Row) -> anyhow::Result<()> {
-    /// let msg: String = row.try_get("msg")?;
+    /// let msg: String = row.get("msg")?;
     /// println!("Value: {msg}");
     /// # Ok(())
     /// # }
     /// ```
-    pub fn try_get<T: FromSql, I: ColumnIndex>(&self, index: I) -> Result<T> {
+    pub fn get<T: FromSql, I: ColumnIndex>(&self, index: I) -> Result<T> {
         let idx = self.resolve_index(&index)?;
         match &self.inner {
             RowInner::Json(values) => {
@@ -223,17 +333,8 @@ impl Row {
                         index: idx,
                         len: self.schema.len(),
                     })?;
-                T::from_arrow(ArrowCell::new(col.as_ref(), *row_idx)).map_err(|e| {
-                    let field_name = self
-                        .schema
-                        .get_field_by_index(idx)
-                        .map(|f| f.name.clone())
-                        .unwrap_or_else(|| idx.to_string());
-                    RowError::TypeConversion {
-                        column: field_name,
-                        source: e,
-                    }
-                })
+                let val = SqlValueInner::Arrow(ArrowCell::new(col.clone(), *row_idx));
+                self.convert_value_at(idx, val)
             }
         }
     }
@@ -241,13 +342,24 @@ impl Row {
     /// Takes ownership of a value from the row by column name or zero-based
     /// index.
     ///
-    /// This replaces the cell value in the row with `Value::Null` in-place to
-    /// avoid cloning. Attempting to read the column again after calling `take()`
-    /// yields `Value::Null`.
+    /// This method mutates `self` by extracting the cell value in-place to
+    /// avoid cloning. The extracted cell in the row is replaced with `NULL`.
+    /// Subsequent attempts to read or take the column will treat it as `NULL`
+    /// (returning `Ok(None)` when reading into `Option<T>`, or returning a
+    /// type conversion error for non-nullable types).
     ///
-    /// # Errors
+    /// <div class="warning">
     ///
-    /// Returns the same errors as [`try_get()`](Row::try_get).
+    /// `take()` removes the value from `self` before converting it to `T`. If
+    /// type conversion fails and returns an error, the original value has
+    /// already been consumed and cannot be recovered from the row.
+    ///
+    /// </div>
+    ///
+    /// If you are not sure of the column's type or need to read the value
+    /// multiple times, use [`get()`](Row::get) instead of `take()`. Use `take()`
+    /// when you are confident of the type and want to avoid cloning large values
+    /// (such as strings, byte buffers, or nested records).
     ///
     /// # Example
     ///
@@ -256,6 +368,12 @@ impl Row {
     /// # fn sample(mut row: Row) -> anyhow::Result<()> {
     /// let text: String = row.take("big_text")?;
     /// println!("Length: {}", text.len());
+    ///
+    /// // Subsequent reads treat the column as NULL:
+    /// assert_eq!(row.get::<Option<String>, _>("big_text")?, None);
+    ///
+    /// // Attempting to read or take again as a non-nullable type fails:
+    /// assert!(row.take::<String, _>("big_text").is_err());
     /// # Ok(())
     /// # }
     /// ```
@@ -271,7 +389,7 @@ impl Row {
                     })?;
 
                 // swap out the value in-place to avoid clones
-                let owned_val = std::mem::replace(val, Value::Null);
+                let owned_val = std::mem::replace(val, SqlValueInner::Null);
                 self.convert_value_at(idx, owned_val)
             }
             RowInner::Arrow { batch, row_idx } => {
@@ -282,44 +400,15 @@ impl Row {
                         index: idx,
                         len: self.schema.len(),
                     })?;
-                T::from_arrow(ArrowCell::new(col.as_ref(), *row_idx)).map_err(|e| {
-                    let field_name = self
-                        .schema
-                        .get_field_by_index(idx)
-                        .map(|f| f.name.clone())
-                        .unwrap_or_else(|| idx.to_string());
-                    RowError::TypeConversion {
-                        column: field_name,
-                        source: e,
-                    }
-                })
+                let val = SqlValueInner::Arrow(ArrowCell::new(col.clone(), *row_idx));
+                self.convert_value_at(idx, val)
             }
         }
     }
-
-    /// Retrieves a value from the row by column name or zero-based index.
-    ///
-    /// # Panics
-    ///
-    /// Panics if the column does not exist or if the value cannot be converted
-    /// to type `T`.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # use google_cloud_bigquery::query::Row;
-    /// # fn sample(row: Row) {
-    /// let count: i64 = row.get("count");
-    /// println!("Count: {count}");
-    /// # }
-    /// ```
-    pub fn get<T: FromSql, I: ColumnIndex>(&self, index: I) -> T {
-        self.try_get(index).unwrap()
-    }
 }
 
-fn convert_row(row: Struct, fields: &[TableFieldSchema]) -> Result<ListValue> {
-    let mut field_list = get_field_list(row)?;
+fn convert_row(row: Struct, fields: &[TableFieldSchema]) -> Result<Vec<SqlValueInner>> {
+    let field_list = get_field_list(row)?;
 
     if field_list.len() != fields.len() {
         return Err(RowError::InvalidRowFormat(format!(
@@ -329,10 +418,11 @@ fn convert_row(row: Struct, fields: &[TableFieldSchema]) -> Result<ListValue> {
         )));
     }
 
-    for (cell, field) in field_list.iter_mut().zip(fields) {
-        *cell = convert_value(get_field_value(cell.take())?, field)?;
-    }
-    Ok(field_list)
+    field_list
+        .into_iter()
+        .zip(fields)
+        .map(|(cell, field)| convert_value(get_field_value(cell)?, field))
+        .collect()
 }
 
 fn get_field_list(mut row: Struct) -> Result<Vec<Value>> {
@@ -353,9 +443,9 @@ fn get_field_value(value: Value) -> Result<Value> {
     }
 }
 
-fn convert_value(value: Value, field: &TableFieldSchema) -> Result<Value> {
+fn convert_value(value: Value, field: &TableFieldSchema) -> Result<SqlValueInner> {
     match value {
-        Value::Null => Ok(Value::Null),
+        Value::Null => Ok(SqlValueInner::Null),
         Value::String(v) => convert_basic_type(v, &field.name, &field.r#type),
         Value::Object(v) => convert_nested(v, &field.fields),
         Value::Array(v) => convert_repeated(v, field),
@@ -366,46 +456,51 @@ fn convert_value(value: Value, field: &TableFieldSchema) -> Result<Value> {
     }
 }
 
-fn convert_repeated(mut value: ListValue, field: &TableFieldSchema) -> Result<Value> {
-    for cell in &mut value {
-        // each cell contains a single entry, keyed by "v"
-        let val = get_field_value(cell.take())?;
-        *cell = convert_value(val, field)?;
-    }
-    Ok(Value::Array(value))
+fn convert_repeated(value: ListValue, field: &TableFieldSchema) -> Result<SqlValueInner> {
+    let arr = value
+        .into_iter()
+        .map(|cell| {
+            // each cell contains a single entry, keyed by "v"
+            let val = get_field_value(cell)?;
+            convert_value(val, field)
+        })
+        .collect::<Result<Vec<_>>>()?;
+    Ok(SqlValueInner::Array(arr))
 }
 
-fn convert_nested(value: Struct, fields: &[TableFieldSchema]) -> Result<Value> {
+fn convert_nested(value: Struct, fields: &[TableFieldSchema]) -> Result<SqlValueInner> {
     let values = convert_row(value, fields)?;
-    let obj: Struct = fields
+    let entries = fields
         .iter()
         .zip(values)
         .map(|(field, value)| (field.name.clone(), value))
         .collect();
-    Ok(Value::Object(obj))
+    Ok(SqlValueInner::Struct(entries))
 }
 
-fn convert_basic_type(value: String, field_name: &str, field_type: &str) -> Result<Value> {
+fn convert_basic_type(value: String, field_name: &str, field_type: &str) -> Result<SqlValueInner> {
     match field_type {
         "STRING" | "BYTES" | "TIMESTAMP" | "DATE" | "TIME" | "DATETIME" | "NUMERIC"
         | "BIGNUMERIC" | "BIGINT" | "GEOGRAPHY" | "JSON" | "INTERVAL" | "RANGE" => {
-            Ok(Value::String(value))
+            Ok(SqlValueInner::String(value))
         }
         "INTEGER" | "INT64" => {
             let num = value.parse::<i64>().map_err(|e| RowError::TypeConversion {
                 column: field_name.to_string(),
+                sql_type: field_type.to_string(),
                 source: ConvertError::Convert(Box::new(e)),
             })?;
-            Ok(Value::Number(serde_json::Number::from(num)))
+            Ok(SqlValueInner::Number(serde_json::Number::from(num)))
         }
         "FLOAT" | "FLOAT64" => {
             let num = value.parse::<f64>().map_err(|e| RowError::TypeConversion {
                 column: field_name.to_string(),
+                sql_type: field_type.to_string(),
                 source: ConvertError::Convert(Box::new(e)),
             })?;
             match serde_json::Number::from_f64(num) {
-                Some(n) => Ok(Value::Number(n)),
-                None => Ok(Value::String(value)),
+                Some(n) => Ok(SqlValueInner::Number(n)),
+                None => Ok(SqlValueInner::String(value)),
             }
         }
         "BOOLEAN" | "BOOL" => {
@@ -416,12 +511,13 @@ fn convert_basic_type(value: String, field_name: &str, field_type: &str) -> Resu
             } else {
                 return Err(RowError::TypeConversion {
                     column: field_name.to_string(),
+                    sql_type: field_type.to_string(),
                     source: ConvertError::Convert(
                         "provided string was not `true` or `false`".into(),
                     ),
                 });
             };
-            Ok(Value::Bool(b))
+            Ok(SqlValueInner::Bool(b))
         }
         _ => Err(RowError::InvalidRowFormat(format!(
             "unknown field type: {} at column {}",
@@ -480,39 +576,39 @@ mod tests {
         let schema = Arc::new(Schema::new(schema));
         let mut row = Row::try_new(raw_row, &schema)?;
 
-        assert_eq!(row.get::<String, _>(0), "James");
-        assert_eq!(row.get::<String, _>("name"), "James");
+        assert_eq!(row.get::<String, _>(0)?, "James");
+        assert_eq!(row.get::<String, _>("name")?, "James");
 
-        assert_eq!(row.get::<i32, _>(1), 272793);
-        assert_eq!(row.get::<i32, _>("some_int"), 272793);
-        assert_eq!(row.get::<i64, _>(1), 272793);
-        assert_eq!(row.get::<i64, _>("some_int"), 272793);
+        assert_eq!(row.get::<i32, _>(1)?, 272793);
+        assert_eq!(row.get::<i32, _>("some_int")?, 272793);
+        assert_eq!(row.get::<i64, _>(1)?, 272793);
+        assert_eq!(row.get::<i64, _>("some_int")?, 272793);
 
-        assert!(row.get::<bool, _>(2));
-        assert!(row.get::<bool, _>("some_bool"));
+        assert!(row.get::<bool, _>(2)?);
+        assert!(row.get::<bool, _>("some_bool")?);
 
-        assert_eq!(row.get::<Option<i64>, _>(3), None);
-        assert_eq!(row.get::<Option<i64>, _>("some_null"), None);
+        assert_eq!(row.get::<Option<i64>, _>(3)?, None);
+        assert_eq!(row.get::<Option<i64>, _>("some_null")?, None);
 
-        assert_eq!(row.get::<f32, _>(4), 64.0);
-        assert_eq!(row.get::<f32, _>("some_float"), 64.0);
-        assert_eq!(row.get::<f64, _>(4), 64.0);
-        assert_eq!(row.get::<f64, _>("some_float"), 64.0);
+        assert_eq!(row.get::<f32, _>(4)?, 64.0);
+        assert_eq!(row.get::<f32, _>("some_float")?, 64.0);
+        assert_eq!(row.get::<f64, _>(4)?, 64.0);
+        assert_eq!(row.get::<f64, _>("some_float")?, 64.0);
 
         assert_eq!(row.take::<String, _>(0)?, "James");
-        assert_eq!(row.try_get::<Option<String>, _>(0)?, None);
+        assert_eq!(row.get::<Option<String>, _>(0)?, None);
 
         assert_eq!(row.take::<i32, _>(1)?, 272793);
-        assert_eq!(row.try_get::<Option<i32>, _>(1)?, None);
+        assert_eq!(row.get::<Option<i32>, _>(1)?, None);
 
         assert!(row.take::<bool, _>(2)?);
-        assert_eq!(row.try_get::<Option<bool>, _>(2)?, None);
+        assert_eq!(row.get::<Option<bool>, _>(2)?, None);
 
         assert_eq!(row.take::<Option<i64>, _>(3)?, None);
-        assert_eq!(row.try_get::<Option<i64>, _>(3)?, None);
+        assert_eq!(row.get::<Option<i64>, _>(3)?, None);
 
         assert_eq!(row.take::<f32, _>(4)?, 64.0);
-        assert_eq!(row.try_get::<Option<f32>, _>(4)?, None);
+        assert_eq!(row.get::<Option<f32>, _>(4)?, None);
 
         Ok(())
     }
@@ -545,59 +641,59 @@ mod tests {
         let mut row = Row::try_new(raw_row, &schema)?;
 
         assert_eq!(
-            row.get::<Decimal, _>(0),
+            row.get::<Decimal, _>(0)?,
             Decimal::new().set_value("123.456")
         );
         assert_eq!(
-            row.get::<Decimal, _>("price"),
+            row.get::<Decimal, _>("price")?,
             Decimal::new().set_value("123.456")
         );
 
         assert_eq!(
-            row.get::<Decimal, _>(1),
+            row.get::<Decimal, _>(1)?,
             Decimal::new().set_value("99999999999999999999.123456789")
         );
         assert_eq!(
-            row.get::<Decimal, _>("big_amount"),
+            row.get::<Decimal, _>("big_amount")?,
             Decimal::new().set_value("99999999999999999999.123456789")
         );
 
         assert_eq!(
-            row.get::<RustDecimal, _>(0),
+            row.get::<RustDecimal, _>(0)?,
             "123.456".parse().expect("valid decimal")
         );
         assert_eq!(
-            row.get::<RustDecimal, _>("price"),
+            row.get::<RustDecimal, _>("price")?,
             "123.456".parse().expect("valid decimal")
         );
 
         assert_eq!(
-            row.get::<RustDecimal, _>(1),
+            row.get::<RustDecimal, _>(1)?,
             "99999999999999999999.123456789"
                 .parse()
                 .expect("valid decimal")
         );
         assert_eq!(
-            row.get::<RustDecimal, _>("big_amount"),
+            row.get::<RustDecimal, _>("big_amount")?,
             "99999999999999999999.123456789"
                 .parse()
                 .expect("valid decimal")
         );
 
-        assert!(row.try_get::<RustDecimal, _>(2).is_err());
-        assert!(row.try_get::<RustDecimal, _>("overflow_amount").is_err());
+        assert!(row.get::<RustDecimal, _>(2).is_err());
+        assert!(row.get::<RustDecimal, _>("overflow_amount").is_err());
 
         assert_eq!(
             row.take::<Decimal, _>(0)?,
             Decimal::new().set_value("123.456")
         );
-        assert_eq!(row.try_get::<Option<Decimal>, _>(0)?, None);
+        assert_eq!(row.get::<Option<Decimal>, _>(0)?, None);
 
         assert_eq!(
             row.take::<RustDecimal, _>(1)?,
             "99999999999999999999.123456789".parse()?
         );
-        assert_eq!(row.try_get::<Option<RustDecimal>, _>(1)?, None);
+        assert_eq!(row.get::<Option<RustDecimal>, _>(1)?, None);
 
         Ok(())
     }
@@ -629,29 +725,29 @@ mod tests {
         let schema = Arc::new(Schema::new(schema));
         let mut row = Row::try_new(raw_row, &schema)?;
 
-        assert_eq!(row.get::<Vec<u8>, _>(0), vec![1, 2, 3, 4]);
-        assert_eq!(row.get::<Vec<u8>, _>("payload_vec"), vec![1, 2, 3, 4]);
+        assert_eq!(row.get::<Vec<u8>, _>(0)?, vec![1, 2, 3, 4]);
+        assert_eq!(row.get::<Vec<u8>, _>("payload_vec")?, vec![1, 2, 3, 4]);
 
         assert_eq!(
-            row.get::<bytes::Bytes, _>(1),
+            row.get::<bytes::Bytes, _>(1)?,
             bytes::Bytes::from_static(b"Hello")
         );
         assert_eq!(
-            row.get::<bytes::Bytes, _>("payload_bytes"),
+            row.get::<bytes::Bytes, _>("payload_bytes")?,
             bytes::Bytes::from_static(b"Hello")
         );
 
-        assert_eq!(row.get::<Option<Vec<u8>>, _>(2), None);
-        assert_eq!(row.get::<Option<bytes::Bytes>, _>("null_bytes"), None);
+        assert_eq!(row.get::<Option<Vec<u8>>, _>(2)?, None);
+        assert_eq!(row.get::<Option<bytes::Bytes>, _>("null_bytes")?, None);
 
         assert_eq!(row.take::<Vec<u8>, _>(0)?, vec![1, 2, 3, 4]);
-        assert_eq!(row.try_get::<Option<Vec<u8>>, _>(0)?, None);
+        assert_eq!(row.get::<Option<Vec<u8>>, _>(0)?, None);
 
         assert_eq!(
             row.take::<bytes::Bytes, _>(1)?,
             bytes::Bytes::from_static(b"Hello")
         );
-        assert_eq!(row.try_get::<Option<bytes::Bytes>, _>(1)?, None);
+        assert_eq!(row.get::<Option<bytes::Bytes>, _>(1)?, None);
 
         Ok(())
     }
@@ -692,10 +788,59 @@ mod tests {
             "name": "Alice",
             "age": 25,
         }))?;
-        assert_eq!(row.get::<Struct, _>(0), expected);
-        assert_eq!(row.get::<Struct, _>("user"), expected);
+        assert_eq!(row.get::<Struct, _>(0)?, expected);
+        assert_eq!(row.get::<Struct, _>("user")?, expected);
+        assert_eq!(row.get::<Struct, _>("user".to_string())?, expected);
         assert_eq!(row.take::<Struct, _>("user")?, expected);
-        assert_eq!(row.try_get::<Option<Struct>, _>("user")?, None);
+        assert_eq!(row.get::<Option<Struct>, _>("user")?, None);
+
+        Ok(())
+    }
+
+    #[derive(crate::query::FromSql, Debug, PartialEq)]
+    struct JsonPayload {
+        name: String,
+        age: i64,
+    }
+
+    #[tokio::test]
+    async fn convert_json_from_row() -> TestResult {
+        let json_str = json!({"name": "Alice", "age": 30}).to_string();
+        let raw_row = Map::from_iter([(
+            "f".to_string(),
+            json!([
+                { "v": json_str },
+                { "v": null },
+            ]),
+        )]);
+        let schema = TableSchema::new().set_fields([
+            TableFieldSchema::new()
+                .set_name("json_obj")
+                .set_type("JSON")
+                .set_mode("NULLABLE"),
+            TableFieldSchema::new()
+                .set_name("json_null")
+                .set_type("JSON")
+                .set_mode("NULLABLE"),
+        ]);
+        let schema = Arc::new(Schema::new(schema));
+        let row = Row::try_new(raw_row, &schema)?;
+
+        let expected_struct: Struct = serde_json::from_value(json!({
+            "name": "Alice",
+            "age": 30,
+        }))?;
+        assert_eq!(row.get::<String, _>("json_obj")?, json_str);
+        assert_eq!(row.get::<Struct, _>("json_obj")?, expected_struct);
+        assert_eq!(
+            row.get::<JsonPayload, _>("json_obj")?,
+            JsonPayload {
+                name: "Alice".to_string(),
+                age: 30,
+            }
+        );
+        assert_eq!(row.get::<Option<Struct>, _>("json_null")?, None);
+        assert_eq!(row.get::<Option<JsonPayload>, _>("json_null")?, None);
 
         Ok(())
     }
@@ -721,10 +866,10 @@ mod tests {
         let schema = Arc::new(Schema::new(schema));
         let mut row = Row::try_new(raw_row, &schema)?;
 
-        assert_eq!(row.get::<Vec<i64>, _>(0), vec![1, 2, 3]);
-        assert_eq!(row.get::<Vec<i64>, _>("numbers"), vec![1, 2, 3]);
+        assert_eq!(row.get::<Vec<i64>, _>(0)?, vec![1, 2, 3]);
+        assert_eq!(row.get::<Vec<i64>, _>("numbers")?, vec![1, 2, 3]);
         assert_eq!(row.take::<Vec<i64>, _>("numbers")?, vec![1, 2, 3]);
-        assert_eq!(row.try_get::<Option<Vec<i64>>, _>("numbers")?, None);
+        assert_eq!(row.get::<Option<Vec<i64>>, _>("numbers")?, None);
 
         Ok(())
     }
@@ -783,10 +928,10 @@ mod tests {
                 "age": 31,
             },
         ]))?;
-        assert_eq!(row.get::<Vec<Struct>, _>(0), expected);
-        assert_eq!(row.get::<Vec<Struct>, _>("users"), expected);
+        assert_eq!(row.get::<Vec<Struct>, _>(0)?, expected);
+        assert_eq!(row.get::<Vec<Struct>, _>("users")?, expected);
         assert_eq!(row.take::<Vec<Struct>, _>("users")?, expected);
-        assert_eq!(row.try_get::<Option<Vec<Struct>>, _>("users")?, None);
+        assert_eq!(row.get::<Option<Vec<Struct>>, _>("users")?, None);
 
         Ok(())
     }
@@ -801,10 +946,14 @@ mod tests {
     #[test_case("BOOLEAN", "true", Value::Bool(true); "boolean true lowercase")]
     #[test_case("BOOLEAN", "TRUE", Value::Bool(true); "boolean true uppercase")]
     #[test_case("BOOL", "false", Value::Bool(false); "bool false")]
+    #[test_case("JSON", r#"{"a":1}"#, Value::String(r#"{"a":1}"#.to_string()); "json string")]
     fn convert_basic_type_cases_success(field_type: &str, value: &str, expected: Value) {
         let res = convert_basic_type(value.to_string(), "test_col", field_type);
         let value = res.expect("should succeed");
-        assert_eq!(value, expected);
+        assert_eq!(
+            value,
+            crate::query::from_sql::SqlValueInner::from_wkt(expected)
+        );
     }
 
     #[test_case("INTEGER", "abc"; "integer invalid")]
@@ -887,6 +1036,45 @@ mod tests {
             }
         );
 
+        Ok(())
+    }
+
+    #[derive(FromRow, Debug, PartialEq)]
+    struct RawIdentRow {
+        r#type: String,
+        r#match: i64,
+    }
+
+    #[tokio::test]
+    async fn derive_from_row_raw_identifier() -> TestResult {
+        let raw_row = Map::from_iter([(
+            "f".to_string(),
+            json!([
+                { "v": "click" },
+                { "v": "7" },
+            ]),
+        )]);
+        let schema = TableSchema::new().set_fields([
+            TableFieldSchema::new()
+                .set_name("type")
+                .set_type("STRING")
+                .set_mode("NULLABLE"),
+            TableFieldSchema::new()
+                .set_name("match")
+                .set_type("INTEGER")
+                .set_mode("NULLABLE"),
+        ]);
+        let schema = Arc::new(Schema::new(schema));
+        let row = Row::try_new(raw_row, &schema)?;
+
+        let converted = RawIdentRow::try_from(row)?;
+        assert_eq!(
+            converted,
+            RawIdentRow {
+                r#type: "click".to_string(),
+                r#match: 7,
+            }
+        );
         Ok(())
     }
 
@@ -990,22 +1178,22 @@ mod tests {
         let schema = Arc::new(Schema::new(table_schema));
 
         let row0 = Row::try_new_from_arrow(&batch, 0, &schema)?;
-        assert_eq!(row0.get::<String, _>("name"), "Alice");
-        assert_eq!(row0.get::<Option<i64>, _>("age"), Some(30));
-        assert!(row0.get::<bool, _>("active"));
-        assert_eq!(row0.get::<f64, _>("score"), 98.5);
+        assert_eq!(row0.get::<String, _>("name")?, "Alice");
+        assert_eq!(row0.get::<Option<i64>, _>("age")?, Some(30));
+        assert!(row0.get::<bool, _>("active")?);
+        assert_eq!(row0.get::<f64, _>("score")?, 98.5);
         assert_eq!(
-            row0.get::<wkt::Timestamp, _>("created_ts"),
+            row0.get::<wkt::Timestamp, _>("created_ts")?,
             wkt::Timestamp::new(1_600_000_000, 0).unwrap()
         );
 
         let row1 = Row::try_new_from_arrow(&batch, 1, &schema)?;
-        assert_eq!(row1.get::<String, _>("name"), "Bob");
-        assert_eq!(row1.get::<Option<i64>, _>("age"), None);
-        assert!(!row1.get::<bool, _>("active"));
-        assert_eq!(row1.get::<f64, _>("score"), 87.25);
+        assert_eq!(row1.get::<String, _>("name")?, "Bob");
+        assert_eq!(row1.get::<Option<i64>, _>("age")?, None);
+        assert!(!row1.get::<bool, _>("active")?);
+        assert_eq!(row1.get::<f64, _>("score")?, 87.25);
         assert_eq!(
-            row1.get::<wkt::Timestamp, _>("created_ts"),
+            row1.get::<wkt::Timestamp, _>("created_ts")?,
             wkt::Timestamp::new(1_700_000_000, 0).unwrap()
         );
 
@@ -1049,7 +1237,7 @@ mod tests {
         let schema = Arc::new(Schema::new(table_schema));
 
         let row0 = Row::try_new_from_arrow(&batch, 0, &schema)?;
-        let int0: Interval = row0.get("duration");
+        let int0: Interval = row0.get("duration")?;
         assert_eq!(
             int0,
             Interval {
@@ -1064,7 +1252,7 @@ mod tests {
         );
 
         let row1 = Row::try_new_from_arrow(&batch, 1, &schema)?;
-        let int1: Interval = row1.get("duration");
+        let int1: Interval = row1.get("duration")?;
         assert_eq!(
             int1,
             Interval {
@@ -1080,7 +1268,7 @@ mod tests {
 
         // Verifies no overflow on i32::MIN and i64::MIN
         let row2 = Row::try_new_from_arrow(&batch, 2, &schema)?;
-        let int2: Interval = row2.get("duration");
+        let int2: Interval = row2.get("duration")?;
         assert_eq!(int2.years, -178956970);
         assert_eq!(int2.months, -8);
         assert_eq!(int2.days, 0);
@@ -1088,6 +1276,630 @@ mod tests {
         assert_eq!(int2.minutes, -47);
         assert_eq!(int2.seconds, -16);
         assert_eq!(int2.nanos, -854_775_808);
+
+        Ok(())
+    }
+
+    #[derive(FromRow, Debug, PartialEq)]
+    struct ShadowedFieldNamesRow {
+        row: i64,
+        name: String,
+    }
+
+    #[tokio::test]
+    async fn derive_from_row_shadowing_field_names() -> TestResult {
+        let raw_row = Map::from_iter([(
+            "f".to_string(),
+            json!([
+                { "v": "42" },
+                { "v": "Alice" },
+            ]),
+        )]);
+        let schema = TableSchema::new().set_fields([
+            TableFieldSchema::new()
+                .set_name("row")
+                .set_type("INTEGER")
+                .set_mode("NULLABLE"),
+            TableFieldSchema::new()
+                .set_name("name")
+                .set_type("STRING")
+                .set_mode("NULLABLE"),
+        ]);
+        let schema = Arc::new(Schema::new(schema));
+        let row = Row::try_new(raw_row, &schema)?;
+
+        let converted = ShadowedFieldNamesRow::try_from(row)?;
+        assert_eq!(
+            converted,
+            ShadowedFieldNamesRow {
+                row: 42,
+                name: "Alice".to_string(),
+            }
+        );
+        Ok(())
+    }
+
+    #[derive(FromRow, Debug, PartialEq)]
+    struct TupleRow(i64, String);
+
+    #[derive(crate::query::FromSql, Debug, PartialEq)]
+    struct AnonTriple(i64, String, bool);
+
+    #[derive(crate::query::FromSql, Debug, PartialEq)]
+    struct NamedZThenA {
+        z: i64,
+        a: i64,
+    }
+
+    #[derive(crate::query::FromSql, Debug, PartialEq)]
+    struct PositionalPair(i64, i64);
+
+    #[derive(crate::query::FromSql, Debug, PartialEq)]
+    struct DupIdNamed {
+        id: i64,
+    }
+
+    #[tokio::test]
+    async fn anonymous_struct_preserves_all_fields() -> TestResult {
+        // Simulates `SELECT STRUCT(10, 'hello', true) AS anon`, where BigQuery
+        // sets `field.name = ""` for all three subfields.
+        let raw_row = Map::from_iter([(
+            "f".to_string(),
+            json!([
+                {
+                    "v": {
+                        "f": [
+                            { "v": "10" },
+                            { "v": "hello" },
+                            { "v": "true" }
+                        ]
+                    }
+                }
+            ]),
+        )]);
+        let schema = TableSchema::new().set_fields([TableFieldSchema::new()
+            .set_name("anon")
+            .set_type("RECORD")
+            .set_mode("NULLABLE")
+            .set_fields([
+                TableFieldSchema::new()
+                    .set_name("")
+                    .set_type("INT64")
+                    .set_mode("NULLABLE"),
+                TableFieldSchema::new()
+                    .set_name("")
+                    .set_type("STRING")
+                    .set_mode("NULLABLE"),
+                TableFieldSchema::new()
+                    .set_name("")
+                    .set_type("BOOL")
+                    .set_mode("NULLABLE"),
+            ])]);
+        let schema = Arc::new(Schema::new(schema));
+        let mut row = Row::try_new(raw_row, &schema)?;
+
+        let anon: AnonTriple = row.take("anon")?;
+        assert_eq!(anon, AnonTriple(10, "hello".to_string(), true));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn struct_preserves_sql_declaration_order_over_alphabetical_order() -> TestResult {
+        // Simulates `SELECT STRUCT(1 AS z, 2 AS a) AS pair`.
+        // A BTreeMap would sort `"a"` before `"z"`, scrambling positional order.
+        let raw_row = Map::from_iter([(
+            "f".to_string(),
+            json!([
+                {
+                    "v": {
+                        "f": [
+                            { "v": "1" },
+                            { "v": "2" }
+                        ]
+                    }
+                }
+            ]),
+        )]);
+        let schema = TableSchema::new().set_fields([TableFieldSchema::new()
+            .set_name("pair")
+            .set_type("RECORD")
+            .set_mode("NULLABLE")
+            .set_fields([
+                TableFieldSchema::new()
+                    .set_name("z")
+                    .set_type("INT64")
+                    .set_mode("NULLABLE"),
+                TableFieldSchema::new()
+                    .set_name("a")
+                    .set_type("INT64")
+                    .set_mode("NULLABLE"),
+            ])]);
+        let schema = Arc::new(Schema::new(schema));
+        let row = Row::try_new(raw_row, &schema)?;
+
+        // Named extraction gets z=1, a=2
+        let by_name: NamedZThenA = row.get("pair")?;
+        assert_eq!(by_name, NamedZThenA { z: 1, a: 2 });
+
+        // Positional extraction on the same struct gets (1, 2) in SQL order (z then a)
+        let by_pos: PositionalPair = row.get("pair")?;
+        assert_eq!(by_pos, PositionalPair(1, 2));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn duplicate_struct_field_names_match_row_behavior() -> TestResult {
+        // Simulates `SELECT STRUCT(100 AS id, 200 AS id) AS dup`.
+        // Name lookup must return the first `"id"` (100), while positional lookup
+        // can access both `(100, 200)`.
+        let raw_row = Map::from_iter([(
+            "f".to_string(),
+            json!([
+                {
+                    "v": {
+                        "f": [
+                            { "v": "100" },
+                            { "v": "200" }
+                        ]
+                    }
+                }
+            ]),
+        )]);
+        let schema = TableSchema::new().set_fields([TableFieldSchema::new()
+            .set_name("dup")
+            .set_type("RECORD")
+            .set_mode("NULLABLE")
+            .set_fields([
+                TableFieldSchema::new()
+                    .set_name("id")
+                    .set_type("INT64")
+                    .set_mode("NULLABLE"),
+                TableFieldSchema::new()
+                    .set_name("id")
+                    .set_type("INT64")
+                    .set_mode("NULLABLE"),
+            ])]);
+        let schema = Arc::new(Schema::new(schema));
+        let row = Row::try_new(raw_row, &schema)?;
+
+        let first_id: DupIdNamed = row.get("dup")?;
+        assert_eq!(first_id, DupIdNamed { id: 100 });
+
+        let both_ids: PositionalPair = row.get("dup")?;
+        assert_eq!(both_ids, PositionalPair(100, 200));
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn derive_from_row_tuple_struct() -> TestResult {
+        // Simulates `SELECT 42, 'world'` where top-level columns have generated names.
+        let raw_row = Map::from_iter([(
+            "f".to_string(),
+            json!([
+            { "v": "42" },
+            { "v": "world" },
+              ]),
+        )]);
+        let schema = TableSchema::new().set_fields([
+            TableFieldSchema::new()
+                .set_name("_f0")
+                .set_type("INT64")
+                .set_mode("NULLABLE"),
+            TableFieldSchema::new()
+                .set_name("_f1")
+                .set_type("STRING")
+                .set_mode("NULLABLE"),
+        ]);
+        let schema = Arc::new(Schema::new(schema));
+        let row = Row::try_new(raw_row, &schema)?;
+
+        let converted = TupleRow::try_from(row)?;
+        assert_eq!(converted, TupleRow(42, "world".to_string()));
+
+        // here
+        Ok(())
+    }
+
+    #[derive(FromSql, Debug, PartialEq)]
+    struct NestedGeneric<U> {
+        inner_val: U,
+    }
+
+    #[derive(FromRow, Debug, PartialEq)]
+    struct GenericRow<T: Clone + Default, U: std::fmt::Debug> {
+        #[bigquery(rename = "custom_val")]
+        single: T,
+        optional: Option<T>,
+        list: Vec<T>,
+        nested: NestedGeneric<U>,
+        common: i64,
+    }
+
+    #[tokio::test]
+    async fn derive_from_row_generic() -> TestResult {
+        let raw_row = Map::from_iter([(
+            "f".to_string(),
+            json!([
+                { "v": "100" },
+                { "v": null },
+                { "v": [{ "v": "1" }, { "v": "2" }, { "v": "3" }] },
+                {
+                    "v": {
+                        "f": [
+                            { "v": "nested_value" }
+                        ]
+                    }
+                },
+                { "v": "1" },
+            ]),
+        )]);
+        let schema = TableSchema::new().set_fields([
+            TableFieldSchema::new()
+                .set_name("custom_val")
+                .set_type("INTEGER")
+                .set_mode("NULLABLE"),
+            TableFieldSchema::new()
+                .set_name("optional")
+                .set_type("INTEGER")
+                .set_mode("NULLABLE"),
+            TableFieldSchema::new()
+                .set_name("list")
+                .set_type("INTEGER")
+                .set_mode("REPEATED"),
+            TableFieldSchema::new()
+                .set_name("nested")
+                .set_type("RECORD")
+                .set_mode("NULLABLE")
+                .set_fields([TableFieldSchema::new()
+                    .set_name("inner_val")
+                    .set_type("STRING")
+                    .set_mode("NULLABLE")]),
+            TableFieldSchema::new()
+                .set_name("common")
+                .set_type("INTEGER")
+                .set_mode("NULLABLE"),
+        ]);
+        let schema = Arc::new(Schema::new(schema));
+        let row = Row::try_new(raw_row, &schema)?;
+
+        let converted = GenericRow::<i64, String>::try_from(row)?;
+        assert_eq!(
+            converted,
+            GenericRow {
+                single: 100,
+                optional: None,
+                list: vec![1, 2, 3],
+                nested: NestedGeneric {
+                    inner_val: "nested_value".to_string(),
+                },
+                common: 1,
+            }
+        );
+        Ok(())
+    }
+
+    #[derive(FromRow, Debug, PartialEq)]
+    struct GenericRowWhere<T>
+    where
+        T: std::fmt::Debug + Clone,
+    {
+        val: T,
+    }
+
+    #[tokio::test]
+    async fn derive_from_row_generic_where_clause() -> TestResult {
+        let raw_row = Map::from_iter([("f".to_string(), json!([{ "v": "hello" }]))]);
+        let schema = TableSchema::new().set_fields([TableFieldSchema::new()
+            .set_name("val")
+            .set_type("STRING")
+            .set_mode("NULLABLE")]);
+        let schema = Arc::new(Schema::new(schema));
+        let row = Row::try_new(raw_row, &schema)?;
+
+        let converted = GenericRowWhere::<String>::try_from(row)?;
+        assert_eq!(
+            converted,
+            GenericRowWhere {
+                val: "hello".to_string(),
+            }
+        );
+        Ok(())
+    }
+
+    #[derive(FromRow, Debug, PartialEq)]
+    struct GenericRowDefault<T = i64> {
+        val: T,
+    }
+
+    #[tokio::test]
+    async fn derive_from_row_generic_default_param() -> TestResult {
+        let raw_row = Map::from_iter([("f".to_string(), json!([{ "v": "42" }]))]);
+        let schema = TableSchema::new().set_fields([TableFieldSchema::new()
+            .set_name("val")
+            .set_type("INTEGER")
+            .set_mode("NULLABLE")]);
+        let schema = Arc::new(Schema::new(schema));
+        let row = Row::try_new(raw_row, &schema)?;
+
+        let converted = GenericRowDefault::try_from(row)?;
+        assert_eq!(converted, GenericRowDefault { val: 42 });
+        Ok(())
+    }
+
+    #[derive(FromRow, Debug, PartialEq)]
+    struct GenericTupleRow<T, U>(T, Option<T>, U);
+
+    #[tokio::test]
+    async fn derive_from_row_generic_tuple_struct() -> TestResult {
+        let raw_row = Map::from_iter([(
+            "f".to_string(),
+            json!([
+                { "v": "42" },
+                { "v": null },
+                { "v": "hello" },
+            ]),
+        )]);
+        let schema = TableSchema::new().set_fields([
+            TableFieldSchema::new()
+                .set_name("_f0")
+                .set_type("INT64")
+                .set_mode("NULLABLE"),
+            TableFieldSchema::new()
+                .set_name("_f1")
+                .set_type("INT64")
+                .set_mode("NULLABLE"),
+            TableFieldSchema::new()
+                .set_name("_f2")
+                .set_type("STRING")
+                .set_mode("NULLABLE"),
+        ]);
+        let schema = Arc::new(Schema::new(schema));
+        let row = Row::try_new(raw_row, &schema)?;
+
+        let converted = GenericTupleRow::<i64, String>::try_from(row)?;
+        assert_eq!(converted, GenericTupleRow(42, None, "hello".to_string()));
+
+        Ok(())
+    }
+
+    #[test]
+    fn try_new_from_arrow_anonymous_and_named_structs() -> TestResult {
+        use arrow::array::{ArrayRef, BooleanArray, Int64Array, StringArray, StructArray};
+        use arrow::datatypes::{DataType, Field, Fields, Schema as ArrowSchema};
+
+        // 1. Anonymous struct: STRUCT(10, 'hello', true)
+        let anon_fields = Fields::from(vec![
+            Field::new("", DataType::Int64, false),
+            Field::new("", DataType::Utf8, false),
+            Field::new("", DataType::Boolean, false),
+        ]);
+        let anon_arr = Arc::new(StructArray::new(
+            anon_fields.clone(),
+            vec![
+                Arc::new(Int64Array::from(vec![10])) as ArrayRef,
+                Arc::new(StringArray::from(vec!["hello"])) as ArrayRef,
+                Arc::new(BooleanArray::from(vec![true])) as ArrayRef,
+            ],
+            None,
+        ));
+
+        // 2. Named pair struct with SQL declaration order: STRUCT(1 AS z, 2 AS a)
+        let pair_fields = Fields::from(vec![
+            Field::new("z", DataType::Int64, false),
+            Field::new("a", DataType::Int64, false),
+        ]);
+        let pair_arr = Arc::new(StructArray::new(
+            pair_fields.clone(),
+            vec![
+                Arc::new(Int64Array::from(vec![1])) as ArrayRef,
+                Arc::new(Int64Array::from(vec![2])) as ArrayRef,
+            ],
+            None,
+        ));
+
+        // 3. Duplicate field names: STRUCT(100 AS id, 200 AS id)
+        let dup_fields = Fields::from(vec![
+            Field::new("id", DataType::Int64, false),
+            Field::new("id", DataType::Int64, false),
+        ]);
+        let dup_arr = Arc::new(StructArray::new(
+            dup_fields.clone(),
+            vec![
+                Arc::new(Int64Array::from(vec![100])) as ArrayRef,
+                Arc::new(Int64Array::from(vec![200])) as ArrayRef,
+            ],
+            None,
+        ));
+
+        let arrow_schema = Arc::new(ArrowSchema::new(vec![
+            Field::new("anon", DataType::Struct(anon_fields), false),
+            Field::new("pair", DataType::Struct(pair_fields), false),
+            Field::new("dup", DataType::Struct(dup_fields), false),
+        ]));
+
+        let batch = Arc::new(RecordBatch::try_new(
+            arrow_schema,
+            vec![anon_arr, pair_arr, dup_arr],
+        )?);
+
+        let table_schema = TableSchema::new().set_fields([
+            TableFieldSchema::new().set_name("anon").set_type("RECORD"),
+            TableFieldSchema::new().set_name("pair").set_type("RECORD"),
+            TableFieldSchema::new().set_name("dup").set_type("RECORD"),
+        ]);
+        let schema = Arc::new(Schema::new(table_schema));
+
+        let mut row = Row::try_new_from_arrow(&batch, 0, &schema)?;
+
+        // Anonymous struct extraction
+        let anon: AnonTriple = row.get("anon")?;
+        assert_eq!(anon, AnonTriple(10, "hello".to_string(), true));
+
+        // Named struct extraction by name and by positional order
+        let by_name: NamedZThenA = row.get("pair")?;
+        assert_eq!(by_name, NamedZThenA { z: 1, a: 2 });
+        let by_pos: PositionalPair = row.get("pair")?;
+        assert_eq!(by_pos, PositionalPair(1, 2));
+
+        // Duplicate fields: name gets first, positional gets both
+        let first_id: DupIdNamed = row.get("dup")?;
+        assert_eq!(first_id, DupIdNamed { id: 100 });
+        let both_ids: PositionalPair = row.get("dup")?;
+        assert_eq!(both_ids, PositionalPair(100, 200));
+
+        // Test taking values mutably
+        let anon_taken: AnonTriple = row.take("anon")?;
+        assert_eq!(anon_taken, AnonTriple(10, "hello".to_string(), true));
+
+        Ok(())
+    }
+
+    #[derive(FromRow, Debug, PartialEq)]
+    struct ArrowNestedRow {
+        numbers: Vec<i64>,
+        strings: Vec<String>,
+        pairs: Vec<PositionalPair>,
+    }
+
+    #[test]
+    fn try_new_from_arrow_list_arrays() -> TestResult {
+        use arrow::array::{
+            ArrayRef, Int64Array, LargeListArray, ListArray, StringArray, StructArray,
+        };
+        use arrow::buffer::OffsetBuffer;
+        use arrow::datatypes::{DataType, Field, Fields, Schema as ArrowSchema};
+
+        // List of integers: [[1, 2, 3], [42]]
+        let int_values = Arc::new(Int64Array::from(vec![1, 2, 3, 42])) as ArrayRef;
+        let int_offsets = OffsetBuffer::from_lengths(vec![3, 1]);
+        let int_list = Arc::new(ListArray::new(
+            Arc::new(Field::new("element", DataType::Int64, false)),
+            int_offsets,
+            int_values,
+            None,
+        ));
+
+        // LargeList of strings: [["a", "b"], ["c"]]
+        let str_values = Arc::new(StringArray::from(vec!["a", "b", "c"])) as ArrayRef;
+        let str_offsets = OffsetBuffer::from_lengths(vec![2, 1]);
+        let str_large_list = Arc::new(LargeListArray::new(
+            Arc::new(Field::new("element", DataType::Utf8, false)),
+            str_offsets,
+            str_values,
+            None,
+        ));
+
+        // List of structs: [[{"z": 1, "a": 2}], [{"z": 10, "a": 20}]]
+        let pair_fields = Fields::from(vec![
+            Field::new("z", DataType::Int64, false),
+            Field::new("a", DataType::Int64, false),
+        ]);
+        let pair_structs = Arc::new(StructArray::new(
+            pair_fields.clone(),
+            vec![
+                Arc::new(Int64Array::from(vec![1, 10])) as ArrayRef,
+                Arc::new(Int64Array::from(vec![2, 20])) as ArrayRef,
+            ],
+            None,
+        )) as ArrayRef;
+        let struct_offsets = OffsetBuffer::from_lengths(vec![1, 1]);
+        let struct_list = Arc::new(ListArray::new(
+            Arc::new(Field::new("element", DataType::Struct(pair_fields), false)),
+            struct_offsets,
+            pair_structs,
+            None,
+        ));
+
+        let arrow_schema = Arc::new(ArrowSchema::new(vec![
+            Field::new(
+                "numbers",
+                DataType::List(Arc::new(Field::new("element", DataType::Int64, false))),
+                false,
+            ),
+            Field::new(
+                "strings",
+                DataType::LargeList(Arc::new(Field::new("element", DataType::Utf8, false))),
+                false,
+            ),
+            Field::new(
+                "pairs",
+                DataType::List(Arc::new(Field::new(
+                    "element",
+                    DataType::Struct(Fields::from(vec![
+                        Field::new("z", DataType::Int64, false),
+                        Field::new("a", DataType::Int64, false),
+                    ])),
+                    false,
+                ))),
+                false,
+            ),
+        ]));
+
+        let batch = Arc::new(RecordBatch::try_new(
+            arrow_schema,
+            vec![int_list, str_large_list, struct_list],
+        )?);
+
+        let table_schema = TableSchema::new().set_fields([
+            TableFieldSchema::new()
+                .set_name("numbers")
+                .set_type("INTEGER")
+                .set_mode("REPEATED"),
+            TableFieldSchema::new()
+                .set_name("strings")
+                .set_type("STRING")
+                .set_mode("REPEATED"),
+            TableFieldSchema::new()
+                .set_name("pairs")
+                .set_type("RECORD")
+                .set_mode("REPEATED"),
+        ]);
+        let schema = Arc::new(Schema::new(table_schema));
+
+        // Row 0
+        let row0 = Row::try_new_from_arrow(&batch, 0, &schema)?;
+        let numbers0: Vec<i64> = row0.get("numbers")?;
+        assert_eq!(numbers0, vec![1, 2, 3]);
+
+        let strings0: Vec<String> = row0.get("strings")?;
+        assert_eq!(strings0, vec!["a".to_string(), "b".to_string()]);
+
+        let pairs0_named: Vec<NamedZThenA> = row0.get("pairs")?;
+        assert_eq!(pairs0_named, vec![NamedZThenA { z: 1, a: 2 }]);
+
+        let pairs0_pos: Vec<PositionalPair> = row0.get("pairs")?;
+        assert_eq!(pairs0_pos, vec![PositionalPair(1, 2)]);
+
+        let row0_derived = ArrowNestedRow::try_from(row0)?;
+        assert_eq!(
+            row0_derived,
+            ArrowNestedRow {
+                numbers: vec![1, 2, 3],
+                strings: vec!["a".to_string(), "b".to_string()],
+                pairs: vec![PositionalPair(1, 2)],
+            }
+        );
+
+        // Row 1
+        let row1 = Row::try_new_from_arrow(&batch, 1, &schema)?;
+        let numbers1: Vec<i64> = row1.get("numbers")?;
+        assert_eq!(numbers1, vec![42]);
+
+        let strings1: Vec<String> = row1.get("strings")?;
+        assert_eq!(strings1, vec!["c".to_string()]);
+
+        let pairs1_pos: Vec<PositionalPair> = row1.get("pairs")?;
+        assert_eq!(pairs1_pos, vec![PositionalPair(10, 20)]);
+
+        let row1_derived = ArrowNestedRow::try_from(row1)?;
+        assert_eq!(
+            row1_derived,
+            ArrowNestedRow {
+                numbers: vec![42],
+                strings: vec!["c".to_string()],
+                pairs: vec![PositionalPair(10, 20)],
+            }
+        );
 
         Ok(())
     }

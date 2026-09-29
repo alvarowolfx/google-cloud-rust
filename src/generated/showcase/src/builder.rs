@@ -2416,14 +2416,12 @@ pub mod echo {
     }
 
     /// Common implementation for [crate::client::Echo] bidi stream builders.
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[derive(Clone, Debug)]
     pub(crate) struct BidiStreamBuilder {
         stub: std::sync::Arc<dyn super::super::stub::dynamic::Echo>,
         options: crate::RequestOptions,
     }
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     impl BidiStreamBuilder {
         pub(crate) fn new(stub: std::sync::Arc<dyn super::super::stub::dynamic::Echo>) -> Self {
             Self {
@@ -2718,7 +2716,11 @@ pub mod echo {
     /// # use google_cloud_showcase_v1beta1::builder::echo::Expand;
     /// # async fn sample() -> google_cloud_showcase_v1beta1::Result<()> {
     /// let builder = prepare_request_builder();
-    /// let mut receiver = builder.send().await?;
+    /// let mut resp_stream = builder.send().await?;
+    /// while let Some(response) = resp_stream.next().await {
+    ///     let response = response?;
+    ///     println!("response {:?}", response);
+    /// }
     /// # Ok(()) }
     ///
     /// fn prepare_request_builder() -> Expand {
@@ -2726,11 +2728,9 @@ pub mod echo {
     ///   // ... details omitted ...
     /// }
     /// ```
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[derive(Clone, Debug)]
     pub struct Expand(RequestBuilder<crate::model::ExpandRequest>);
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     impl Expand {
         pub(crate) fn new(stub: std::sync::Arc<dyn super::super::stub::dynamic::Echo>) -> Self {
             Self(RequestBuilder::new(stub))
@@ -2751,7 +2751,7 @@ pub mod echo {
         /// Initiates the server stream.
         pub async fn send(
             self,
-        ) -> Result<google_cloud_gax::streaming::ResponseReceiver<crate::model::EchoResponse>>
+        ) -> Result<google_cloud_gax::streaming::ResponseStream<crate::model::EchoResponse>>
         {
             (*self.0.stub).expand(self.0.request, self.0.options).await
         }
@@ -2799,7 +2799,6 @@ pub mod echo {
         }
     }
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[doc(hidden)]
     impl crate::RequestBuilder for Expand {
         fn request_options(&mut self) -> &mut crate::RequestOptions {
@@ -2815,12 +2814,12 @@ pub mod echo {
     /// # use google_cloud_showcase_v1beta1::model::EchoRequest;
     /// # async fn sample() -> anyhow::Result<()> {
     /// let builder = prepare_request_builder();
-    /// let (sender, mut receiver) = builder.build();
+    /// let (sender, mut resp_stream) = builder.build();
     ///
     /// sender.send(EchoRequest::default()).await?;
     /// drop(sender); // Half-close the stream
     ///
-    /// while let Some(response) = receiver.recv().await {
+    /// while let Some(response) = resp_stream.next().await {
     ///     let response = response?;
     ///     println!("response {:?}", response);
     /// }
@@ -2831,11 +2830,9 @@ pub mod echo {
     ///   // ... details omitted ...
     /// }
     /// ```
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[derive(Clone, Debug)]
     pub struct Chat(BidiStreamBuilder);
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     impl Chat {
         pub(crate) fn new(stub: std::sync::Arc<dyn super::super::stub::dynamic::Echo>) -> Self {
             Self(BidiStreamBuilder::new(stub))
@@ -2852,13 +2849,12 @@ pub mod echo {
             self,
         ) -> (
             google_cloud_gax::streaming::RequestSender<crate::model::EchoRequest>,
-            google_cloud_gax::streaming::ResponseReceiver<crate::model::EchoResponse>,
+            google_cloud_gax::streaming::ResponseStream<crate::model::EchoResponse>,
         ) {
             (*self.0.stub).chat(self.0.options)
         }
     }
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[doc(hidden)]
     impl crate::RequestBuilder for Chat {
         fn request_options(&mut self) -> &mut crate::RequestOptions {
@@ -5435,14 +5431,12 @@ pub mod messaging {
     }
 
     /// Common implementation for [crate::client::Messaging] bidi stream builders.
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[derive(Clone, Debug)]
     pub(crate) struct BidiStreamBuilder {
         stub: std::sync::Arc<dyn super::super::stub::dynamic::Messaging>,
         options: crate::RequestOptions,
     }
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     impl BidiStreamBuilder {
         pub(crate) fn new(
             stub: std::sync::Arc<dyn super::super::stub::dynamic::Messaging>,
@@ -6377,7 +6371,11 @@ pub mod messaging {
     /// # use google_cloud_showcase_v1beta1::builder::messaging::StreamBlurbs;
     /// # async fn sample() -> google_cloud_showcase_v1beta1::Result<()> {
     /// let builder = prepare_request_builder();
-    /// let mut receiver = builder.send().await?;
+    /// let mut resp_stream = builder.send().await?;
+    /// while let Some(response) = resp_stream.next().await {
+    ///     let response = response?;
+    ///     println!("response {:?}", response);
+    /// }
     /// # Ok(()) }
     ///
     /// fn prepare_request_builder() -> StreamBlurbs {
@@ -6385,11 +6383,9 @@ pub mod messaging {
     ///   // ... details omitted ...
     /// }
     /// ```
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[derive(Clone, Debug)]
     pub struct StreamBlurbs(RequestBuilder<crate::model::StreamBlurbsRequest>);
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     impl StreamBlurbs {
         pub(crate) fn new(
             stub: std::sync::Arc<dyn super::super::stub::dynamic::Messaging>,
@@ -6412,7 +6408,7 @@ pub mod messaging {
         /// Initiates the server stream.
         pub async fn send(
             self,
-        ) -> Result<google_cloud_gax::streaming::ResponseReceiver<crate::model::StreamBlurbsResponse>>
+        ) -> Result<google_cloud_gax::streaming::ResponseStream<crate::model::StreamBlurbsResponse>>
         {
             (*self.0.stub)
                 .stream_blurbs(self.0.request, self.0.options)
@@ -6450,7 +6446,6 @@ pub mod messaging {
         }
     }
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[doc(hidden)]
     impl crate::RequestBuilder for StreamBlurbs {
         fn request_options(&mut self) -> &mut crate::RequestOptions {
@@ -6466,12 +6461,12 @@ pub mod messaging {
     /// # use google_cloud_showcase_v1beta1::model::ConnectRequest;
     /// # async fn sample() -> anyhow::Result<()> {
     /// let builder = prepare_request_builder();
-    /// let (sender, mut receiver) = builder.build();
+    /// let (sender, mut resp_stream) = builder.build();
     ///
     /// sender.send(ConnectRequest::default()).await?;
     /// drop(sender); // Half-close the stream
     ///
-    /// while let Some(response) = receiver.recv().await {
+    /// while let Some(response) = resp_stream.next().await {
     ///     let response = response?;
     ///     println!("response {:?}", response);
     /// }
@@ -6482,11 +6477,9 @@ pub mod messaging {
     ///   // ... details omitted ...
     /// }
     /// ```
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[derive(Clone, Debug)]
     pub struct Connect(BidiStreamBuilder);
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     impl Connect {
         pub(crate) fn new(
             stub: std::sync::Arc<dyn super::super::stub::dynamic::Messaging>,
@@ -6505,13 +6498,12 @@ pub mod messaging {
             self,
         ) -> (
             google_cloud_gax::streaming::RequestSender<crate::model::ConnectRequest>,
-            google_cloud_gax::streaming::ResponseReceiver<crate::model::StreamBlurbsResponse>,
+            google_cloud_gax::streaming::ResponseStream<crate::model::StreamBlurbsResponse>,
         ) {
             (*self.0.stub).connect(self.0.options)
         }
     }
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[doc(hidden)]
     impl crate::RequestBuilder for Connect {
         fn request_options(&mut self) -> &mut crate::RequestOptions {
@@ -7685,7 +7677,11 @@ pub mod sequence_service {
     /// # use google_cloud_showcase_v1beta1::builder::sequence_service::AttemptStreamingSequence;
     /// # async fn sample() -> google_cloud_showcase_v1beta1::Result<()> {
     /// let builder = prepare_request_builder();
-    /// let mut receiver = builder.send().await?;
+    /// let mut resp_stream = builder.send().await?;
+    /// while let Some(response) = resp_stream.next().await {
+    ///     let response = response?;
+    ///     println!("response {:?}", response);
+    /// }
     /// # Ok(()) }
     ///
     /// fn prepare_request_builder() -> AttemptStreamingSequence {
@@ -7693,13 +7689,11 @@ pub mod sequence_service {
     ///   // ... details omitted ...
     /// }
     /// ```
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[derive(Clone, Debug)]
     pub struct AttemptStreamingSequence(
         RequestBuilder<crate::model::AttemptStreamingSequenceRequest>,
     );
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     impl AttemptStreamingSequence {
         pub(crate) fn new(
             stub: std::sync::Arc<dyn super::super::stub::dynamic::SequenceService>,
@@ -7726,7 +7720,7 @@ pub mod sequence_service {
         pub async fn send(
             self,
         ) -> Result<
-            google_cloud_gax::streaming::ResponseReceiver<
+            google_cloud_gax::streaming::ResponseStream<
                 crate::model::AttemptStreamingSequenceResponse,
             >,
         > {
@@ -7750,7 +7744,6 @@ pub mod sequence_service {
         }
     }
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[doc(hidden)]
     impl crate::RequestBuilder for AttemptStreamingSequence {
         fn request_options(&mut self) -> &mut crate::RequestOptions {

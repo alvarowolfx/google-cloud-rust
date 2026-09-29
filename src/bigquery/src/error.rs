@@ -29,6 +29,7 @@ pub enum QueryError {
 
     /// The query job failed on the BigQuery service side.
     /// Includes the list of error protocols returned by the service.
+    #[non_exhaustive]
     #[error("query job failed: {errors:?}")]
     JobFailed {
         /// The list of all errors associated with the job.
@@ -55,6 +56,7 @@ pub enum RowError {
     ColumnNotFound(String),
 
     /// The requested column index was out of range.
+    #[non_exhaustive]
     #[error("column index out of range: {index} (expected < {len})")]
     IndexOutOfRange {
         /// The index that was requested.
@@ -64,17 +66,20 @@ pub enum RowError {
     },
 
     /// Failed to convert/parse the cell value to the target type.
-    #[error("type conversion error for column '{column}': {source}")]
+    #[error("type conversion error for column '{column}' (SQL type {sql_type}): {source}")]
+    #[non_exhaustive]
     TypeConversion {
         /// The column identifier (name or index).
         column: String,
+        /// The BigQuery SQL type of the column.
+        sql_type: String,
         /// The underlying parsing error.
         #[source]
         source: ConvertError,
     },
 
     /// The JSON format returned by the service did not match expectations.
-    #[error("internal service JSON layout invalid: {0}")]
+    #[error("internal service JSON layout is invalid: {0}")]
     InvalidRowFormat(String),
 
     /// The underlying RPC failed.
@@ -88,17 +93,18 @@ pub enum RowError {
     },
 }
 
-/// Represents failures when converting a raw BigQuery cell value (`wkt::Value`) to a Rust type.
+/// Represents failures when converting a BigQuery cell value to a Rust type.
 #[derive(thiserror::Error, Debug)]
 #[non_exhaustive]
 pub enum ConvertError {
     /// The value type did not match the expected type.
-    #[error("type mismatch, expected {expected}, got {got:?}")]
+    #[error("type mismatch, expected {expected}, got {got}")]
+    #[non_exhaustive]
     TypeMismatch {
         /// The expected type name.
-        expected: &'static str,
-        /// The actual value received.
-        got: wkt::Value,
+        expected: String,
+        /// The actual type received.
+        got: String,
     },
 
     /// The value was null, but the target type does not support nulls (non-Option).
@@ -118,9 +124,21 @@ pub enum ConvertError {
     ),
 }
 
-// TODO(#6443) - consolidate crates
+impl ConvertError {
+    pub(crate) fn type_mismatch(
+        expected: impl Into<String>,
+        got: &crate::query::from_sql::SqlValueInner,
+    ) -> Self {
+        Self::TypeMismatch {
+            expected: expected.into(),
+            got: got.type_name().to_string(),
+        }
+    }
+}
+
 pub use crate::write::error::AppendError;
-pub use crate::write::error::AttachError;
+pub use crate::write::error::CommitError;
+pub use crate::write::error::WriterBuilderError;
 
 #[cfg(test)]
 mod tests {
@@ -180,17 +198,18 @@ mod tests {
 
         let err = RowError::TypeConversion {
             column: "age".to_string(),
+            sql_type: "INTEGER".to_string(),
             source: ConvertError::NotNull,
         };
         assert_eq!(
             err.to_string(),
-            "type conversion error for column 'age': expected non-null value, got null"
+            "type conversion error for column 'age' (SQL type INTEGER): expected non-null value, got null"
         );
 
         let err = RowError::InvalidRowFormat("missing f field".to_string());
         assert_eq!(
             err.to_string(),
-            "internal service JSON layout invalid: missing f field"
+            "internal service JSON layout is invalid: missing f field"
         );
 
         let status = Status::default()
@@ -204,14 +223,9 @@ mod tests {
 
     #[test]
     fn test_convert_error_display() {
-        let err = ConvertError::TypeMismatch {
-            expected: "i64",
-            got: wkt::Value::String("hello".to_string()),
-        };
-        assert_eq!(
-            err.to_string(),
-            "type mismatch, expected i64, got String(\"hello\")"
-        );
+        let val = crate::query::SqlValue::new(wkt::Value::String("hello".to_string()));
+        let err = ConvertError::type_mismatch("i64", &val.inner);
+        assert_eq!(err.to_string(), "type mismatch, expected i64, got string");
 
         let err = ConvertError::NotNull;
         assert_eq!(err.to_string(), "expected non-null value, got null");

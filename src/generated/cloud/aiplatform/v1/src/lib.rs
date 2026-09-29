@@ -16,13 +16,6 @@
 
 //! Google Cloud Client Libraries for Rust - Vertex AI API
 //!
-//! **WARNING:** some RPCs have no corresponding Rust function to call them.
-//! Typically these are streaming RPCs. We expect adding these RPCs in a
-//! way that does not break the existing APIs or changes their behavior in a
-//! significant way. We do anticipate a number of new crate dependencies
-//! will be required. If you need these RPCs please open an issue in our
-//! GitHub repository.
-//!
 //! This crate contains traits, types, and functions to interact with Vertex AI API
 //! Most applications will use the structs defined in the [client] module.
 //!
@@ -96,6 +89,7 @@ pub use google_cloud_gax::error::Error;
 #[allow(rustdoc::redundant_explicit_links)]
 pub mod stub;
 
+/// Concrete implementations of client library traits.
 ///
 /// # Example
 /// ```
@@ -110,7 +104,6 @@ pub mod stub;
 ///     Ok(())
 /// }
 /// ```
-/// Concrete implementations of this client library traits.
 pub mod client;
 
 /// Request builders.
@@ -121,6 +114,36 @@ pub(crate) mod tracing;
 
 #[doc(hidden)]
 pub(crate) mod transport;
+
+#[cfg(any(
+    feature = "feature-online-store-service",
+    feature = "featurestore-online-serving-service",
+    feature = "prediction-service",
+    feature = "reasoning-engine-execution-service",
+    feature = "tensorboard-service",
+))]
+#[doc(hidden)]
+#[allow(clippy::all)]
+#[allow(unused_imports)]
+#[allow(dead_code)]
+#[allow(missing_docs)]
+pub(crate) mod prost {
+    include!("prost/includes.rs");
+}
+
+#[cfg(any(
+    feature = "feature-online-store-service",
+    feature = "featurestore-online-serving-service",
+    feature = "prediction-service",
+    feature = "reasoning-engine-execution-service",
+    feature = "tensorboard-service",
+))]
+#[doc(hidden)]
+#[allow(clippy::all)]
+#[allow(unused_imports)]
+#[allow(dead_code)]
+#[allow(missing_docs)]
+pub(crate) mod convert;
 
 /// The default host used by the service.
 #[cfg(any(
@@ -208,6 +231,15 @@ pub(crate) mod info {
                 library_type: gaxi::api_header::GAPIC,
             };
             ac.rest_header_value()
+        });
+    pub(crate) static X_GOOG_API_CLIENT_GRPC_HEADER: std::sync::LazyLock<String> =
+        std::sync::LazyLock::new(|| {
+            let ac = gaxi::api_header::XGoogApiClient {
+                name: NAME,
+                version: VERSION,
+                library_type: gaxi::api_header::GAPIC,
+            };
+            ac.grpc_header_value()
         });
 }
 

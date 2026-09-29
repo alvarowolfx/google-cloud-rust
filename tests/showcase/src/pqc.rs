@@ -42,7 +42,6 @@ use anyhow::Error;
 use google_cloud_gax::options::RequestOptionsBuilder;
 use google_cloud_gax::retry_policy::{AlwaysRetry, RetryPolicyExt};
 use google_cloud_showcase_v1beta1::client::{Echo, Testing};
-#[cfg(google_cloud_unstable_gapic_streaming)]
 use google_cloud_showcase_v1beta1::model::EchoRequest;
 use std::path::PathBuf;
 use std::process::Stdio;
@@ -112,11 +111,8 @@ pub async fn run() -> Result<()> {
     tracing::info!("testing PQC transport (HTTP unary)");
     test_pqc_http().await?;
 
-    #[cfg(google_cloud_unstable_gapic_streaming)]
-    {
-        tracing::info!("testing PQC transport (gRPC streaming)");
-        test_pqc_grpc().await?;
-    }
+    tracing::info!("testing PQC transport (gRPC streaming)");
+    test_pqc_grpc().await?;
 
     Ok(())
 }
@@ -188,7 +184,6 @@ async fn test_pqc_http() -> Result<()> {
 }
 
 /// Verifies that gRPC bidirectional streaming RPCs (`tonic`) succeed over a TLS channel requiring `X25519MLKEM768`.
-#[cfg(google_cloud_unstable_gapic_streaming)]
 async fn test_pqc_grpc() -> Result<()> {
     let client = Echo::builder()
         .with_endpoint(PQC_ENDPOINT)
@@ -199,7 +194,7 @@ async fn test_pqc_grpc() -> Result<()> {
         .await?;
 
     const TOTAL_MESSAGES: usize = 5;
-    let (sender, mut receiver) = client.chat().build();
+    let (sender, mut resp_stream) = client.chat().build();
 
     for i in 0..TOTAL_MESSAGES {
         sender
@@ -209,7 +204,7 @@ async fn test_pqc_grpc() -> Result<()> {
     drop(sender);
 
     let mut received = Vec::new();
-    while let Some(res) = receiver.recv().await {
+    while let Some(res) = resp_stream.next().await {
         received.push(res?.content);
     }
 

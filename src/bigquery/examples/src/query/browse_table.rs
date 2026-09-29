@@ -27,16 +27,16 @@ LIMIT 10
 "#,
         )
         .with_project_id(project_id)
-        .set_max_results(5_u32)
+        .set_page_size(5_u32)
         .set_location("US")
         .until_done()
         .await?
         .read();
 
     while let Some(row) = rows.next().await.transpose()? {
-        let name: String = row.get("name");
-        let gender: String = row.get("gender");
-        let number: i64 = row.get("number");
+        let name: String = row.get("name")?;
+        let gender: String = row.get("gender")?;
+        let number: i64 = row.get("number")?;
         println!("Name: {name}, Gender: {gender}, Number: {number}");
     }
     Ok(())

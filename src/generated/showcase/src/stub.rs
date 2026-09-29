@@ -296,27 +296,25 @@ pub trait Echo: std::fmt::Debug + Send + Sync {
     }
 
     /// Implements [super::client::Echo::expand].
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     fn expand(
         &self,
         _req: crate::model::ExpandRequest,
         _options: crate::RequestOptions,
     ) -> impl std::future::Future<
         Output = crate::Result<
-            google_cloud_gax::streaming::ResponseReceiver<crate::model::EchoResponse>,
+            google_cloud_gax::streaming::ResponseStream<crate::model::EchoResponse>,
         >,
     > + Send {
         gaxi::unimplemented::unimplemented_server_streaming_stub()
     }
 
     /// Implements [super::client::Echo::chat].
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     fn chat(
         &self,
         _options: crate::RequestOptions,
     ) -> (
         google_cloud_gax::streaming::RequestSender<crate::model::EchoRequest>,
-        google_cloud_gax::streaming::ResponseReceiver<crate::model::EchoResponse>,
+        google_cloud_gax::streaming::ResponseStream<crate::model::EchoResponse>,
     ) {
         gaxi::unimplemented::unimplemented_bidi_stub()
     }
@@ -800,27 +798,25 @@ pub trait Messaging: std::fmt::Debug + Send + Sync {
     }
 
     /// Implements [super::client::Messaging::stream_blurbs].
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     fn stream_blurbs(
         &self,
         _req: crate::model::StreamBlurbsRequest,
         _options: crate::RequestOptions,
     ) -> impl std::future::Future<
         Output = crate::Result<
-            google_cloud_gax::streaming::ResponseReceiver<crate::model::StreamBlurbsResponse>,
+            google_cloud_gax::streaming::ResponseStream<crate::model::StreamBlurbsResponse>,
         >,
     > + Send {
         gaxi::unimplemented::unimplemented_server_streaming_stub()
     }
 
     /// Implements [super::client::Messaging::connect].
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     fn connect(
         &self,
         _options: crate::RequestOptions,
     ) -> (
         google_cloud_gax::streaming::RequestSender<crate::model::ConnectRequest>,
-        google_cloud_gax::streaming::ResponseReceiver<crate::model::StreamBlurbsResponse>,
+        google_cloud_gax::streaming::ResponseStream<crate::model::StreamBlurbsResponse>,
     ) {
         gaxi::unimplemented::unimplemented_bidi_stub()
     }
@@ -1026,14 +1022,13 @@ pub trait SequenceService: std::fmt::Debug + Send + Sync {
     }
 
     /// Implements [super::client::SequenceService::attempt_streaming_sequence].
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     fn attempt_streaming_sequence(
         &self,
         _req: crate::model::AttemptStreamingSequenceRequest,
         _options: crate::RequestOptions,
     ) -> impl std::future::Future<
         Output = crate::Result<
-            google_cloud_gax::streaming::ResponseReceiver<
+            google_cloud_gax::streaming::ResponseStream<
                 crate::model::AttemptStreamingSequenceResponse,
             >,
         >,

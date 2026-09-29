@@ -196,6 +196,34 @@ where
     }
 
     #[tracing::instrument(level = tracing::Level::DEBUG, ret)]
+    async fn set_agent_ops_observability(
+        &self,
+        req: crate::model::SetAgentOpsObservabilityRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<google_cloud_longrunning::model::Operation>> {
+        let (_span, pending) = gaxi::client_request_signals!(
+            metric: self.duration.clone(),
+            info: *info::INSTRUMENTATION_CLIENT_INFO,
+            method: "client::DataAgentService::set_agent_ops_observability",
+            self.inner.set_agent_ops_observability(req, options));
+        pending.await
+    }
+
+    #[tracing::instrument(level = tracing::Level::DEBUG, ret)]
+    async fn retrieve_agent_ops_observability(
+        &self,
+        req: crate::model::RetrieveAgentOpsObservabilityRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::RetrieveAgentOpsObservabilityResponse>> {
+        let (_span, pending) = gaxi::client_request_signals!(
+            metric: self.duration.clone(),
+            info: *info::INSTRUMENTATION_CLIENT_INFO,
+            method: "client::DataAgentService::retrieve_agent_ops_observability",
+            self.inner.retrieve_agent_ops_observability(req, options));
+        pending.await
+    }
+
+    #[tracing::instrument(level = tracing::Level::DEBUG, ret)]
     async fn list_locations(
         &self,
         req: google_cloud_location::model::ListLocationsRequest,
@@ -352,6 +380,7 @@ where
     T: super::stub::DataChatService + std::fmt::Debug + Send + Sync,
 {
     inner: T,
+    #[allow(dead_code)]
     duration: gaxi::observability::DurationMetric,
 }
 
@@ -371,6 +400,14 @@ impl<T> super::stub::DataChatService for DataChatService<T>
 where
     T: super::stub::DataChatService + std::fmt::Debug + Send + Sync,
 {
+    async fn chat(
+        &self,
+        req: crate::model::ChatRequest,
+        options: crate::RequestOptions,
+    ) -> Result<google_cloud_gax::streaming::ResponseStream<crate::model::Message>> {
+        self.inner.chat(req, options).await
+    }
+
     #[tracing::instrument(level = tracing::Level::DEBUG, ret)]
     async fn create_conversation(
         &self,
@@ -396,6 +433,20 @@ where
             info: *info::INSTRUMENTATION_CLIENT_INFO,
             method: "client::DataChatService::delete_conversation",
             self.inner.delete_conversation(req, options));
+        pending.await
+    }
+
+    #[tracing::instrument(level = tracing::Level::DEBUG, ret)]
+    async fn update_conversation(
+        &self,
+        req: crate::model::UpdateConversationRequest,
+        options: crate::RequestOptions,
+    ) -> Result<crate::Response<crate::model::Conversation>> {
+        let (_span, pending) = gaxi::client_request_signals!(
+            metric: self.duration.clone(),
+            info: *info::INSTRUMENTATION_CLIENT_INFO,
+            method: "client::DataChatService::update_conversation",
+            self.inner.update_conversation(req, options));
         pending.await
     }
 

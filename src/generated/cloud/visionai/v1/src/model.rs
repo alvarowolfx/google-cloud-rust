@@ -28,6 +28,9 @@ extern crate google_cloud_longrunning;
 extern crate google_cloud_lro;
 extern crate google_cloud_rpc;
 extern crate google_cloud_type;
+extern crate http;
+extern crate prost;
+extern crate prost_types;
 extern crate serde;
 extern crate serde_json;
 extern crate serde_with;
@@ -40205,7 +40208,7 @@ impl wkt::message::Message for GenerateHlsUriResponse {
 #[non_exhaustive]
 pub struct SearchAssetsRequest {
     /// Required. The parent corpus to search.
-    /// Format: `projects/{project_id}/locations/{location_id}/corpora/{corpus_id}'
+    /// Format: `projects/{project_id}/locations/{location_id}/corpora/{corpus_id}`
     pub corpus: std::string::String,
 
     /// The number of results to be returned in this page. If it's 0, the server
@@ -40491,7 +40494,7 @@ pub mod search_assets_request {
 pub struct SearchIndexEndpointRequest {
     /// Required. The index endpoint to search.
     /// Format:
-    /// `projects/{project_id}/locations/{location_id}/indexEndpoints/{index_endpoint_id}'
+    /// `projects/{project_id}/locations/{location_id}/indexEndpoints/{index_endpoint_id}`
     pub index_endpoint: std::string::String,
 
     /// Criteria applied to search results.
