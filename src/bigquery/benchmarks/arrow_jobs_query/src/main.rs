@@ -14,6 +14,7 @@
 
 use clap::{Parser, ValueEnum};
 use google_cloud_bigquery::client::BigQuery;
+use google_cloud_bigquery::datatypes::{Interval, Range};
 use google_cloud_bigquery::query::FromRow;
 use stats_alloc::{Region, StatsAlloc};
 use std::alloc::System;
@@ -89,10 +90,24 @@ enum Scenario {
     Synthetic100k,
     #[value(name = "synthetic-500k")]
     Synthetic500k,
+    #[value(name = "wikipedia-1k")]
+    Wikipedia1k,
+    #[value(name = "wikipedia-5k")]
+    Wikipedia5k,
     #[value(name = "wikipedia-10k")]
     Wikipedia10k,
     #[value(name = "wikipedia-100k")]
     Wikipedia100k,
+    #[value(name = "usa-names-1k")]
+    UsaNames1k,
+    #[value(name = "usa-names-10k")]
+    UsaNames10k,
+    #[value(name = "usa-names-50k")]
+    UsaNames50k,
+    #[value(name = "datatypes-1k")]
+    DataTypes1k,
+    #[value(name = "datatypes-5k")]
+    DataTypes5k,
     #[value(name = "custom")]
     Custom,
 }
@@ -107,8 +122,15 @@ impl Scenario {
             Scenario::Synthetic50k => Self::synthetic_query(50_000),
             Scenario::Synthetic100k => Self::synthetic_query(100_000),
             Scenario::Synthetic500k => Self::synthetic_query(500_000),
+            Scenario::Wikipedia1k => Self::wikipedia_query(1_000),
+            Scenario::Wikipedia5k => Self::wikipedia_query(5_000),
             Scenario::Wikipedia10k => Self::wikipedia_query(10_000),
             Scenario::Wikipedia100k => Self::wikipedia_query(100_000),
+            Scenario::UsaNames1k => Self::usa_names_query(1_000),
+            Scenario::UsaNames10k => Self::usa_names_query(10_000),
+            Scenario::UsaNames50k => Self::usa_names_query(50_000),
+            Scenario::DataTypes1k => Self::datatypes_query(1_000),
+            Scenario::DataTypes5k => Self::datatypes_query(5_000),
             Scenario::Custom => custom_query
                 .expect("custom query must be provided when scenario is 'custom'")
                 .to_string(),
@@ -147,8 +169,63 @@ impl Scenario {
         )
     }
 
+    fn usa_names_query(limit: usize) -> String {
+        format!(
+            "SELECT \
+                state, \
+                gender, \
+                year, \
+                name, \
+                number \
+             FROM `bigquery-public-data.usa_names.usa_1910_2013` \
+             LIMIT {limit}"
+        )
+    }
+
+    fn datatypes_query(limit: usize) -> String {
+        format!(
+            "SELECT \
+                 CONCAT('User_', CAST(x AS STRING)) AS name, \
+                 x AS age, \
+                 CAST(x AS FLOAT64) * 0.05 + 1.5 AS height, \
+                 (MOD(x, 2) = 0) AS active, \
+                 ARRAY[x, x + 1, x + 2] AS numbers, \
+                 TIMESTAMP '2026-05-28 15:30:00 UTC' AS created_at, \
+                 DATE '2026-05-28' AS birth_date, \
+                 TIME '15:30:00' AS daily_alarm, \
+                 DATETIME '2026-05-28 15:30:00' AS event_time, \
+                 RANGE(DATE '2026-05-28', DATE '2026-05-29') AS date_range, \
+                 RANGE(TIMESTAMP '2026-05-28 15:30:00 UTC', NULL) AS timestamp_range, \
+                 IF(MOD(x, 2) = 0, CAST(NULL AS STRING), 'nullable_val') AS nullable_name, \
+                 IF(MOD(x, 2) = 0, CAST(NULL AS INT64), x) AS nullable_age, \
+                 B'hello world' AS raw_bytes, \
+                 B'payload in bytes' AS payload_bytes, \
+                 IF(MOD(x, 2) = 0, CAST(NULL AS BYTES), B'optional') AS nullable_bytes, \
+                 INTERVAL '1 2:30:45.123456' DAY TO SECOND AS interval_val, \
+                 JSON '{{\"role\": \"admin\", \"level\": 5}}' AS json_val \
+             FROM UNNEST(GENERATE_ARRAY(1, {limit})) AS x"
+        )
+    }
+
     fn is_wikipedia(&self) -> bool {
-        matches!(self, Scenario::Wikipedia10k | Scenario::Wikipedia100k)
+        matches!(
+            self,
+            Scenario::Wikipedia1k
+                | Scenario::Wikipedia5k
+                | Scenario::Wikipedia10k
+                | Scenario::Wikipedia100k
+        )
+    }
+
+    fn is_usa_names(&self) -> bool {
+        matches!(
+            self,
+            Scenario::UsaNames1k | Scenario::UsaNames10k | Scenario::UsaNames50k
+        )
+    }
+
+    fn is_datatypes(&self) -> bool {
+        matches!(self, Scenario::DataTypes1k | Scenario::DataTypes5k)
     }
 }
 
@@ -177,6 +254,39 @@ struct WikipediaRow {
     contributor_username: Option<String>,
     comment: Option<String>,
     num_characters: Option<i64>,
+}
+
+#[derive(FromRow, Debug, PartialEq)]
+#[allow(dead_code)]
+struct UsaNamesRow {
+    state: Option<String>,
+    gender: Option<String>,
+    year: Option<i64>,
+    name: Option<String>,
+    number: Option<i64>,
+}
+
+#[derive(FromRow, Debug, PartialEq)]
+#[allow(dead_code)]
+struct DataTypesRow {
+    name: String,
+    age: i64,
+    height: f64,
+    active: bool,
+    numbers: Vec<i64>,
+    created_at: wkt::Timestamp,
+    birth_date: google_cloud_type::model::Date,
+    daily_alarm: google_cloud_type::model::TimeOfDay,
+    event_time: google_cloud_type::model::DateTime,
+    date_range: Range<google_cloud_type::model::Date>,
+    timestamp_range: Range<wkt::Timestamp>,
+    nullable_name: Option<String>,
+    nullable_age: Option<i64>,
+    raw_bytes: Vec<u8>,
+    payload_bytes: bytes::Bytes,
+    nullable_bytes: Option<Vec<u8>>,
+    interval_val: Interval,
+    json_val: wkt::Struct,
 }
 
 struct IterationResult {
@@ -356,6 +466,18 @@ async fn run_single_query(
             while let Some(row_res) = iter.next().await {
                 let row = row_res?;
                 let _typed_row: WikipediaRow = row.try_into()?;
+                rows_count += 1;
+            }
+        } else if scenario.is_usa_names() {
+            while let Some(row_res) = iter.next().await {
+                let row = row_res?;
+                let _typed_row: UsaNamesRow = row.try_into()?;
+                rows_count += 1;
+            }
+        } else if scenario.is_datatypes() {
+            while let Some(row_res) = iter.next().await {
+                let row = row_res?;
+                let _typed_row: DataTypesRow = row.try_into()?;
                 rows_count += 1;
             }
         } else {

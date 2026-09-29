@@ -227,23 +227,12 @@ impl FromSql for wkt::Value {
                             )))
                         }
                     }
-                    DataType::Timestamp(arrow::datatypes::TimeUnit::Microsecond, _) => {
-                        let micros = cell
-                            .downcast_value::<arrow::array::TimestampMicrosecondArray, _, _>(
-                                |arr, idx| arr.value(idx),
-                            )?;
+                    DataType::Timestamp(_, _) => {
+                        let micros = cell.as_timestamp_micros()?;
                         Ok(wkt::Value::String(micros.to_string()))
                     }
-                    DataType::Decimal128(_, _) => {
-                        let s = cell.downcast_value::<arrow::array::Decimal128Array, _, _>(
-                            |arr, idx| arr.value_as_string(idx),
-                        )?;
-                        Ok(wkt::Value::String(s))
-                    }
-                    DataType::Decimal256(_, _) => {
-                        let s = cell.downcast_value::<arrow::array::Decimal256Array, _, _>(
-                            |arr, idx| arr.value_as_string(idx),
-                        )?;
+                    DataType::Decimal128(_, _) | DataType::Decimal256(_, _) => {
+                        let s = cell.as_decimal_str()?;
                         Ok(wkt::Value::String(s))
                     }
                     DataType::Interval(arrow::datatypes::IntervalUnit::MonthDayNano) => {
@@ -400,35 +389,15 @@ impl<T: FromSql> FromSql for Vec<T> {
                 .collect(),
             SqlValueInner::Null => Err(ConvertError::NotNull),
             SqlValueInner::Arrow(cell) => {
-                if cell.is_null() {
-                    return Err(ConvertError::NotNull);
+                let value_arr = cell.list_array_ref()?;
+                let mut result = Vec::with_capacity(value_arr.len());
+                for i in 0..value_arr.len() {
+                    let elem_cell = ArrowCell::new(value_arr.clone(), i);
+                    let sql_value = SqlValue::from_inner(SqlValueInner::Arrow(elem_cell));
+                    let val = T::from_value(sql_value)?;
+                    result.push(val);
                 }
-                if let Some(arr) = cell.downcast_ref::<arrow::array::ListArray>() {
-                    let value_arr = arr.value(cell.row_idx);
-                    let mut result = Vec::with_capacity(value_arr.len());
-                    for i in 0..value_arr.len() {
-                        let cell = ArrowCell::new(value_arr.clone(), i);
-                        let sql_value = SqlValue::from_inner(SqlValueInner::Arrow(cell));
-                        let val = T::from_value(sql_value)?;
-                        result.push(val);
-                    }
-                    return Ok(result);
-                }
-                if let Some(arr) = cell.downcast_ref::<arrow::array::LargeListArray>() {
-                    let value_arr = arr.value(cell.row_idx);
-                    let mut result = Vec::with_capacity(value_arr.len());
-                    for i in 0..value_arr.len() {
-                        let cell = ArrowCell::new(value_arr.clone(), i);
-                        let sql_value = SqlValue::from_inner(SqlValueInner::Arrow(cell));
-                        let val = T::from_value(sql_value)?;
-                        result.push(val);
-                    }
-                    return Ok(result);
-                }
-                Err(ConvertError::type_mismatch(
-                    "list array",
-                    &SqlValueInner::Arrow(cell),
-                ))
+                Ok(result)
             }
             other => Err(ConvertError::type_mismatch("array", &other)),
         }
@@ -480,9 +449,7 @@ impl FromSql for wkt::Timestamp {
             }
             SqlValueInner::Null => Err(ConvertError::NotNull),
             SqlValueInner::Arrow(cell) => {
-                let micros = cell.downcast_value::<arrow::array::TimestampMicrosecondArray, _, _>(
-                    |arr, idx| arr.value(idx),
-                )?;
+                let micros = cell.as_timestamp_micros()?;
                 timestamp_from_micros(micros)
             }
             other => Err(ConvertError::type_mismatch("string or number", &other)),
@@ -511,8 +478,7 @@ impl FromSql for google_cloud_type::model::Date {
             }
             SqlValueInner::Null => Err(ConvertError::NotNull),
             SqlValueInner::Arrow(cell) => {
-                let days = cell
-                    .downcast_value::<arrow::array::Date32Array, _, _>(|arr, idx| arr.value(idx))?;
+                let days = cell.as_date32()?;
                 let date = time::OffsetDateTime::from_unix_timestamp(days as i64 * 86400)
                     .map_err(|e| ConvertError::Convert(Box::new(e)))?
                     .date();
@@ -548,9 +514,7 @@ impl FromSql for google_cloud_type::model::TimeOfDay {
             }
             SqlValueInner::Null => Err(ConvertError::NotNull),
             SqlValueInner::Arrow(cell) => {
-                let micros = cell.downcast_value::<arrow::array::Time64MicrosecondArray, _, _>(
-                    |arr, idx| arr.value(idx),
-                )?;
+                let micros = cell.as_time64_micros()?;
                 let nanos = (micros % 1_000_000) * 1_000;
                 let total_secs = micros / 1_000_000;
                 let seconds = total_secs % 60;
@@ -590,9 +554,7 @@ impl FromSql for google_cloud_type::model::DateTime {
             }
             SqlValueInner::Null => Err(ConvertError::NotNull),
             SqlValueInner::Arrow(cell) => {
-                let micros = cell.downcast_value::<arrow::array::TimestampMicrosecondArray, _, _>(
-                    |arr, idx| arr.value(idx),
-                )?;
+                let micros = cell.as_timestamp_micros()?;
                 let odt = time::OffsetDateTime::from_unix_timestamp_nanos(micros as i128 * 1_000)
                     .map_err(|e| ConvertError::Convert(Box::new(e)))?;
                 Ok(google_cloud_type::model::DateTime::new()
@@ -618,22 +580,8 @@ impl FromSql for google_cloud_type::model::Decimal {
             }
             SqlValueInner::Null => Err(ConvertError::NotNull),
             SqlValueInner::Arrow(cell) => {
-                if cell.is_null() {
-                    return Err(ConvertError::NotNull);
-                }
-                let row_idx = cell.row_idx;
-                if let Some(arr) = cell.downcast_ref::<arrow::array::Decimal128Array>() {
-                    let s = arr.value_as_string(row_idx);
-                    return Ok(google_cloud_type::model::Decimal::new().set_value(s));
-                }
-                if let Some(arr) = cell.downcast_ref::<arrow::array::Decimal256Array>() {
-                    let s = arr.value_as_string(row_idx);
-                    return Ok(google_cloud_type::model::Decimal::new().set_value(s));
-                }
-                Err(ConvertError::type_mismatch(
-                    "decimal",
-                    &SqlValueInner::Arrow(cell),
-                ))
+                let s = cell.as_decimal_str()?;
+                Ok(google_cloud_type::model::Decimal::new().set_value(s))
             }
             other => Err(ConvertError::type_mismatch("string or number", &other)),
         }
@@ -660,36 +608,24 @@ impl FromSql for rust_decimal::Decimal {
             }
             SqlValueInner::Null => Err(ConvertError::NotNull),
             SqlValueInner::Arrow(cell) => {
-                if cell.is_null() {
-                    return Err(ConvertError::NotNull);
-                }
-                let row_idx = cell.row_idx;
-                if let Some(arr) = cell.downcast_ref::<arrow::array::Decimal128Array>() {
-                    let val = arr.value(row_idx);
-                    let scale = arr.scale() as u32;
+                if let Ok((val, scale)) = cell.as_decimal128_with_scale() {
                     return rust_decimal::Decimal::try_from_i128_with_scale(val, scale)
                         .map_err(|e| ConvertError::Convert(Box::new(e)));
                 }
-                if let Some(arr) = cell.downcast_ref::<arrow::array::Decimal256Array>() {
-                    let s = arr.value_as_string(row_idx);
-                    let trimmed = if let Some((int_part, frac_part)) = s.split_once('.') {
-                        let frac_trimmed = frac_part.trim_end_matches('0');
-                        if frac_trimmed.is_empty() {
-                            int_part.to_string()
-                        } else {
-                            format!("{int_part}.{frac_trimmed}")
-                        }
+                let s = cell.as_decimal_str()?;
+                let trimmed = if let Some((int_part, frac_part)) = s.split_once('.') {
+                    let frac_trimmed = frac_part.trim_end_matches('0');
+                    if frac_trimmed.is_empty() {
+                        int_part.to_string()
                     } else {
-                        s
-                    };
-                    return trimmed
-                        .parse::<rust_decimal::Decimal>()
-                        .map_err(|e| ConvertError::Convert(Box::new(e)));
-                }
-                Err(ConvertError::type_mismatch(
-                    "decimal",
-                    &SqlValueInner::Arrow(cell),
-                ))
+                        format!("{int_part}.{frac_trimmed}")
+                    }
+                } else {
+                    s
+                };
+                trimmed
+                    .parse::<rust_decimal::Decimal>()
+                    .map_err(|e| ConvertError::Convert(Box::new(e)))
             }
             other => Err(ConvertError::type_mismatch("string or number", &other)),
         }

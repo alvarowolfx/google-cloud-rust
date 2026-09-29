@@ -431,8 +431,10 @@ name = "bigquery-benchmark-arrow-jobs-query"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "bytes",
  "clap",
  "google-cloud-bigquery",
+ "google-cloud-type",
  "google-cloud-wkt",
  "stats_alloc",
  "tokio",

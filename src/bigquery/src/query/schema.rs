@@ -13,43 +13,48 @@
 // limitations under the License.
 
 use arrow::datatypes::DataType;
-use arrow::ipc::reader::StreamReader;
 use google_cloud_bigquery_v2::model::{TableFieldSchema, TableSchema};
-use std::io::Cursor;
+use std::collections::HashMap;
 
 /// Schema of a table.
 #[derive(Clone, Debug)]
-pub(crate) struct Schema(TableSchema);
+pub(crate) struct Schema {
+    schema: TableSchema,
+    field_indices: HashMap<String, usize>,
+}
 
 impl Schema {
     pub(crate) fn new(schema: TableSchema) -> Self {
-        Self(schema)
+        let field_indices = schema
+            .fields
+            .iter()
+            .enumerate()
+            .map(|(i, f)| (f.name.clone(), i))
+            .collect();
+        Self {
+            schema,
+            field_indices,
+        }
+    }
+
+    pub(crate) fn from_arrow_schema(arrow_schema: &arrow::datatypes::Schema) -> Self {
+        Self::new(table_schema_from_arrow_schema(arrow_schema))
     }
 
     pub(crate) fn get_field_index_by_name(&self, name: &str) -> Option<usize> {
-        self.0.fields.iter().position(|f| f.name == name)
+        self.field_indices.get(name).copied()
     }
 
     pub(crate) fn get_field_by_index(&self, index: usize) -> Option<&TableFieldSchema> {
-        self.0.fields.get(index)
+        self.schema.fields.get(index)
     }
 
     pub(crate) fn len(&self) -> usize {
-        self.0.fields.len()
+        self.schema.fields.len()
     }
 
     pub(crate) fn fields(&self) -> &[TableFieldSchema] {
-        &self.0.fields
-    }
-
-    pub(crate) fn try_from_arrow_ipc(
-        serialized_schema: &[u8],
-    ) -> Result<Self, crate::error::RowError> {
-        let reader = StreamReader::try_new(Cursor::new(serialized_schema), None).map_err(|e| {
-            crate::error::RowError::InvalidRowFormat(format!("failed to parse arrow schema: {e}"))
-        })?;
-        let table_schema = table_schema_from_arrow_schema(&reader.schema());
-        Ok(Self(table_schema))
+        &self.schema.fields
     }
 }
 

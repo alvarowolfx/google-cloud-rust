@@ -215,33 +215,32 @@ impl FromSql for Interval {
                 })
             }
             SqlValueInner::Null => Err(ConvertError::NotNull),
-            SqlValueInner::Arrow(cell) => cell
-                .downcast_value::<arrow::array::IntervalMonthDayNanoArray, _, _>(|arr, idx| {
-                    let v = arr.value(idx);
-                    let ym_sign = if v.months < 0 { -1 } else { 1 };
-                    let total_months = v.months.unsigned_abs();
-                    let years = (total_months / 12) as i32 * ym_sign;
-                    let months = (total_months % 12) as i32 * ym_sign;
+            SqlValueInner::Arrow(cell) => {
+                let v = cell.as_interval()?;
+                let ym_sign = if v.months < 0 { -1 } else { 1 };
+                let total_months = v.months.unsigned_abs();
+                let years = (total_months / 12) as i32 * ym_sign;
+                let months = (total_months % 12) as i32 * ym_sign;
 
-                    let time_sign = if v.nanoseconds < 0 { -1 } else { 1 };
-                    let total_nanos = v.nanoseconds.unsigned_abs();
-                    let nanos = (total_nanos % 1_000_000_000) as i32 * time_sign;
-                    let total_secs = total_nanos / 1_000_000_000;
-                    let seconds = (total_secs % 60) as i32 * time_sign;
-                    let total_mins = total_secs / 60;
-                    let minutes = (total_mins % 60) as i32 * time_sign;
-                    let hours = (total_mins / 60) as i32 * time_sign;
+                let time_sign = if v.nanoseconds < 0 { -1 } else { 1 };
+                let total_nanos = v.nanoseconds.unsigned_abs();
+                let nanos = (total_nanos % 1_000_000_000) as i32 * time_sign;
+                let total_secs = total_nanos / 1_000_000_000;
+                let seconds = (total_secs % 60) as i32 * time_sign;
+                let total_mins = total_secs / 60;
+                let minutes = (total_mins % 60) as i32 * time_sign;
+                let hours = (total_mins / 60) as i32 * time_sign;
 
-                    Interval {
-                        years,
-                        months,
-                        days: v.days,
-                        hours,
-                        minutes,
-                        seconds,
-                        nanos,
-                    }
-                }),
+                Ok(Interval {
+                    years,
+                    months,
+                    days: v.days,
+                    hours,
+                    minutes,
+                    seconds,
+                    nanos,
+                })
+            }
             other => Err(ConvertError::type_mismatch("string", &other)),
         }
     }
@@ -415,8 +414,12 @@ impl<T: RangeElement> FromSql for Range<T> {
                 if cell.is_null() {
                     return Err(ConvertError::NotNull);
                 }
-                let start = cell.take("start")?;
-                let end = cell.take("end")?;
+                let take = |key: &str| -> Result<Option<T>, ConvertError> {
+                    let field_cell = cell.struct_field_cell(&key)?;
+                    Option::<T>::from_value(SqlValue::from_inner(SqlValueInner::Arrow(field_cell)))
+                };
+                let start = take("start")?;
+                let end = take("end")?;
                 Ok(Range { start, end })
             }
             other => Err(ConvertError::type_mismatch("string", &other)),

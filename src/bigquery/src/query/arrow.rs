@@ -13,8 +13,7 @@
 // limitations under the License.
 
 use crate::error::ConvertError;
-use crate::query::from_sql::SqlValueInner;
-use crate::query::{ColumnIndex, FromSql, SqlValue};
+use crate::query::ColumnIndex;
 use arrow::array::ArrayRef;
 use std::sync::Arc;
 
@@ -38,15 +37,9 @@ impl ArrowCell {
         Self { array, row_idx }
     }
 
-    /// Returns true if the cell is null.    
+    /// Returns true if the cell is null.
     pub(crate) fn is_null(&self) -> bool {
         self.array.is_null(self.row_idx)
-    }
-
-    /// Extracts a field from a struct array cell by column index or name and converts it to `T`.    
-    pub(crate) fn take<T: FromSql, I: ColumnIndex>(&self, index: I) -> Result<T, ConvertError> {
-        let field_cell = self.struct_field_cell(&index)?;
-        T::from_value(SqlValue::from_inner(SqlValueInner::Arrow(field_cell)))
     }
 
     fn resolve_index<I: ColumnIndex>(
@@ -77,81 +70,87 @@ impl ArrowCell {
             return Err(ConvertError::NotNull);
         }
 
-        let Some(struct_arr) = self.downcast_ref::<arrow::array::StructArray>() else {
-            return Err(ConvertError::TypeMismatch {
-                expected: "struct or list array".to_string(),
+        match self.array.data_type() {
+            arrow::datatypes::DataType::Struct(_) => {
+                let struct_arr = arrow::array::as_struct_array(&self.array);
+                let idx = self.resolve_index(index, struct_arr)?;
+                let col = struct_arr.column(idx);
+                Ok(ArrowCell {
+                    array: col.clone(),
+                    row_idx: self.row_idx,
+                })
+            }
+            _ => Err(ConvertError::TypeMismatch {
+                expected: "struct array".to_string(),
                 got: self.data_type_str(),
-            });
-        };
-
-        let idx = self.resolve_index(index, struct_arr)?;
-        let col = struct_arr.column(idx);
-        Ok(ArrowCell {
-            array: col.clone(),
-            row_idx: self.row_idx,
-        })
+            }),
+        }
     }
 
     pub(crate) fn list_element_cell(&self, index: usize) -> Result<ArrowCell, ConvertError> {
+        let value_arr = self.list_array_ref()?;
+        if index < value_arr.len() {
+            Ok(ArrowCell::new(value_arr, index))
+        } else {
+            Err(ConvertError::MissingField(index.to_string()))
+        }
+    }
+
+    /// Returns a reference to the nested array for this list row.
+    pub(crate) fn list_array_ref(&self) -> Result<arrow::array::ArrayRef, ConvertError> {
         if self.is_null() {
             return Err(ConvertError::NotNull);
         }
 
-        if let Some(arr) = self.downcast_ref::<arrow::array::ListArray>() {
-            let value_arr = arr.value(self.row_idx);
-            if index < value_arr.len() {
-                return Ok(ArrowCell::new(value_arr, index));
-            } else {
-                return Err(ConvertError::MissingField(index.to_string()));
+        match self.array.data_type() {
+            arrow::datatypes::DataType::List(_) => {
+                let arr = arrow::array::as_list_array(&self.array);
+                Ok(arr.value(self.row_idx))
             }
-        }
-
-        if let Some(arr) = self.downcast_ref::<arrow::array::LargeListArray>() {
-            let value_arr = arr.value(self.row_idx);
-            if index < value_arr.len() {
-                return Ok(ArrowCell::new(value_arr, index));
-            } else {
-                return Err(ConvertError::MissingField(index.to_string()));
+            arrow::datatypes::DataType::LargeList(_) => {
+                let arr = arrow::array::as_large_list_array(&self.array);
+                Ok(arr.value(self.row_idx))
             }
-        }
-
-        return Err(ConvertError::TypeMismatch {
-            expected: "struct or list array".to_string(),
-            got: self.data_type_str(),
-        });
-    }
-
-    /// Downcasts the underlying Arrow array to a specific type.
-    pub(crate) fn downcast_ref<T: arrow::array::Array + 'static>(&self) -> Option<&T> {
-        self.array.as_any().downcast_ref::<T>()
-    }
-
-    /// Downcasts to the specified array type and returns the value at the cell's row index.
-    pub(crate) fn downcast_value<T, V, F>(&self, f: F) -> Result<V, ConvertError>
-    where
-        T: arrow::array::Array + 'static,
-        F: FnOnce(&T, usize) -> V,
-    {
-        if self.is_null() {
-            return Err(ConvertError::NotNull);
-        }
-        let arr = self
-            .downcast_ref::<T>()
-            .ok_or_else(|| ConvertError::TypeMismatch {
-                expected: std::any::type_name::<T>().to_string(),
+            _ => Err(ConvertError::TypeMismatch {
+                expected: "list array".to_string(),
                 got: self.data_type_str(),
-            })?;
-        Ok(f(arr, self.row_idx))
+            }),
+        }
     }
 
     /// Returns the cell's value as a boolean.
     pub(crate) fn as_bool(&self) -> Result<bool, ConvertError> {
-        self.downcast_value::<arrow::array::BooleanArray, _, _>(|arr, idx| arr.value(idx))
+        if self.is_null() {
+            return Err(ConvertError::NotNull);
+        }
+        match self.array.data_type() {
+            arrow::datatypes::DataType::Boolean => {
+                let arr = arrow::array::as_boolean_array(&self.array);
+                Ok(arr.value(self.row_idx))
+            }
+            _ => Err(ConvertError::TypeMismatch {
+                expected: "BooleanArray".to_string(),
+                got: self.data_type_str(),
+            }),
+        }
     }
 
     /// Returns the cell's value as an `i64`.
     pub(crate) fn as_i64(&self) -> Result<i64, ConvertError> {
-        self.downcast_value::<arrow::array::Int64Array, _, _>(|arr, idx| arr.value(idx))
+        if self.is_null() {
+            return Err(ConvertError::NotNull);
+        }
+        match self.array.data_type() {
+            arrow::datatypes::DataType::Int64 => {
+                let arr =
+                    arrow::array::as_primitive_array::<arrow::datatypes::Int64Type>(&self.array);
+                Ok(arr.value(self.row_idx))
+            }
+            _ => Err(ConvertError::TypeMismatch {
+                expected: "Int64Array".to_string(),
+                got: self.data_type_str(),
+            }),
+        }
     }
 
     /// Returns the cell's value as an `i32`.
@@ -159,22 +158,41 @@ impl ArrowCell {
         if self.is_null() {
             return Err(ConvertError::NotNull);
         }
-        if let Some(arr) = self.downcast_ref::<arrow::array::Int64Array>() {
-            return i32::try_from(arr.value(self.row_idx))
-                .map_err(|e| ConvertError::Convert(Box::new(e)));
+        match self.array.data_type() {
+            arrow::datatypes::DataType::Int32 => {
+                let arr =
+                    arrow::array::as_primitive_array::<arrow::datatypes::Int32Type>(&self.array);
+                Ok(arr.value(self.row_idx))
+            }
+            arrow::datatypes::DataType::Int64 => {
+                let arr =
+                    arrow::array::as_primitive_array::<arrow::datatypes::Int64Type>(&self.array);
+                i32::try_from(arr.value(self.row_idx))
+                    .map_err(|e| ConvertError::Convert(Box::new(e)))
+            }
+            _ => Err(ConvertError::TypeMismatch {
+                expected: "Int64Array or Int32Array".to_string(),
+                got: self.data_type_str(),
+            }),
         }
-        if let Some(arr) = self.downcast_ref::<arrow::array::Int32Array>() {
-            return Ok(arr.value(self.row_idx));
-        }
-        Err(ConvertError::TypeMismatch {
-            expected: "Int64Array or Int32Array".to_string(),
-            got: self.data_type_str(),
-        })
     }
 
     /// Returns the cell's value as an `f64`.
     pub(crate) fn as_f64(&self) -> Result<f64, ConvertError> {
-        self.downcast_value::<arrow::array::Float64Array, _, _>(|arr, idx| arr.value(idx))
+        if self.is_null() {
+            return Err(ConvertError::NotNull);
+        }
+        match self.array.data_type() {
+            arrow::datatypes::DataType::Float64 => {
+                let arr =
+                    arrow::array::as_primitive_array::<arrow::datatypes::Float64Type>(&self.array);
+                Ok(arr.value(self.row_idx))
+            }
+            _ => Err(ConvertError::TypeMismatch {
+                expected: "Float64Array".to_string(),
+                got: self.data_type_str(),
+            }),
+        }
     }
 
     /// Returns the cell's value as an `f32`.
@@ -182,16 +200,22 @@ impl ArrowCell {
         if self.is_null() {
             return Err(ConvertError::NotNull);
         }
-        if let Some(arr) = self.downcast_ref::<arrow::array::Float64Array>() {
-            return Ok(arr.value(self.row_idx) as f32);
+        match self.array.data_type() {
+            arrow::datatypes::DataType::Float32 => {
+                let arr =
+                    arrow::array::as_primitive_array::<arrow::datatypes::Float32Type>(&self.array);
+                Ok(arr.value(self.row_idx))
+            }
+            arrow::datatypes::DataType::Float64 => {
+                let arr =
+                    arrow::array::as_primitive_array::<arrow::datatypes::Float64Type>(&self.array);
+                Ok(arr.value(self.row_idx) as f32)
+            }
+            _ => Err(ConvertError::TypeMismatch {
+                expected: "Float64Array or Float32Array".to_string(),
+                got: self.data_type_str(),
+            }),
         }
-        if let Some(arr) = self.downcast_ref::<arrow::array::Float32Array>() {
-            return Ok(arr.value(self.row_idx));
-        }
-        Err(ConvertError::TypeMismatch {
-            expected: "Float64Array or Float32Array".to_string(),
-            got: self.data_type_str(),
-        })
     }
 
     /// Returns the cell's value as a string slice (`&str`).
@@ -199,15 +223,19 @@ impl ArrowCell {
         if self.is_null() {
             return Err(ConvertError::NotNull);
         }
-        if let Some(arr) = self.downcast_ref::<arrow::array::StringArray>() {
-            Ok(arr.value(self.row_idx))
-        } else if let Some(arr) = self.downcast_ref::<arrow::array::LargeStringArray>() {
-            Ok(arr.value(self.row_idx))
-        } else {
-            Err(ConvertError::TypeMismatch {
+        match self.array.data_type() {
+            arrow::datatypes::DataType::Utf8 => {
+                let arr = arrow::array::as_string_array(&self.array);
+                Ok(arr.value(self.row_idx))
+            }
+            arrow::datatypes::DataType::LargeUtf8 => {
+                let arr = arrow::array::as_largestring_array(&self.array);
+                Ok(arr.value(self.row_idx))
+            }
+            _ => Err(ConvertError::TypeMismatch {
                 expected: "StringArray or LargeStringArray".to_string(),
                 got: self.data_type_str(),
-            })
+            }),
         }
     }
 
@@ -216,15 +244,164 @@ impl ArrowCell {
         if self.is_null() {
             return Err(ConvertError::NotNull);
         }
-        if let Some(arr) = self.downcast_ref::<arrow::array::BinaryArray>() {
-            Ok(arr.value(self.row_idx))
-        } else if let Some(arr) = self.downcast_ref::<arrow::array::LargeBinaryArray>() {
-            Ok(arr.value(self.row_idx))
-        } else {
-            Err(ConvertError::TypeMismatch {
+        match self.array.data_type() {
+            arrow::datatypes::DataType::Binary => {
+                let arr = arrow::array::as_generic_binary_array::<i32>(&self.array);
+                Ok(arr.value(self.row_idx))
+            }
+            arrow::datatypes::DataType::LargeBinary => {
+                let arr = arrow::array::as_generic_binary_array::<i64>(&self.array);
+                Ok(arr.value(self.row_idx))
+            }
+            _ => Err(ConvertError::TypeMismatch {
                 expected: "BinaryArray or LargeBinaryArray".to_string(),
                 got: self.data_type_str(),
-            })
+            }),
+        }
+    }
+
+    /// Returns timestamp value in microseconds since Unix epoch.
+    pub(crate) fn as_timestamp_micros(&self) -> Result<i64, ConvertError> {
+        if self.is_null() {
+            return Err(ConvertError::NotNull);
+        }
+        match self.array.data_type() {
+            arrow::datatypes::DataType::Timestamp(arrow::datatypes::TimeUnit::Microsecond, _) => {
+                let arr = arrow::array::as_primitive_array::<
+                    arrow::datatypes::TimestampMicrosecondType,
+                >(&self.array);
+                Ok(arr.value(self.row_idx))
+            }
+            arrow::datatypes::DataType::Timestamp(arrow::datatypes::TimeUnit::Millisecond, _) => {
+                let arr = arrow::array::as_primitive_array::<
+                    arrow::datatypes::TimestampMillisecondType,
+                >(&self.array);
+                Ok(arr.value(self.row_idx) * 1_000)
+            }
+            arrow::datatypes::DataType::Timestamp(arrow::datatypes::TimeUnit::Nanosecond, _) => {
+                let arr = arrow::array::as_primitive_array::<
+                    arrow::datatypes::TimestampNanosecondType,
+                >(&self.array);
+                Ok(arr.value(self.row_idx) / 1_000)
+            }
+            arrow::datatypes::DataType::Timestamp(arrow::datatypes::TimeUnit::Second, _) => {
+                let arr = arrow::array::as_primitive_array::<arrow::datatypes::TimestampSecondType>(
+                    &self.array,
+                );
+                Ok(arr.value(self.row_idx) * 1_000_000)
+            }
+            _ => Err(ConvertError::TypeMismatch {
+                expected: "TimestampArray".to_string(),
+                got: self.data_type_str(),
+            }),
+        }
+    }
+
+    /// Returns date value in days since Unix epoch.
+    pub(crate) fn as_date32(&self) -> Result<i32, ConvertError> {
+        if self.is_null() {
+            return Err(ConvertError::NotNull);
+        }
+        match self.array.data_type() {
+            arrow::datatypes::DataType::Date32 => {
+                let arr =
+                    arrow::array::as_primitive_array::<arrow::datatypes::Date32Type>(&self.array);
+                Ok(arr.value(self.row_idx))
+            }
+            _ => Err(ConvertError::TypeMismatch {
+                expected: "Date32Array".to_string(),
+                got: self.data_type_str(),
+            }),
+        }
+    }
+
+    /// Returns time value in microseconds since midnight.
+    pub(crate) fn as_time64_micros(&self) -> Result<i64, ConvertError> {
+        if self.is_null() {
+            return Err(ConvertError::NotNull);
+        }
+        match self.array.data_type() {
+            arrow::datatypes::DataType::Time64(arrow::datatypes::TimeUnit::Microsecond) => {
+                let arr = arrow::array::as_primitive_array::<arrow::datatypes::Time64MicrosecondType>(
+                    &self.array,
+                );
+                Ok(arr.value(self.row_idx))
+            }
+            arrow::datatypes::DataType::Time64(arrow::datatypes::TimeUnit::Nanosecond) => {
+                let arr = arrow::array::as_primitive_array::<arrow::datatypes::Time64NanosecondType>(
+                    &self.array,
+                );
+                Ok(arr.value(self.row_idx) / 1_000)
+            }
+            _ => Err(ConvertError::TypeMismatch {
+                expected: "Time64MicrosecondArray".to_string(),
+                got: self.data_type_str(),
+            }),
+        }
+    }
+
+    /// Returns interval month-day-nano value.
+    pub(crate) fn as_interval(
+        &self,
+    ) -> Result<arrow::datatypes::IntervalMonthDayNano, ConvertError> {
+        if self.is_null() {
+            return Err(ConvertError::NotNull);
+        }
+        match self.array.data_type() {
+            arrow::datatypes::DataType::Interval(arrow::datatypes::IntervalUnit::MonthDayNano) => {
+                let arr = arrow::array::as_primitive_array::<
+                    arrow::datatypes::IntervalMonthDayNanoType,
+                >(&self.array);
+                Ok(arr.value(self.row_idx))
+            }
+            _ => Err(ConvertError::TypeMismatch {
+                expected: "IntervalMonthDayNanoArray".to_string(),
+                got: self.data_type_str(),
+            }),
+        }
+    }
+
+    /// Returns decimal value as a formatted string.
+    pub(crate) fn as_decimal_str(&self) -> Result<String, ConvertError> {
+        if self.is_null() {
+            return Err(ConvertError::NotNull);
+        }
+        match self.array.data_type() {
+            arrow::datatypes::DataType::Decimal128(_, _) => {
+                let arr = arrow::array::as_primitive_array::<arrow::datatypes::Decimal128Type>(
+                    &self.array,
+                );
+                Ok(arr.value_as_string(self.row_idx))
+            }
+            arrow::datatypes::DataType::Decimal256(_, _) => {
+                let arr = arrow::array::as_primitive_array::<arrow::datatypes::Decimal256Type>(
+                    &self.array,
+                );
+                Ok(arr.value_as_string(self.row_idx))
+            }
+            _ => Err(ConvertError::TypeMismatch {
+                expected: "Decimal128Array or Decimal256Array".to_string(),
+                got: self.data_type_str(),
+            }),
+        }
+    }
+
+    /// Returns decimal128 value along with scale.
+    pub(crate) fn as_decimal128_with_scale(&self) -> Result<(i128, u32), ConvertError> {
+        if self.is_null() {
+            return Err(ConvertError::NotNull);
+        }
+        match self.array.data_type() {
+            arrow::datatypes::DataType::Decimal128(_, scale) => {
+                let arr = arrow::array::as_primitive_array::<arrow::datatypes::Decimal128Type>(
+                    &self.array,
+                );
+                Ok((arr.value(self.row_idx), *scale as u32))
+            }
+            _ => Err(ConvertError::TypeMismatch {
+                expected: "Decimal128Array".to_string(),
+                got: self.data_type_str(),
+            }),
         }
     }
 }

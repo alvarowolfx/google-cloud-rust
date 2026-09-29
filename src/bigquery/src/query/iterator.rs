@@ -81,15 +81,13 @@ impl RowIterator {
                     None,
                 )
                 .expect("valid arrow IPC stream"); // TODO: convert error
+                let schema = Arc::new(Schema::from_arrow_schema(&reader.schema()));
                 let batches = reader
                     .map(|res| res.map(Arc::new))
                     .collect::<std::result::Result<VecDeque<_>, _>>()
                     .expect("valid record batches"); // TODO: convert error
 
-                let schema =
-                    Schema::try_from_arrow_ipc(&serialized_schema).expect("valid arrow ipc schema"); // TODO: convert error
-
-                (VecDeque::new(), batches, Arc::new(schema))
+                (VecDeque::new(), batches, schema)
             }
         };
         Self {
