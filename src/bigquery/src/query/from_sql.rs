@@ -45,15 +45,15 @@ pub(crate) enum SqlValueInner {
 }
 
 impl SqlValueInner {
-    pub(crate) fn type_name(&self) -> &str {
+    pub(crate) fn type_name(&self) -> String {
         match self {
-            Self::Null => "null",
-            Self::Bool(_) => "bool",
-            Self::Number(_) => "number",
-            Self::String(_) => "string",
-            Self::Array(_) => "array",
-            Self::Struct(_) => "object",
-            Self::Arrow(_) => "arrow",
+            Self::Null => "null".to_string(),
+            Self::Bool(_) => "bool".to_string(),
+            Self::Number(_) => "number".to_string(),
+            Self::String(_) => "string".to_string(),
+            Self::Array(_) => "array".to_string(),
+            Self::Struct(_) => "object".to_string(),
+            Self::Arrow(cell) => cell.data_type_str(),
         }
     }
 
