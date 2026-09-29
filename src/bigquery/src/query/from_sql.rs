@@ -163,83 +163,78 @@ pub trait FromSql: Sized {
 
 impl FromSql for wkt::Value {
     fn from_value(value: SqlValue) -> Result<Self, ConvertError> {
-        match value.inner {
-            SqlValueInner::Null => Ok(wkt::Value::Null),
-            SqlValueInner::Bool(b) => Ok(wkt::Value::Bool(b)),
-            SqlValueInner::Number(n) => Ok(wkt::Value::Number(n)),
-            SqlValueInner::String(s) => Ok(wkt::Value::String(s)),
-            SqlValueInner::Array(arr) => Ok(wkt::Value::Array(
+        Ok(match value.inner {
+            SqlValueInner::Null => wkt::Value::Null,
+            SqlValueInner::Bool(b) => wkt::Value::Bool(b),
+            SqlValueInner::Number(n) => wkt::Value::Number(n),
+            SqlValueInner::String(s) => wkt::Value::String(s),
+            SqlValueInner::Array(arr) => wkt::Value::Array(
                 arr.into_iter()
                     .map(|v| wkt::Value::from_value(SqlValue::from_inner(v)))
                     .collect::<Result<Vec<_>, _>>()?,
-            )),
-            SqlValueInner::Struct(entries) => Ok(wkt::Value::Object(
+            ),
+            SqlValueInner::Struct(entries) => wkt::Value::Object(
                 entries
                     .into_iter()
                     .map(|(k, v)| Ok((k, wkt::Value::from_value(SqlValue::from_inner(v))?)))
                     .collect::<Result<wkt::Struct, ConvertError>>()?,
-            )),
+            ),
             SqlValueInner::Arrow(cell) => {
                 if cell.is_null() {
                     return Ok(wkt::Value::Null);
                 }
                 use arrow::datatypes::DataType;
                 match cell.data_type() {
-                    DataType::Null => Ok(wkt::Value::Null),
-                    DataType::Boolean => Ok(wkt::Value::Bool(cell.as_bool()?)),
-                    DataType::Int64 => {
-                        Ok(wkt::Value::Number(serde_json::Number::from(cell.as_i64()?)))
-                    }
+                    DataType::Null => wkt::Value::Null,
+                    DataType::Boolean => wkt::Value::Bool(cell.as_bool()?),
+                    DataType::Int64 => wkt::Value::Number(serde_json::Number::from(cell.as_i64()?)),
                     DataType::Float64 => {
                         let n = serde_json::Number::from_f64(cell.as_f64()?)
                             .ok_or_else(|| ConvertError::Convert("invalid f64 value".into()))?;
-                        Ok(wkt::Value::Number(n))
+                        wkt::Value::Number(n)
                     }
                     DataType::Utf8 | DataType::LargeUtf8 => {
-                        Ok(wkt::Value::String(cell.as_str()?.to_string()))
+                        wkt::Value::String(cell.as_str()?.to_string())
                     }
                     DataType::Binary | DataType::LargeBinary => {
-                        Ok(wkt::Value::String(BASE64_STANDARD.encode(cell.as_bytes()?)))
+                        wkt::Value::String(BASE64_STANDARD.encode(cell.as_bytes()?))
                     }
                     DataType::Date32 => {
                         let d = google_cloud_type::model::Date::from_value(SqlValue::from_inner(
                             SqlValueInner::Arrow(cell),
                         ))?;
-                        Ok(wkt::Value::String(format!(
-                            "{:04}-{:02}-{:02}",
-                            d.year, d.month, d.day
-                        )))
+                        wkt::Value::String(format!("{:04}-{:02}-{:02}", d.year, d.month, d.day))
                     }
                     DataType::Time64(arrow::datatypes::TimeUnit::Microsecond) => {
                         let t = google_cloud_type::model::TimeOfDay::from_value(
                             SqlValue::from_inner(SqlValueInner::Arrow(cell)),
                         )?;
                         if t.nanos == 0 {
-                            Ok(wkt::Value::String(format!(
+                            wkt::Value::String(format!(
                                 "{:02}:{:02}:{:02}",
                                 t.hours, t.minutes, t.seconds
-                            )))
+                            ))
                         } else {
                             let subsec_micros = t.nanos / 1_000;
-                            Ok(wkt::Value::String(format!(
+                            wkt::Value::String(format!(
                                 "{:02}:{:02}:{:02}.{subsec_micros:06}",
                                 t.hours, t.minutes, t.seconds
-                            )))
+                            ))
                         }
                     }
                     DataType::Timestamp(_, _) => {
                         let micros = cell.as_timestamp_micros()?;
-                        Ok(wkt::Value::String(micros.to_string()))
+                        wkt::Value::String(micros.to_string())
                     }
                     DataType::Decimal128(_, _) | DataType::Decimal256(_, _) => {
                         let s = cell.as_decimal_str()?;
-                        Ok(wkt::Value::String(s))
+                        wkt::Value::String(s)
                     }
                     DataType::Interval(arrow::datatypes::IntervalUnit::MonthDayNano) => {
                         let interval = crate::datatypes::Interval::from_value(
                             SqlValue::from_inner(SqlValueInner::Arrow(cell)),
                         )?;
-                        Ok(wkt::Value::String(format!(
+                        wkt::Value::String(format!(
                             "{}-{} {} {:02}:{:02}:{:02}.{:09}",
                             interval.years,
                             interval.months,
@@ -248,27 +243,29 @@ impl FromSql for wkt::Value {
                             interval.minutes,
                             interval.seconds,
                             interval.nanos
-                        )))
+                        ))
                     }
                     DataType::Struct(_) => {
                         let s = wkt::Struct::from_value(SqlValue::from_inner(
                             SqlValueInner::Arrow(cell),
                         ))?;
-                        Ok(wkt::Value::Object(s))
+                        wkt::Value::Object(s)
                     }
                     DataType::List(_) => {
                         let v = Vec::<wkt::Value>::from_value(SqlValue::from_inner(
                             SqlValueInner::Arrow(cell),
                         ))?;
-                        Ok(wkt::Value::Array(v))
+                        wkt::Value::Array(v)
                     }
-                    _ => Err(ConvertError::type_mismatch(
-                        "supported arrow value",
-                        &SqlValueInner::Arrow(cell),
-                    )),
+                    _ => {
+                        return Err(ConvertError::type_mismatch(
+                            "supported arrow value",
+                            &SqlValueInner::Arrow(cell),
+                        ));
+                    }
                 }
             }
-        }
+        })
     }
 }
 
