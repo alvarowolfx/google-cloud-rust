@@ -1,0 +1,156 @@
+// Copyright 2026 Google LLC
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     https://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+//! Test helpers for the `Write` client internals
+
+use super::dispatcher::Dispatcher;
+use super::format::Arrow;
+use super::pool::{StreamPool, StreamPoolOptions};
+use super::retry_policy::RetryOptions;
+use super::runner::WriteRequest;
+use super::transport::Transport;
+use crate::google::cloud::bigquery::storage::v1::append_rows_request::{ArrowData, Rows};
+use crate::google::cloud::bigquery::storage::v1::append_rows_response::{AppendResult, Response};
+use crate::google::cloud::bigquery::storage::v1::{AppendRowsRequest, AppendRowsResponse};
+use crate::model::{ArrowRecordBatch, ArrowSchema, ProtoSchema};
+use bigquery_grpc_mock::google::cloud::bigquery::storage::v1;
+use bytes::Bytes;
+use google_cloud_auth::credentials::anonymous::Builder as Anonymous;
+use google_cloud_gax::backoff_policy::BackoffPolicy;
+use google_cloud_gax::retry_policy::NeverRetry;
+use google_cloud_gax::retry_state::RetryState;
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::mpsc;
+
+mockall::mock! {
+    #[derive(Debug)]
+    pub BackoffPolicy {}
+    impl BackoffPolicy for BackoffPolicy {
+        fn on_failure(&self, state: &RetryState) -> Duration;
+    }
+}
+
+/// A backoff policy that does not wait, so tests do not depend on timing.
+#[derive(Debug)]
+pub(super) struct NoBackoff;
+
+impl BackoffPolicy for NoBackoff {
+    fn on_failure(&self, _state: &RetryState) -> Duration {
+        Duration::ZERO
+    }
+}
+
+pub(super) fn write_stream() -> String {
+    "projects/p/datasets/d/tables/t/streams/s".to_string()
+}
+
+// We only need to test the shared implementations once. We pick Arrow as the
+// DataFormat.
+pub(super) fn format() -> Arrow {
+    Arrow { schema: schema() }
+}
+
+// We only need to test the shared implementations once. We pick Arrow as the
+// DataFormat.
+pub(super) fn rows(id: i64) -> ArrowRecordBatch {
+    ArrowRecordBatch::new().set_serialized_record_batch(id.to_string())
+}
+
+pub(super) fn schema() -> ArrowSchema {
+    ArrowSchema::new().set_serialized_schema("test")
+}
+
+pub(super) fn proto_schema() -> ProtoSchema {
+    let descriptor = wkt::DescriptorProto::default().set_name("TestMessage".to_string());
+    ProtoSchema::new().set_proto_descriptor(descriptor)
+}
+
+pub(super) async fn test_transport<T: Into<String>>(endpoint: T) -> anyhow::Result<Transport> {
+    let mut config = gaxi::options::ClientConfig::default();
+    config.cred = Some(Anonymous::new().build());
+    config.endpoint = Some(endpoint.into());
+    Ok(Transport::new(config).await?)
+}
+
+// Both crates have their own copies of the protos. We can just serialize
+// then deserialize to convert between the two, as performance is not a
+// concern for these unit tests.
+pub(super) fn convert(pb: &AppendRowsResponse) -> v1::AppendRowsResponse {
+    use prost::Message;
+    let v = pb.encode_to_vec();
+    v1::AppendRowsResponse::decode(v.as_slice()).expect("encoding is always valid.")
+}
+
+pub(super) fn test_request(index: i64) -> AppendRowsRequest {
+    // Cover the model types.
+    use crate::google::cloud::bigquery::storage::v1::{ArrowRecordBatch, ArrowSchema};
+
+    AppendRowsRequest {
+        write_stream: "projects/p/datasets/d/tables/t/streams/s".to_string(),
+        offset: Some(index),
+        rows: Some(Rows::ArrowRows(ArrowData {
+            writer_schema: Some(ArrowSchema {
+                serialized_schema: Bytes::from_static(b"test-schema"),
+            }),
+            rows: Some(ArrowRecordBatch {
+                serialized_record_batch: Bytes::from_static(b"test-rows"),
+                ..Default::default()
+            }),
+        })),
+        ..Default::default()
+    }
+}
+
+pub(super) fn test_response(index: i64) -> AppendRowsResponse {
+    AppendRowsResponse {
+        response: Some(Response::AppendResult(AppendResult {
+            offset: Some(index),
+        })),
+        write_stream: "projects/p/datasets/d/tables/t/streams/s".to_string(),
+        ..Default::default()
+    }
+}
+
+/// Retry options that never retry, and never wait.
+///
+/// Tests override the fields they exercise.
+pub(super) fn test_retry_options() -> RetryOptions {
+    RetryOptions {
+        retry_policy: Arc::new(NeverRetry),
+        backoff_policy: Arc::new(NoBackoff),
+        attempt_timeout: None,
+    }
+}
+
+// Return a dispatcher that sends requests on the provided channel.
+//
+// The dispatcher never retries. Only the seeded stream routes to the provided
+// channel, so a retry would use a replacement stream that the test cannot
+// observe.
+pub(super) async fn test_dispatcher(
+    req_tx: mpsc::UnboundedSender<WriteRequest>,
+) -> anyhow::Result<Arc<Dispatcher>> {
+    let transport = Arc::new(test_transport("http://ignored:1").await?);
+    let pool = Arc::new(StreamPool::new(transport, StreamPoolOptions::default()));
+    // Seed the pool with a stream.
+    pool.seed([0]);
+    // Override its channel with the provided channel.
+    pool.lock()
+        .first_mut()
+        .expect("there is one entry in the pool")
+        .req_tx = req_tx;
+    let dispatcher = Arc::new(Dispatcher::new(pool, test_retry_options()));
+    Ok(dispatcher)
+}

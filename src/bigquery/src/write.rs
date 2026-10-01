@@ -12,26 +12,49 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// Types to write data in [Arrow] format
-///
-/// [arrow]: https://arrow.apache.org/
-pub mod arrow;
-
 pub use append_future::AppendFuture;
 
-pub(super) mod append_builder;
+pub use buffered::BufferedWriter;
+pub use committed::CommittedWriter;
+pub use default::DefaultWriter;
+pub use pending::PendingWriter;
+
+/// Defines the data formats accepted by a writer.
+pub mod format;
+
+/// Defines the retry policy for the BigQuery Storage Write API.
+pub mod retry_policy;
+
+pub mod stream_type;
+
 pub(super) mod append_future;
 pub(super) mod append_response;
+pub(super) mod builder;
 pub(super) mod client;
 pub(super) mod client_builder;
 pub(super) mod error;
+pub(super) mod writer_builder;
+
+mod base;
+mod buffered;
+mod committed;
+mod default;
+mod dispatcher;
+mod entry;
+mod optimizer;
+mod pending;
+mod pool;
 mod proto_schema;
 mod runner;
 mod stream;
 mod transport;
+mod validate;
 
 // TODO(#4832) - remove handwritten code.
 mod status;
 
 #[allow(dead_code)]
 pub(crate) mod generated;
+
+#[cfg(test)]
+mod test;

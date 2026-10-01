@@ -14,7 +14,7 @@
 
 [package]
 name        = "google-cloud-bigquery"
-version     = "0.16.1-preview"
+version     = "0.17.0-preview"
 description = "Google Cloud Client Libraries for Rust - BigQuery"
 # Inherit other attributes from the workspace.
 edition.workspace      = true
@@ -27,6 +27,7 @@ rust-version.workspace = true
 
 [dependencies]
 arrow                        = { workspace = true, features = ["ffi", "ipc", "ipc_compression"] }
+arc-swap.workspace           = true
 async-trait.workspace        = true
 base64.workspace             = true
 bytes.workspace              = true
@@ -40,7 +41,6 @@ google-cloud-auth.workspace  = true
 google-cloud-gax.workspace   = true
 gaxi                         = { workspace = true, features = ["_internal-common", "_internal-grpc-client", "_internal-http-client"] }
 google-cloud-bigquery-derive = { workspace = true }
-google-cloud-bigquery-read   = { workspace = true }
 google-cloud-bigquery-v2     = { workspace = true }
 google-cloud-rpc.workspace   = true
 google-cloud-type.workspace  = true
@@ -55,12 +55,14 @@ uuid.workspace               = true
 
 [dev-dependencies]
 anyhow.workspace            = true
+httptest.workspace          = true
 mockall.workspace           = true
+static_assertions.workspace = true
 test-case.workspace         = true
 tokio                       = { workspace = true, features = ["macros", "rt-multi-thread", "test-util"] }
 bigquery-grpc-mock          = { path = "../bigquery/grpc-mock" }
 google-cloud-auth.workspace = true
-google-cloud-bigquery       = { path = ".", features = ["default-rustls-provider"] }
+google-cloud-rpc.workspace  = true
 
 [features]
 default = ["default-rustls-provider"]

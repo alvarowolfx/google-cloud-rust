@@ -85,7 +85,6 @@ pub struct ResultSet {
     max_buffered_partial_result_sets: usize,
     retry_count: usize,
     transaction_selector: Option<ReadContextTransactionSelector>,
-    channel_hint: usize,
     gax_options: GaxRequestOptions,
     method_name: &'static str,
     headers: HeaderMap,
@@ -110,7 +109,6 @@ pub(crate) struct ResultSetParams {
     pub session_name: String,
     pub transaction_tag: Option<String>,
     pub operation: StreamOperation,
-    pub channel_hint: usize,
     pub gax_options: GaxRequestOptions,
     pub method_name: &'static str,
     pub attempt_start_time: Option<Instant>,
@@ -148,7 +146,6 @@ impl ResultSet {
             session_name,
             transaction_tag,
             operation,
-            channel_hint,
             gax_options,
             method_name,
             attempt_start_time,
@@ -181,7 +178,6 @@ impl ResultSet {
             max_buffered_partial_result_sets: MAX_BUFFERED_PARTIAL_RESULT_SETS,
             retry_count: 0,
             transaction_selector,
-            channel_hint,
             gax_options,
             tokio_handle: Handle::try_current().ok(),
             method_name,
@@ -597,7 +593,6 @@ impl ResultSet {
                 client: self.client.clone(),
                 session_name: self.session_name.clone(),
                 transaction_tag: self.transaction_tag.clone(),
-                channel_hint: self.channel_hint,
                 request_options: self.gax_options.clone(),
                 is_stream_fallback: true,
                 precommit_token_tracker: self.precommit_token_tracker.clone(),
@@ -759,7 +754,7 @@ impl ResultSet {
                     .clone()
                     .or_else(|| req.transaction.take());
                 self.client
-                    .execute_streaming_sql(req.clone(), self.gax_options.clone(), self.channel_hint)
+                    .execute_streaming_sql(req.clone(), self.gax_options.clone(), &self.affinity)
                     .send()
                     .await
             }
@@ -769,7 +764,7 @@ impl ResultSet {
                     .clone()
                     .or_else(|| req.transaction.take());
                 self.client
-                    .streaming_read(req.clone(), self.gax_options.clone(), self.channel_hint)
+                    .streaming_read(req.clone(), self.gax_options.clone(), &self.affinity)
                     .send()
                     .await
             }
@@ -916,7 +911,7 @@ pub(crate) mod tests {
     use google_cloud_gax::retry_policy::{Aip194Strict, RetryPolicyExt};
     use google_cloud_gax::retry_state::RetryState;
     use google_cloud_test_macros::tokio_test_no_panics;
-    #[cfg(feature = "_experimental-builtin-metrics")]
+    #[cfg(feature = "builtin-metrics")]
     use opentelemetry_sdk::metrics::data::ResourceMetrics;
     use spanner_grpc_mock::MockSpanner;
     use spanner_grpc_mock::google::spanner::v1 as spanner_v1;
@@ -1979,7 +1974,7 @@ pub(crate) mod tests {
             .set_sql("SELECT 1".to_string());
 
         let stream = db_client
-            .execute_streaming_sql(req.clone(), GaxRequestOptions::default(), 0)
+            .execute_streaming_sql(req.clone(), GaxRequestOptions::default(), None)
             .send()
             .await?;
 
@@ -1991,7 +1986,6 @@ pub(crate) mod tests {
             session_name: "session".to_string(),
             transaction_tag: None,
             operation: StreamOperation::Query(req),
-            channel_hint: 0,
             gax_options: GaxRequestOptions::default(),
             method_name: "ExecuteStreamingSql",
             attempt_start_time: None,
@@ -3099,7 +3093,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "_experimental-builtin-metrics")]
+    #[cfg(feature = "builtin-metrics")]
     #[tokio_test_no_panics]
     async fn streaming_query_records_attempt_metrics() -> anyhow::Result<()> {
         use crate::observability::metrics::{Observability, SpannerMetrics};
@@ -3153,16 +3147,17 @@ pub(crate) mod tests {
         let reader = PeriodicReader::builder(exporter.clone()).build();
         let provider = SdkMeterProvider::builder().with_reader(reader).build();
         let meter = provider.meter("cloud.google.com/rust");
-        let metrics = SpannerMetrics::new(meter);
+        let metrics = SpannerMetrics::new(&meter);
         let common_attributes = [
             KeyValue::new("client_hash", "mock_client"),
             KeyValue::new("database", "db"),
             KeyValue::new("instance_id", "test-instance"),
         ];
         let o11y = Observability {
-            metrics: Some(Arc::new(metrics)),
+            metrics: vec![metrics],
             common_attributes,
             meter_provider: Some(Arc::new(provider.clone())),
+            caller_meter_provider: None,
         };
         db_client.o11y = Arc::new(o11y);
 
@@ -3191,7 +3186,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "_experimental-builtin-metrics")]
+    #[cfg(feature = "builtin-metrics")]
     #[tokio_test_no_panics]
     async fn streaming_query_retry_records_multiple_attempts() -> anyhow::Result<()> {
         use crate::observability::metrics::{Observability, SpannerMetrics};
@@ -3259,16 +3254,17 @@ pub(crate) mod tests {
         let reader = PeriodicReader::builder(exporter.clone()).build();
         let provider = SdkMeterProvider::builder().with_reader(reader).build();
         let meter = provider.meter("cloud.google.com/rust");
-        let metrics = SpannerMetrics::new(meter);
+        let metrics = SpannerMetrics::new(&meter);
         let common_attributes = [
             KeyValue::new("client_hash", "mock_client"),
             KeyValue::new("database", "db"),
             KeyValue::new("instance_id", "test-instance"),
         ];
         let o11y = Observability {
-            metrics: Some(Arc::new(metrics)),
+            metrics: vec![metrics],
             common_attributes,
             meter_provider: Some(Arc::new(provider.clone())),
+            caller_meter_provider: None,
         };
         db_client.o11y = Arc::new(o11y);
 
@@ -3323,7 +3319,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "_experimental-builtin-metrics")]
+    #[cfg(feature = "builtin-metrics")]
     #[tokio_test_no_panics]
     async fn streaming_read_records_attempt_metrics() -> anyhow::Result<()> {
         use crate::observability::metrics::{Observability, SpannerMetrics};
@@ -3377,16 +3373,17 @@ pub(crate) mod tests {
         let reader = PeriodicReader::builder(exporter.clone()).build();
         let provider = SdkMeterProvider::builder().with_reader(reader).build();
         let meter = provider.meter("cloud.google.com/rust");
-        let metrics = SpannerMetrics::new(meter);
+        let metrics = SpannerMetrics::new(&meter);
         let common_attributes = [
             KeyValue::new("client_hash", "mock_client"),
             KeyValue::new("database", "db"),
             KeyValue::new("instance_id", "test-instance"),
         ];
         let o11y = Observability {
-            metrics: Some(Arc::new(metrics)),
+            metrics: vec![metrics],
             common_attributes,
             meter_provider: Some(Arc::new(provider.clone())),
+            caller_meter_provider: None,
         };
         db_client.o11y = Arc::new(o11y);
 
@@ -3418,7 +3415,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "_experimental-builtin-metrics")]
+    #[cfg(feature = "builtin-metrics")]
     #[tokio_test_no_panics]
     async fn streaming_query_midstream_retry_records_all_attempts() -> anyhow::Result<()> {
         use crate::observability::metrics::{Observability, SpannerMetrics};
@@ -3497,15 +3494,16 @@ pub(crate) mod tests {
         let reader = PeriodicReader::builder(exporter.clone()).build();
         let provider = SdkMeterProvider::builder().with_reader(reader).build();
         let meter = provider.meter("cloud.google.com/rust");
-        let metrics = SpannerMetrics::new(meter);
+        let metrics = SpannerMetrics::new(&meter);
         let o11y = Observability {
-            metrics: Some(Arc::new(metrics)),
+            metrics: vec![metrics],
             common_attributes: [
                 KeyValue::new("client_hash", "mock_client"),
                 KeyValue::new("database", "db"),
                 KeyValue::new("instance_id", "test-instance"),
             ],
             meter_provider: Some(Arc::new(provider.clone())),
+            caller_meter_provider: None,
         };
         db_client.o11y = Arc::new(o11y);
 
@@ -3569,7 +3567,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "_experimental-builtin-metrics")]
+    #[cfg(feature = "builtin-metrics")]
     #[tokio_test_no_panics]
     async fn streaming_query_permanent_failure_records_error_metrics() -> anyhow::Result<()> {
         use crate::observability::metrics::{Observability, SpannerMetrics};
@@ -3607,15 +3605,16 @@ pub(crate) mod tests {
         let reader = PeriodicReader::builder(exporter.clone()).build();
         let provider = SdkMeterProvider::builder().with_reader(reader).build();
         let meter = provider.meter("cloud.google.com/rust");
-        let metrics = SpannerMetrics::new(meter);
+        let metrics = SpannerMetrics::new(&meter);
         let o11y = Observability {
-            metrics: Some(Arc::new(metrics)),
+            metrics: vec![metrics],
             common_attributes: [
                 KeyValue::new("client_hash", "mock_client"),
                 KeyValue::new("database", "db"),
                 KeyValue::new("instance_id", "test-instance"),
             ],
             meter_provider: Some(Arc::new(provider.clone())),
+            caller_meter_provider: None,
         };
         db_client.o11y = Arc::new(o11y);
 
@@ -3673,7 +3672,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "_experimental-builtin-metrics")]
+    #[cfg(feature = "builtin-metrics")]
     #[tokio_test_no_panics]
     async fn streaming_query_without_server_timing_headers() -> anyhow::Result<()> {
         use crate::observability::metrics::{Observability, SpannerMetrics};
@@ -3716,15 +3715,16 @@ pub(crate) mod tests {
         let reader = PeriodicReader::builder(exporter.clone()).build();
         let provider = SdkMeterProvider::builder().with_reader(reader).build();
         let meter = provider.meter("cloud.google.com/rust");
-        let metrics = SpannerMetrics::new(meter);
+        let metrics = SpannerMetrics::new(&meter);
         let o11y = Observability {
-            metrics: Some(Arc::new(metrics)),
+            metrics: vec![metrics],
             common_attributes: [
                 KeyValue::new("client_hash", "mock_client"),
                 KeyValue::new("database", "db"),
                 KeyValue::new("instance_id", "test-instance"),
             ],
             meter_provider: Some(Arc::new(provider.clone())),
+            caller_meter_provider: None,
         };
         db_client.o11y = Arc::new(o11y);
 
@@ -3750,7 +3750,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "_experimental-builtin-metrics")]
+    #[cfg(feature = "builtin-metrics")]
     #[tokio_test_no_panics]
     async fn init_stream_failure_records_failed_attempt_status() -> anyhow::Result<()> {
         use crate::observability::metrics::{Observability, SpannerMetrics};
@@ -3791,15 +3791,16 @@ pub(crate) mod tests {
         let reader = PeriodicReader::builder(exporter.clone()).build();
         let provider = SdkMeterProvider::builder().with_reader(reader).build();
         let meter = provider.meter("cloud.google.com/rust");
-        let metrics = SpannerMetrics::new(meter);
+        let metrics = SpannerMetrics::new(&meter);
         let o11y = Observability {
-            metrics: Some(Arc::new(metrics)),
+            metrics: vec![metrics],
             common_attributes: [
                 KeyValue::new("client_hash", "mock_client"),
                 KeyValue::new("database", "db"),
                 KeyValue::new("instance_id", "test-instance"),
             ],
             meter_provider: Some(Arc::new(provider.clone())),
+            caller_meter_provider: None,
         };
         db_client.o11y = Arc::new(o11y);
 
@@ -3845,7 +3846,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "_experimental-builtin-metrics")]
+    #[cfg(feature = "builtin-metrics")]
     #[tokio_test_no_panics]
     async fn restart_stream_clears_previous_attempt_headers() -> anyhow::Result<()> {
         use crate::observability::metrics::{Observability, SpannerMetrics};
@@ -3908,15 +3909,16 @@ pub(crate) mod tests {
         let reader = PeriodicReader::builder(exporter.clone()).build();
         let provider = SdkMeterProvider::builder().with_reader(reader).build();
         let meter = provider.meter("cloud.google.com/rust");
-        let metrics = SpannerMetrics::new(meter);
+        let metrics = SpannerMetrics::new(&meter);
         let o11y = Observability {
-            metrics: Some(Arc::new(metrics)),
+            metrics: vec![metrics],
             common_attributes: [
                 KeyValue::new("client_hash", "mock_client"),
                 KeyValue::new("database", "db"),
                 KeyValue::new("instance_id", "test-instance"),
             ],
             meter_provider: Some(Arc::new(provider.clone())),
+            caller_meter_provider: None,
         };
         db_client.o11y = Arc::new(o11y);
 
@@ -3961,7 +3963,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "_experimental-builtin-metrics")]
+    #[cfg(feature = "builtin-metrics")]
     #[tokio_test_no_panics]
     async fn initial_stream_send_failure_records_attempt_and_operation_metrics()
     -> anyhow::Result<()> {
@@ -3999,15 +4001,16 @@ pub(crate) mod tests {
         let reader = PeriodicReader::builder(exporter.clone()).build();
         let provider = SdkMeterProvider::builder().with_reader(reader).build();
         let meter = provider.meter("cloud.google.com/rust");
-        let metrics = SpannerMetrics::new(meter);
+        let metrics = SpannerMetrics::new(&meter);
         let o11y = Observability {
-            metrics: Some(Arc::new(metrics)),
+            metrics: vec![metrics],
             common_attributes: [
                 KeyValue::new("client_uid", "test-uid"),
                 KeyValue::new("client_name", "test-name"),
                 KeyValue::new("database", "db"),
             ],
             meter_provider: Some(Arc::new(provider.clone())),
+            caller_meter_provider: None,
         };
         db_client.o11y = Arc::new(o11y);
 
@@ -4076,7 +4079,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "_experimental-builtin-metrics")]
+    #[cfg(feature = "builtin-metrics")]
     #[tokio_test_no_panics]
     async fn result_set_dropped_before_consumption_records_metrics() -> anyhow::Result<()> {
         use crate::observability::metrics::{Observability, SpannerMetrics};
@@ -4117,15 +4120,16 @@ pub(crate) mod tests {
         let reader = PeriodicReader::builder(exporter.clone()).build();
         let provider = SdkMeterProvider::builder().with_reader(reader).build();
         let meter = provider.meter("cloud.google.com/rust");
-        let metrics = SpannerMetrics::new(meter);
+        let metrics = SpannerMetrics::new(&meter);
         let o11y = Observability {
-            metrics: Some(Arc::new(metrics)),
+            metrics: vec![metrics],
             common_attributes: [
                 KeyValue::new("client_uid", "test-uid"),
                 KeyValue::new("client_name", "test-name"),
                 KeyValue::new("database", "db"),
             ],
             meter_provider: Some(Arc::new(provider.clone())),
+            caller_meter_provider: None,
         };
         db_client.o11y = Arc::new(o11y);
 
@@ -4150,7 +4154,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "_experimental-builtin-metrics")]
+    #[cfg(feature = "builtin-metrics")]
     fn assert_metric_names_recorded(finished: &[ResourceMetrics], expected_names: &[&str]) {
         use std::collections::HashSet;
 

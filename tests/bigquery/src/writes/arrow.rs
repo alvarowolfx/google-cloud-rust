@@ -20,7 +20,8 @@ use ::arrow::record_batch::RecordBatch;
 use anyhow::Result;
 use google_cloud_bigquery::client::Write;
 use google_cloud_bigquery::model::{ArrowRecordBatch, ArrowSchema};
-use google_cloud_bigquery::write::arrow::CommittedWriter;
+use google_cloud_bigquery::write::format::Arrow;
+use google_cloud_bigquery::write::{BufferedWriter, CommittedWriter, PendingWriter};
 use std::sync::Arc;
 
 pub async fn basic(
@@ -30,18 +31,19 @@ pub async fn basic(
     table_id: &str,
 ) -> Result<()> {
     let table = format!("projects/{project_id}/datasets/{dataset_id}/tables/{table_id}");
-    let schema = create_test_schema();
+    let mut serializer = ArrowSerializer::new("basic")?;
 
     // Create a writer for the default stream
     let writer = client
-        .arrow(ArrowSchema::new().set_serialized_schema(serialize_schema(&schema)?))
-        .default(table)?;
+        .open_default_stream(table)
+        .build_arrow(serializer.schema())
+        .await?;
 
     // Write the batches
-    let batch1 = create_test_batch(schema.clone(), vec!["Alice", "Bob"], vec![25, 28], "basic")?;
+    let batch1 = serializer.batch(vec!["Alice", "Bob"], vec![25, 28])?;
     let _ = writer.append(batch1).send().await?;
 
-    let batch2 = create_test_batch(schema.clone(), vec!["Charlie"], vec![31], "basic")?;
+    let batch2 = serializer.batch(vec!["Charlie"], vec![31])?;
     let _ = writer.append(batch2).send().await?;
 
     // Verify the writes
@@ -77,25 +79,22 @@ pub async fn pending(
     table_id: &str,
 ) -> Result<()> {
     let table = format!("projects/{project_id}/datasets/{dataset_id}/tables/{table_id}");
-    let schema = create_test_schema();
+    let mut serializer = ArrowSerializer::new("pending")?;
 
     // Create a writer for a pending stream
-    let writer = client
-        .arrow(ArrowSchema::new().set_serialized_schema(serialize_schema(&schema)?))
-        .pending(table)
+    let writer: PendingWriter<Arrow> = client
+        .create_stream(table)
+        .build_arrow(serializer.schema())
         .await?;
 
     // Write the batches
-    let batch1 = create_test_batch(
-        schema.clone(),
-        vec!["David", "Eve"],
-        vec![42, 38],
-        "pending",
-    )?;
-    let _ = writer.append(batch1).set_offset(0).send().await?;
+    let batch1 = serializer.batch(vec!["David", "Eve"], vec![42, 38])?;
+    let resp1 = writer.append(batch1).set_offset(0).send().await?;
+    assert_eq!(resp1.offset, Some(0));
 
-    let batch2 = create_test_batch(schema.clone(), vec!["Frank"], vec![55], "pending")?;
-    let _ = writer.append(batch2).set_offset(2).send().await?;
+    let batch2 = serializer.batch(vec!["Frank"], vec![55])?;
+    let resp2 = writer.append(batch2).set_offset(2).send().await?;
+    assert_eq!(resp2.offset, Some(2));
 
     // Finalize the stream
     writer.finalize().await?;
@@ -105,7 +104,7 @@ pub async fn pending(
     assert!(users.is_empty(), "{users:?}");
 
     // Verify that appending to a finalized stream fails
-    let batch3 = create_test_batch(schema.clone(), vec!["Ghost"], vec![99], "pending")?;
+    let batch3 = serializer.batch(vec!["Ghost"], vec![99])?;
     let _err = writer
         .append(batch3)
         .set_offset(3)
@@ -140,50 +139,6 @@ pub async fn pending(
 
     Ok(())
 }
-fn create_test_schema() -> Arc<Schema> {
-    Arc::new(Schema::new(vec![
-        Field::new("name", DataType::Utf8, false),
-        Field::new("age", DataType::Int64, false),
-        Field::new("test", DataType::Utf8, false),
-    ]))
-}
-
-fn create_test_batch(
-    schema: Arc<Schema>,
-    names: Vec<&str>,
-    ages: Vec<i64>,
-    test: &str,
-) -> Result<ArrowRecordBatch> {
-    let schema_buf = serialize_schema(&schema)?;
-    let schema_len = schema_buf.len();
-
-    let name = StringArray::from(names);
-    let age = Int64Array::from(ages);
-    let test_col = StringArray::from(vec![test; age.len()]);
-
-    let batch = RecordBatch::try_new(
-        schema,
-        vec![Arc::new(name), Arc::new(age), Arc::new(test_col)],
-    )?;
-    let batch_buf = serialize_batch(&batch, schema_len)?;
-
-    Ok(ArrowRecordBatch::new().set_serialized_record_batch(batch_buf))
-}
-
-fn serialize_schema(schema: &Schema) -> Result<Vec<u8>> {
-    let mut buf = Vec::new();
-    let _ = StreamWriter::try_new(&mut buf, schema)?;
-    Ok(buf)
-}
-
-fn serialize_batch(batch: &RecordBatch, schema_len: usize) -> Result<Vec<u8>> {
-    let mut buf = Vec::new();
-    let mut writer = StreamWriter::try_new(&mut buf, &batch.schema())?;
-    writer.write(batch)?;
-    // Note that the schema is encoded in the front of the record batch. We need
-    // to strip it.
-    Ok(buf[schema_len..].to_vec())
-}
 
 pub async fn committed(
     client: &Write,
@@ -192,25 +147,22 @@ pub async fn committed(
     table_id: &str,
 ) -> Result<()> {
     let table = format!("projects/{project_id}/datasets/{dataset_id}/tables/{table_id}");
-    let schema = create_test_schema();
+    let mut serializer = ArrowSerializer::new("committed")?;
 
     // Create a writer for a committed stream
-    let writer = client
-        .arrow(ArrowSchema::new().set_serialized_schema(serialize_schema(&schema)?))
-        .committed(table)
+    let writer: CommittedWriter<Arrow> = client
+        .create_stream(table)
+        .build_arrow(serializer.schema())
         .await?;
 
     // Write the batches
-    let batch1 = create_test_batch(
-        schema.clone(),
-        vec!["Gerald", "Hannah"],
-        vec![20, 22],
-        "committed",
-    )?;
-    let _ = writer.append(batch1).send().await?;
+    let batch1 = serializer.batch(vec!["Gerald", "Hannah"], vec![20, 22])?;
+    let resp1 = writer.append(batch1).set_offset(0).send().await?;
+    assert_eq!(resp1.offset, Some(0));
 
-    let batch2 = create_test_batch(schema.clone(), vec!["Ian"], vec![24], "committed")?;
-    let _ = writer.append(batch2).send().await?;
+    let batch2 = serializer.batch(vec!["Ian"], vec![24])?;
+    let resp2 = writer.append(batch2).set_offset(2).send().await?;
+    assert_eq!(resp2.offset, Some(2));
 
     // Verify the writes are immediately available since it's a committed stream
     let users = read_writes_table(project_id, dataset_id, table_id, "committed").await?;
@@ -239,7 +191,7 @@ pub async fn committed(
     writer.finalize().await?;
 
     // Verify that appending to a finalized stream fails
-    let batch3 = create_test_batch(schema.clone(), vec!["Jack"], vec![26], "committed")?;
+    let batch3 = serializer.batch(vec!["Jack"], vec![26])?;
     let _err = writer
         .append(batch3)
         .send()
@@ -256,25 +208,20 @@ pub async fn buffered(
     table_id: &str,
 ) -> Result<()> {
     let table = format!("projects/{project_id}/datasets/{dataset_id}/tables/{table_id}");
-    let schema = create_test_schema();
+    let mut serializer = ArrowSerializer::new("buffered")?;
 
     // Create a writer for a buffered stream
-    let writer = client
-        .arrow(ArrowSchema::new().set_serialized_schema(serialize_schema(&schema)?))
-        .buffered(table)
+    let writer: BufferedWriter<Arrow> = client
+        .create_stream(table)
+        .build_arrow(serializer.schema())
         .await?;
 
-    // Write the batches (no implicit commit yet)
-    let batch1 = create_test_batch(
-        schema.clone(),
-        vec!["Kelly", "Liam"],
-        vec![30, 32],
-        "buffered",
-    )?;
+    // Write the batches
+    let batch1 = serializer.batch(vec!["Kelly", "Liam"], vec![30, 32])?;
     let resp1 = writer.append(batch1).set_offset(0).send().await?;
     assert_eq!(resp1.offset, Some(0));
 
-    let batch2 = create_test_batch(schema.clone(), vec!["Mia"], vec![34], "buffered")?;
+    let batch2 = serializer.batch(vec!["Mia"], vec![34])?;
     let resp2 = writer.append(batch2).set_offset(2).send().await?;
     assert_eq!(resp2.offset, Some(2));
 
@@ -334,7 +281,7 @@ pub async fn buffered(
     writer.finalize().await?;
 
     // Verify that appending to a finalized stream fails
-    let batch3 = create_test_batch(schema.clone(), vec!["Noah"], vec![36], "buffered")?;
+    let batch3 = serializer.batch(vec!["Noah"], vec![36])?;
     let _err = writer
         .append(batch3)
         .set_offset(3)
@@ -352,33 +299,31 @@ pub async fn attach(
     table_id: &str,
 ) -> Result<()> {
     let table = format!("projects/{project_id}/datasets/{dataset_id}/tables/{table_id}");
-    let schema = create_test_schema();
+    let mut serializer = ArrowSerializer::new("attach")?;
+    let schema = serializer.schema();
 
-    // Create a writer for a committed stream
-    let writer = client
-        .arrow(ArrowSchema::new().set_serialized_schema(serialize_schema(&schema)?))
-        .committed(table)
+    let write_stream = {
+        // Create a writer for a committed stream
+        let writer: CommittedWriter<Arrow> = client
+            .create_stream(table)
+            .build_arrow(schema.clone())
+            .await?;
+
+        // Write the first batch
+        let batch1 = serializer.batch(vec!["Attached1", "Attached2"], vec![80, 81])?;
+        let _ = writer.append(batch1).set_offset(0).send().await?;
+
+        // Return the resource name of the write stream
+        writer.write_stream().to_string()
+    };
+
+    // Attach to the previously created write stream from a new writer.
+    let attached_writer: CommittedWriter<Arrow> = client
+        .attach_to_stream(write_stream)
+        .build_arrow(schema)
         .await?;
 
-    let stream_name = writer.write_stream().to_string();
-
-    // Write the first batch dynamically using the original stream
-    let batch1 = create_test_batch(
-        schema.clone(),
-        vec!["Attached1", "Attached2"],
-        vec![80, 81],
-        "attach",
-    )?;
-    let _ = writer.append(batch1).set_offset(0).send().await?;
-
-    // Drop the first writer and launch a completely separate attached instance
-    // connecting back to the identical resource string via our new builder path.
-    let attached_writer: CommittedWriter = client
-        .arrow(ArrowSchema::new().set_serialized_schema(serialize_schema(&schema)?))
-        .attach(&stream_name)
-        .await?;
-
-    let batch2 = create_test_batch(schema.clone(), vec!["Attached3"], vec![82], "attach")?;
+    let batch2 = serializer.batch(vec!["Attached3"], vec![82])?;
     let _ = attached_writer.append(batch2).set_offset(2).send().await?;
 
     // Verify the writes are logically seamless across the boundary
@@ -408,4 +353,111 @@ pub async fn attach(
     attached_writer.finalize().await?;
 
     Ok(())
+}
+
+pub async fn multiplex(
+    client: &Write,
+    project_id: &str,
+    dataset_id: &str,
+    table_id_prefix: &str,
+) -> Result<()> {
+    let table1 = format!("projects/{project_id}/datasets/{dataset_id}/tables/{table_id_prefix}1");
+    let table2 = format!("projects/{project_id}/datasets/{dataset_id}/tables/{table_id_prefix}2");
+    let mut serializer = ArrowSerializer::new("multiplex")?;
+    let schema = serializer.schema();
+
+    // Create a writer for each table. They share the stream pool.
+    let writer1 = client
+        .open_default_stream(table1)
+        .with_multiplexing(true)
+        .build_arrow(schema.clone())
+        .await?;
+    let writer2 = client
+        .open_default_stream(table2)
+        .with_multiplexing(true)
+        .build_arrow(schema)
+        .await?;
+
+    // Write the batches
+    let batch1 = serializer.batch(vec!["Alice", "Bob"], vec![25, 28])?;
+    let _ = writer1.append(batch1.clone()).send().await?;
+    let _ = writer2.append(batch1).send().await?;
+
+    let batch2 = serializer.batch(vec!["Charlie"], vec![31])?;
+    let _ = writer1.append(batch2.clone()).send().await?;
+    let _ = writer2.append(batch2).send().await?;
+
+    // Verify the writes
+    let table_id1 = format!("{table_id_prefix}1");
+    let table_id2 = format!("{table_id_prefix}2");
+    for table_id in [table_id1, table_id2] {
+        let users = read_writes_table(project_id, dataset_id, &table_id, "multiplex").await?;
+        assert_eq!(
+            users,
+            vec![
+                WriteUserRecord {
+                    name: "Alice".to_string(),
+                    age: 25,
+                    test: "multiplex".to_string()
+                },
+                WriteUserRecord {
+                    name: "Bob".to_string(),
+                    age: 28,
+                    test: "multiplex".to_string()
+                },
+                WriteUserRecord {
+                    name: "Charlie".to_string(),
+                    age: 31,
+                    test: "multiplex".to_string()
+                },
+            ]
+        );
+    }
+
+    Ok(())
+}
+
+struct ArrowSerializer {
+    schema: Arc<Schema>,
+    schema_msg: ArrowSchema,
+    writer: StreamWriter<Vec<u8>>,
+    test: &'static str,
+}
+
+impl ArrowSerializer {
+    fn new(test: &'static str) -> Result<Self> {
+        let schema = Arc::new(Schema::new(vec![
+            Field::new("name", DataType::Utf8, false),
+            Field::new("age", DataType::Int64, false),
+            Field::new("test", DataType::Utf8, false),
+        ]));
+        let mut writer = StreamWriter::try_new(Vec::new(), &schema)?;
+        let buf = std::mem::take(writer.get_mut());
+        let schema_msg = ArrowSchema::new().set_serialized_schema(buf);
+        Ok(Self {
+            schema,
+            schema_msg,
+            writer,
+            test,
+        })
+    }
+
+    fn schema(&self) -> ArrowSchema {
+        self.schema_msg.clone()
+    }
+
+    fn batch(&mut self, names: Vec<&str>, ages: Vec<i64>) -> Result<ArrowRecordBatch> {
+        let batch = {
+            let name = StringArray::from(names);
+            let age = Int64Array::from(ages);
+            let test_col = StringArray::from(vec![self.test; age.len()]);
+            RecordBatch::try_new(
+                self.schema.clone(),
+                vec![Arc::new(name), Arc::new(age), Arc::new(test_col)],
+            )?
+        };
+        self.writer.write(&batch)?;
+        let buf = std::mem::take(self.writer.get_mut());
+        Ok(ArrowRecordBatch::new().set_serialized_record_batch(buf))
+    }
 }

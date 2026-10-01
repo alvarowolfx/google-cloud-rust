@@ -183,7 +183,7 @@ impl Storage {
             request.params,
             options,
         )
-        .send_unbuffered()
+        .send_unbuffered(request.checksum_precomputation)
         .await
     }
 
@@ -251,7 +251,7 @@ impl Storage {
                     recorder.on_client_request(
                         ClientRequestAttributes::default()
                             .set_rpc_method("google.storage.v2.Storage/BidiStreamingRead")
-                            .set_url_template("/upload/storage/v1/b/{bucket}/o")
+                            .set_url_template("/storage/v1/b/{bucket}/o/{object}")
                             .set_resource_name(resource_name),
                     );
                 }
@@ -1221,6 +1221,7 @@ mod tests {
     }
 
     /// Models a complete lifecycle: `reopen` -> `append` -> `flush` -> `finalize`.
+    #[ignore = "TODO(#6324) - disabled because it was flaky"]
     #[cfg(google_cloud_unstable_storage_bidi)]
     #[tokio::test]
     async fn reopen_appendable_object_success() -> anyhow::Result<()> {

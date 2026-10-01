@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::client::Read as ReadClient;
 use crate::error::RowError;
-use arrow::record_batch::RecordBatch;
-use google_cloud_bigquery_read::client::Read as ReadClient;
-use google_cloud_bigquery_read::model::{
+use crate::model::{
     ArrowSerializationOptions, CreateReadSessionRequest, DataFormat, ReadRowsResponse, ReadSession,
     arrow_serialization_options::CompressionCodec, read_rows_response::Rows,
     read_rows_response::Schema as ReadRowsResponseSchema, read_session::TableReadOptions,
 };
+use arrow::record_batch::RecordBatch;
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::JobReference;
 use google_cloud_gax::streaming::ResponseStream;

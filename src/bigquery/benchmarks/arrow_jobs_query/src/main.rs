@@ -14,6 +14,7 @@
 
 use clap::{Parser, ValueEnum};
 use google_cloud_bigquery::client::BigQuery;
+use google_cloud_bigquery::datatypes::{Interval, Range};
 use google_cloud_bigquery::query::FromRow;
 use stats_alloc::{Region, StatsAlloc};
 use std::alloc::System;
@@ -41,7 +42,7 @@ fn format_bytes(bytes: usize) -> String {
 #[derive(Parser, Debug)]
 #[command(
     name = "bigquery-benchmark-arrow-jobs-query",
-    about = "BigQuery Benchmark: Storage Read API vs Standard REST JSON Pagination (Speed & Memory Allocations)"
+    about = "BigQuery jobs.query Benchmark: Arrow results format vs standard JSON (Speed & Allocations)"
 )]
 struct Args {
     /// GCP Project ID (reads from GOOGLE_CLOUD_PROJECT if omitted).
@@ -71,14 +72,6 @@ struct Args {
     /// Whether to deserialize rows into typed structs using FromRow.
     #[arg(long, default_value_t = true)]
     typed: bool,
-
-    /// Explicitly enable or disable Storage Read API acceleration (if omitted and not --compare, defaults to true).
-    #[arg(long)]
-    storage_read: Option<bool>,
-
-    /// Run both modes (Standard REST JSON vs Storage Read API) and print comparison summary.
-    #[arg(long, default_value_t = false)]
-    compare: bool,
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
@@ -97,12 +90,24 @@ enum Scenario {
     Synthetic100k,
     #[value(name = "synthetic-500k")]
     Synthetic500k,
+    #[value(name = "wikipedia-1k")]
+    Wikipedia1k,
+    #[value(name = "wikipedia-5k")]
+    Wikipedia5k,
     #[value(name = "wikipedia-10k")]
     Wikipedia10k,
     #[value(name = "wikipedia-100k")]
     Wikipedia100k,
-    #[value(name = "wikipedia-500k")]
-    Wikipedia500k,
+    #[value(name = "usa-names-1k")]
+    UsaNames1k,
+    #[value(name = "usa-names-10k")]
+    UsaNames10k,
+    #[value(name = "usa-names-50k")]
+    UsaNames50k,
+    #[value(name = "datatypes-1k")]
+    DataTypes1k,
+    #[value(name = "datatypes-5k")]
+    DataTypes5k,
     #[value(name = "custom")]
     Custom,
 }
@@ -117,9 +122,15 @@ impl Scenario {
             Scenario::Synthetic50k => Self::synthetic_query(50_000),
             Scenario::Synthetic100k => Self::synthetic_query(100_000),
             Scenario::Synthetic500k => Self::synthetic_query(500_000),
+            Scenario::Wikipedia1k => Self::wikipedia_query(1_000),
+            Scenario::Wikipedia5k => Self::wikipedia_query(5_000),
             Scenario::Wikipedia10k => Self::wikipedia_query(10_000),
             Scenario::Wikipedia100k => Self::wikipedia_query(100_000),
-            Scenario::Wikipedia500k => Self::wikipedia_query(500_000),
+            Scenario::UsaNames1k => Self::usa_names_query(1_000),
+            Scenario::UsaNames10k => Self::usa_names_query(10_000),
+            Scenario::UsaNames50k => Self::usa_names_query(50_000),
+            Scenario::DataTypes1k => Self::datatypes_query(1_000),
+            Scenario::DataTypes5k => Self::datatypes_query(5_000),
             Scenario::Custom => custom_query
                 .expect("custom query must be provided when scenario is 'custom'")
                 .to_string(),
@@ -158,11 +169,63 @@ impl Scenario {
         )
     }
 
+    fn usa_names_query(limit: usize) -> String {
+        format!(
+            "SELECT \
+                state, \
+                gender, \
+                year, \
+                name, \
+                number \
+             FROM `bigquery-public-data.usa_names.usa_1910_2013` \
+             LIMIT {limit}"
+        )
+    }
+
+    fn datatypes_query(limit: usize) -> String {
+        format!(
+            "SELECT \
+                 CONCAT('User_', CAST(x AS STRING)) AS name, \
+                 x AS age, \
+                 CAST(x AS FLOAT64) * 0.05 + 1.5 AS height, \
+                 (MOD(x, 2) = 0) AS active, \
+                 ARRAY[x, x + 1, x + 2] AS numbers, \
+                 TIMESTAMP '2026-05-28 15:30:00 UTC' AS created_at, \
+                 DATE '2026-05-28' AS birth_date, \
+                 TIME '15:30:00' AS daily_alarm, \
+                 DATETIME '2026-05-28 15:30:00' AS event_time, \
+                 RANGE(DATE '2026-05-28', DATE '2026-05-29') AS date_range, \
+                 RANGE(TIMESTAMP '2026-05-28 15:30:00 UTC', NULL) AS timestamp_range, \
+                 IF(MOD(x, 2) = 0, CAST(NULL AS STRING), 'nullable_val') AS nullable_name, \
+                 IF(MOD(x, 2) = 0, CAST(NULL AS INT64), x) AS nullable_age, \
+                 B'hello world' AS raw_bytes, \
+                 B'payload in bytes' AS payload_bytes, \
+                 IF(MOD(x, 2) = 0, CAST(NULL AS BYTES), B'optional') AS nullable_bytes, \
+                 INTERVAL '1 2:30:45.123456' DAY TO SECOND AS interval_val, \
+                 JSON '{{\"role\": \"admin\", \"level\": 5}}' AS json_val \
+             FROM UNNEST(GENERATE_ARRAY(1, {limit})) AS x"
+        )
+    }
+
     fn is_wikipedia(&self) -> bool {
         matches!(
             self,
-            Scenario::Wikipedia10k | Scenario::Wikipedia100k | Scenario::Wikipedia500k
+            Scenario::Wikipedia1k
+                | Scenario::Wikipedia5k
+                | Scenario::Wikipedia10k
+                | Scenario::Wikipedia100k
         )
+    }
+
+    fn is_usa_names(&self) -> bool {
+        matches!(
+            self,
+            Scenario::UsaNames1k | Scenario::UsaNames10k | Scenario::UsaNames50k
+        )
+    }
+
+    fn is_datatypes(&self) -> bool {
+        matches!(self, Scenario::DataTypes1k | Scenario::DataTypes5k)
     }
 }
 
@@ -193,7 +256,39 @@ struct WikipediaRow {
     num_characters: Option<i64>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(FromRow, Debug, PartialEq)]
+#[allow(dead_code)]
+struct UsaNamesRow {
+    state: Option<String>,
+    gender: Option<String>,
+    year: Option<i64>,
+    name: Option<String>,
+    number: Option<i64>,
+}
+
+#[derive(FromRow, Debug, PartialEq)]
+#[allow(dead_code)]
+struct DataTypesRow {
+    name: String,
+    age: i64,
+    height: f64,
+    active: bool,
+    numbers: Vec<i64>,
+    created_at: wkt::Timestamp,
+    birth_date: google_cloud_type::model::Date,
+    daily_alarm: google_cloud_type::model::TimeOfDay,
+    event_time: google_cloud_type::model::DateTime,
+    date_range: Range<google_cloud_type::model::Date>,
+    timestamp_range: Range<wkt::Timestamp>,
+    nullable_name: Option<String>,
+    nullable_age: Option<i64>,
+    raw_bytes: Vec<u8>,
+    payload_bytes: bytes::Bytes,
+    nullable_bytes: Option<Vec<u8>>,
+    interval_val: Interval,
+    json_val: wkt::Struct,
+}
+
 struct IterationResult {
     query_duration: Duration,
     read_duration: Duration,
@@ -206,95 +301,51 @@ struct IterationResult {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
-    let project_id = args.project_id.clone().unwrap_or_default();
+
+    let project_id = args.project_id.ok_or_else(|| {
+        anyhow::anyhow!(
+            "Project ID must be provided via --project-id or GOOGLE_CLOUD_PROJECT env var"
+        )
+    })?;
+
     let sql_query = args.scenario.query(args.query.as_deref());
 
-    println!("==================================================================================");
-    println!("BigQuery Storage Read API Benchmark");
-    println!("==================================================================================");
-    println!("Scenario:         {:?}", args.scenario);
     println!(
-        "Project ID:       {}",
-        if project_id.is_empty() {
-            "(ADC default)"
-        } else {
-            &project_id
-        }
+        "=========================================================================================================="
     );
-    println!("Typed:            {}", args.typed);
-    println!("Use Query Cache:  {}", args.use_query_cache);
+    println!("                               BigQuery Query Benchmark (Speed & Memory)");
     println!(
-        "Iterations:       {} (warmup: {})",
-        args.iterations, args.warmup
+        "=========================================================================================================="
     );
+    #[cfg(google_cloud_unstable_bigquery_arrow)]
+    println!("  Arrow Acceleration:    ENABLED (--cfg google_cloud_unstable_bigquery_arrow)");
+    #[cfg(not(google_cloud_unstable_bigquery_arrow))]
+    println!("  Arrow Acceleration:    DISABLED (Standard JSON mode)");
+    println!("  Project ID:            {project_id}");
+    println!("  Scenario:              {:?}", args.scenario);
+    println!("  Warmup Iterations:     {}", args.warmup);
+    println!("  Measured Runs:         {}", args.iterations);
+    println!("  Use Query Cache:       {}", args.use_query_cache);
+    println!("  Typed Deserialization: {}", args.typed);
     println!(
-        "Query:\n{}",
-        sql_query
-            .lines()
-            .map(|l| format!("  {l}"))
-            .collect::<Vec<_>>()
-            .join("\n")
+        "=========================================================================================================="
     );
-    println!(
-        "==================================================================================\n"
-    );
+    println!();
 
-    if args.compare {
-        println!(">>> Running Mode 1: Standard REST JSON Pagination (storage_read = false)");
-        let client_json = BigQuery::builder().with_storage_read(false).build().await?;
-        let json_results =
-            run_benchmark_suite(&client_json, &project_id, &sql_query, &args, "REST JSON").await?;
-
-        println!(
-            "\n>>> Running Mode 2: BigQuery Storage Read API Acceleration (storage_read = true)"
-        );
-        let client_storage = BigQuery::builder().with_storage_read(true).build().await?;
-        let storage_results = run_benchmark_suite(
-            &client_storage,
-            &project_id,
-            &sql_query,
-            &args,
-            "Storage Read API",
-        )
+    let client = BigQuery::builder()
+        .with_project_id(&project_id)
+        .build()
         .await?;
 
-        print_comparison(&json_results, &storage_results);
-    } else {
-        let storage_read = args.storage_read.unwrap_or(true);
-        let mode_label = if storage_read {
-            "Storage Read API (Arrow Streaming)"
-        } else {
-            "Standard REST JSON Pagination"
-        };
-        println!(">>> Mode: {mode_label} (storage_read = {storage_read})");
-
-        let client = BigQuery::builder()
-            .with_storage_read(storage_read)
-            .build()
-            .await?;
-        let results =
-            run_benchmark_suite(&client, &project_id, &sql_query, &args, mode_label).await?;
-        print_summary(&results, mode_label);
-    }
-
-    Ok(())
-}
-
-async fn run_benchmark_suite(
-    client: &BigQuery,
-    project_id: &str,
-    sql_query: &str,
-    args: &Args,
-    label: &str,
-) -> anyhow::Result<Vec<IterationResult>> {
     // Warmup runs
     if args.warmup > 0 {
-        print!("Warming up ({label}, {} run(s))... ", args.warmup);
-        for _ in 0..args.warmup {
+        println!("Running {} warmup iteration(s)...", args.warmup);
+        for i in 1..=args.warmup {
+            print!("  Warmup {i}/{}: ", args.warmup);
             let result = run_single_query(
-                client,
-                project_id,
-                sql_query,
+                &client,
+                &project_id,
+                &sql_query,
                 args.scenario,
                 args.use_query_cache,
                 args.typed,
@@ -313,7 +364,7 @@ async fn run_benchmark_suite(
     }
 
     // Benchmark measured runs
-    println!("Running {} measurement(s) for {label}...", args.iterations);
+    println!("Running {} benchmark measurement(s)...", args.iterations);
     println!(
         "------------------------------------------------------------------------------------------------------------------"
     );
@@ -335,9 +386,9 @@ async fn run_benchmark_suite(
     let mut results = Vec::with_capacity(args.iterations);
     for i in 1..=args.iterations {
         let result = run_single_query(
-            client,
-            project_id,
-            sql_query,
+            &client,
+            &project_id,
+            &sql_query,
             args.scenario,
             args.use_query_cache,
             args.typed,
@@ -366,7 +417,22 @@ async fn run_benchmark_suite(
         "------------------------------------------------------------------------------------------------------------------"
     );
 
-    Ok(results)
+    // Print summary statistics
+    print_summary(&results);
+
+    println!();
+    println!("Tip: Compare Arrow vs JSON by running:");
+    println!(
+        "  Arrow:  RUSTFLAGS=\"--cfg google_cloud_unstable_bigquery_arrow\" cargo run --release -p bigquery-benchmark-arrow-jobs-query -- --scenario {:?}",
+        args.scenario
+    );
+    println!(
+        "  JSON:   cargo run --release -p bigquery-benchmark-arrow-jobs-query -- --scenario {:?}",
+        args.scenario
+    );
+    println!();
+
+    Ok(())
 }
 
 async fn run_single_query(
@@ -382,11 +448,9 @@ async fn run_single_query(
 
     // 1. Submit query and wait until complete
     let start_query = Instant::now();
-    let mut query_builder = client.query(query_str);
-    if !project_id.is_empty() {
-        query_builder = query_builder.with_project_id(project_id);
-    }
-    let complete_query = query_builder
+    let complete_query = client
+        .query(query_str)
+        .with_project_id(project_id)
         .set_use_query_cache(use_query_cache)
         .until_done()
         .await?;
@@ -402,6 +466,18 @@ async fn run_single_query(
             while let Some(row_res) = iter.next().await {
                 let row = row_res?;
                 let _typed_row: WikipediaRow = row.try_into()?;
+                rows_count += 1;
+            }
+        } else if scenario.is_usa_names() {
+            while let Some(row_res) = iter.next().await {
+                let row = row_res?;
+                let _typed_row: UsaNamesRow = row.try_into()?;
+                rows_count += 1;
+            }
+        } else if scenario.is_datatypes() {
+            while let Some(row_res) = iter.next().await {
+                let row = row_res?;
+                let _typed_row: DataTypesRow = row.try_into()?;
                 rows_count += 1;
             }
         } else {
@@ -434,7 +510,7 @@ async fn run_single_query(
     })
 }
 
-fn print_summary(results: &[IterationResult], label: &str) {
+fn print_summary(results: &[IterationResult]) {
     if results.is_empty() {
         return;
     }
@@ -487,10 +563,7 @@ fn print_summary(results: &[IterationResult], label: &str) {
         0.0
     };
 
-    println!(
-        "\nSummary Statistics for {label} (over {} runs):",
-        results.len()
-    );
+    println!("Summary Statistics (over {} runs):", results.len());
     println!(
         "  Query Execution Time:   avg: {:.2?} (min: {:.2?}, max: {:.2?}, stddev: {:.2?})",
         Duration::from_secs_f64(q_avg),
@@ -531,120 +604,5 @@ fn print_summary(results: &[IterationResult], label: &str) {
         } else {
             0.0
         }
-    );
-}
-
-fn print_comparison(json_results: &[IterationResult], storage_results: &[IterationResult]) {
-    if json_results.is_empty() || storage_results.is_empty() {
-        return;
-    }
-
-    let n_j = json_results.len() as f64;
-    let n_s = storage_results.len() as f64;
-
-    let avg_read_json = json_results
-        .iter()
-        .map(|r| r.read_duration.as_secs_f64())
-        .sum::<f64>()
-        / n_j;
-    let avg_read_storage = storage_results
-        .iter()
-        .map(|r| r.read_duration.as_secs_f64())
-        .sum::<f64>()
-        / n_s;
-
-    let avg_total_json = json_results
-        .iter()
-        .map(|r| r.total_duration.as_secs_f64())
-        .sum::<f64>()
-        / n_j;
-    let avg_total_storage = storage_results
-        .iter()
-        .map(|r| r.total_duration.as_secs_f64())
-        .sum::<f64>()
-        / n_s;
-
-    let avg_tp_json = json_results
-        .iter()
-        .map(|r| r.rows_count as f64 / r.read_duration.as_secs_f64())
-        .sum::<f64>()
-        / n_j;
-    let avg_tp_storage = storage_results
-        .iter()
-        .map(|r| r.rows_count as f64 / r.read_duration.as_secs_f64())
-        .sum::<f64>()
-        / n_s;
-
-    let avg_mem_json = json_results
-        .iter()
-        .map(|r| r.bytes_allocated as f64)
-        .sum::<f64>()
-        / n_j;
-    let avg_mem_storage = storage_results
-        .iter()
-        .map(|r| r.bytes_allocated as f64)
-        .sum::<f64>()
-        / n_s;
-
-    let avg_alloc_json = json_results
-        .iter()
-        .map(|r| r.allocations_count as f64)
-        .sum::<f64>()
-        / n_j;
-    let avg_alloc_storage = storage_results
-        .iter()
-        .map(|r| r.allocations_count as f64)
-        .sum::<f64>()
-        / n_s;
-
-    let speedup_read = avg_read_json / avg_read_storage;
-    let speedup_total = avg_total_json / avg_total_storage;
-    let mem_reduction = (avg_mem_json - avg_mem_storage) / avg_mem_json * 100.0;
-    let alloc_reduction = (avg_alloc_json - avg_alloc_storage) / avg_alloc_json * 100.0;
-
-    println!(
-        "\n=================================================================================="
-    );
-    println!("COMPARISON: Standard REST JSON vs Storage Read API");
-    println!("==================================================================================");
-    println!(
-        "{:<26} | {:<22} | {:<22} | {:<12}",
-        "Metric", "REST JSON", "Storage Read API", "Improvement"
-    );
-    println!("----------------------------------------------------------------------------------");
-    println!(
-        "{:<26} | {:<22.2?} | {:<22.2?} | {:>.2}x faster",
-        "Read/Iter Time (avg)",
-        Duration::from_secs_f64(avg_read_json),
-        Duration::from_secs_f64(avg_read_storage),
-        speedup_read
-    );
-    println!(
-        "{:<26} | {:<22.2?} | {:<22.2?} | {:>.2}x faster",
-        "Total Time (avg)",
-        Duration::from_secs_f64(avg_total_json),
-        Duration::from_secs_f64(avg_total_storage),
-        speedup_total
-    );
-    println!(
-        "{:<26} | {:>15.0} rows/s | {:>15.0} rows/s | {:>.2}x throughput",
-        "Throughput (avg)",
-        avg_tp_json,
-        avg_tp_storage,
-        avg_tp_storage / avg_tp_json
-    );
-    println!(
-        "{:<26} | {:<22} | {:<22} | {:>.1}% less",
-        "Heap Allocated (avg)",
-        format_bytes(avg_mem_json as usize),
-        format_bytes(avg_mem_storage as usize),
-        mem_reduction
-    );
-    println!(
-        "{:<26} | {:>15.0} allocs | {:>15.0} allocs | {:>.1}% less",
-        "Allocations (avg)", avg_alloc_json, avg_alloc_storage, alloc_reduction
-    );
-    println!(
-        "==================================================================================\n"
     );
 }

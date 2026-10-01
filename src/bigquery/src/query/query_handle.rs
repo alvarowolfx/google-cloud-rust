@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#[cfg(google_cloud_unstable_gapic_streaming)]
+use crate::client::Read as ReadClient;
 use crate::error::QueryError;
 #[cfg(google_cloud_unstable_gapic_streaming)]
 use crate::error::RowError;
@@ -20,9 +22,8 @@ use crate::generated::{CompleteQueryMetadata, QueryMetadata};
 use crate::query::ArrowArrayStream;
 use crate::query::execution::RetryContext;
 use crate::query::retry_policy::JobRetryResult;
-use crate::query::{Result, RowIterator, Schema};
+use crate::query::{Result, RowIterator};
 use bytes::Bytes;
-use google_cloud_bigquery_read::client::Read as ReadClient;
 use google_cloud_bigquery_v2::builder::job_service::GetJob;
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::query_response::{Results, ResultsSchema};
@@ -61,11 +62,12 @@ use std::sync::Arc;
 #[derive(Clone, Debug)]
 pub struct Query {
     pub(crate) job_service: Arc<JobService>,
+    #[cfg(google_cloud_unstable_gapic_streaming)]
     pub(crate) read_client: Option<Arc<ReadClient>>,
     pub(crate) completed: bool,
     pub(crate) metadata: QueryMetadata,
     pub(crate) cached_data: Option<CachedData>,
-    pub(crate) max_results: Option<u32>,
+    pub(crate) page_size: Option<u32>,
     pub(crate) retry_context: Option<RetryContext>,
 }
 
@@ -82,9 +84,9 @@ impl Query {
     pub(crate) fn from_job(
         job_service: Arc<JobService>,
         initial_job: Job,
-        retry_context: Option<RetryContext>,
-        max_results: Option<u32>,
-        read_client: Option<Arc<ReadClient>>,
+        retry_context: Option<&RetryContext>,
+        page_size: Option<u32>,
+        #[cfg(google_cloud_unstable_gapic_streaming)] read_client: Option<Arc<ReadClient>>,
     ) -> Self {
         let completed = initial_job
             .status
@@ -93,21 +95,22 @@ impl Query {
             .unwrap_or(false);
         Self {
             job_service,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
             read_client,
             completed,
             cached_data: None,
-            metadata: QueryMetadata::from(initial_job),
-            retry_context,
-            max_results,
+            metadata: build_query_metadata_from_job(initial_job),
+            retry_context: retry_context.filter(|_| !completed).cloned(),
+            page_size,
         }
     }
 
     pub(crate) fn from_query_response(
         job_service: Arc<JobService>,
         mut query_response: QueryResponse,
-        retry_context: Option<RetryContext>,
-        max_results: Option<u32>,
-        read_client: Option<Arc<ReadClient>>,
+        retry_context: Option<&RetryContext>,
+        page_size: Option<u32>,
+        #[cfg(google_cloud_unstable_gapic_streaming)] read_client: Option<Arc<ReadClient>>,
     ) -> Self {
         let completed = query_response.job_complete.unwrap_or(false);
         let cached_data = if let (
@@ -128,12 +131,13 @@ impl Query {
         let metadata = QueryMetadata::from(query_response);
         Self {
             job_service,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
             read_client,
             completed,
             cached_data,
             metadata,
-            retry_context,
-            max_results,
+            retry_context: retry_context.filter(|_| !completed).cloned(),
+            page_size,
         }
     }
 
@@ -234,11 +238,12 @@ impl Query {
         loop {
             let Query {
                 job_service,
+                #[cfg(google_cloud_unstable_gapic_streaming)]
                 read_client,
                 completed,
                 metadata,
                 cached_data,
-                max_results,
+                page_size,
                 retry_context,
             } = self;
 
@@ -247,30 +252,33 @@ impl Query {
                     job_service,
                     metadata,
                     cached_data,
-                    max_results,
+                    page_size,
+                    #[cfg(google_cloud_unstable_gapic_streaming)]
                     read_client,
                 ));
             }
 
             let job_ref = metadata
                 .job_reference
-                .as_ref()
+                .clone()
                 .expect("query job should have job reference at this point");
 
             let backoff_policy = Arc::new(
                 ExponentialBackoffBuilder::default()
-                    .with_initial_delay(std::time::Duration::from_secs(10))
+                    .with_initial_delay(std::time::Duration::from_secs(1))
                     .build()
                     .expect("valid backoff configuration"),
             );
 
-            match poll_query_results(&job_service, job_ref, backoff_policy).await {
+            match poll_query_results(&job_service, &job_ref, backoff_policy).await {
                 Ok(res) => {
                     return Ok(CompleteQuery::from_get_query_results_response(
                         job_service,
-                        job_ref,
+                        &job_ref,
                         res,
-                        max_results,
+                        metadata,
+                        page_size,
+                        #[cfg(google_cloud_unstable_gapic_streaming)]
                         read_client,
                     ));
                 }
@@ -317,14 +325,14 @@ impl Query {
 #[derive(Clone, Debug)]
 pub struct CompleteQuery {
     pub(crate) job_service: Arc<JobService>,
+    #[cfg(google_cloud_unstable_gapic_streaming)]
     #[allow(dead_code)]
     pub(crate) read_client: Option<Arc<ReadClient>>,
     pub(crate) job_ref: Option<JobReference>,
     pub(crate) cached_data: CachedData,
-    pub(crate) schema: Arc<Schema>,
     pub(crate) page_token: Option<String>,
     pub(crate) metadata: CompleteQueryMetadata,
-    pub(crate) max_results: Option<u32>,
+    pub(crate) page_size: Option<u32>,
 }
 
 impl CompleteQuery {
@@ -332,60 +340,53 @@ impl CompleteQuery {
         job_service: Arc<JobService>,
         job_ref: &JobReference,
         mut res: GetQueryResultsResponse,
-        max_results: Option<u32>,
-        read_client: Option<Arc<ReadClient>>,
+        initial_metadata: QueryMetadata,
+        page_size: Option<u32>,
+        #[cfg(google_cloud_unstable_gapic_streaming)] read_client: Option<Arc<ReadClient>>,
     ) -> Self {
         let cached_rows = VecDeque::from(std::mem::take(&mut res.rows));
-        let metadata = CompleteQueryMetadata::from(res);
-        // DDL/DML queries have no schema.
-        let schema = metadata.schema.clone().unwrap_or_default();
-        let schema = Arc::new(Schema::new(schema));
-        let page_token = if metadata.page_token.is_empty() {
-            None
-        } else {
-            Some(metadata.page_token.clone())
-        };
-        Self {
+        let cached_data = CachedData::Rows(cached_rows);
+        let metadata =
+            build_complete_query_metadata_from_get_query_results(initial_metadata, res, job_ref);
+        Self::from_complete_metadata(
             job_service,
-            read_client,
-            job_ref: Some(job_ref.clone()),
-            cached_data: CachedData::Rows(cached_rows),
-            page_token,
-            schema,
+            Some(job_ref.clone()),
             metadata,
-            max_results,
-        }
+            cached_data,
+            page_size,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
+            read_client,
+        )
     }
 
     pub(crate) fn from_query_metadata(
         job_service: Arc<JobService>,
         metadata: QueryMetadata,
         cached_data: CachedData,
-        max_results: Option<u32>,
-        read_client: Option<Arc<ReadClient>>,
+        page_size: Option<u32>,
+        #[cfg(google_cloud_unstable_gapic_streaming)] read_client: Option<Arc<ReadClient>>,
     ) -> Self {
         let job_ref = metadata.job_reference.clone();
         let metadata = CompleteQueryMetadata::from(metadata);
-        let schema = match &cached_data {
-            CachedData::Rows(_) => {
-                // DDL/DML queries have no schema.
-                let schema = metadata.schema.clone().unwrap_or_default();
-                Arc::new(Schema::new(schema))
-            }
-            CachedData::Arrow {
-                serialized_schema, ..
-            } => {
-                match Schema::try_from_arrow_ipc(serialized_schema) {
-                    Ok(s) => Arc::new(s),
-                    Err(_) => {
-                        // DDL/DML queries have no schema.
-                        let schema = metadata.schema.clone().unwrap_or_default();
-                        Arc::new(Schema::new(schema))
-                    }
-                }
-            }
-        };
+        Self::from_complete_metadata(
+            job_service,
+            job_ref,
+            metadata,
+            cached_data,
+            page_size,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
+            read_client,
+        )
+    }
 
+    pub(crate) fn from_complete_metadata(
+        job_service: Arc<JobService>,
+        job_ref: Option<JobReference>,
+        metadata: CompleteQueryMetadata,
+        cached_data: CachedData,
+        page_size: Option<u32>,
+        #[cfg(google_cloud_unstable_gapic_streaming)] read_client: Option<Arc<ReadClient>>,
+    ) -> Self {
         let page_token = if metadata.page_token.is_empty() {
             None
         } else {
@@ -393,13 +394,13 @@ impl CompleteQuery {
         };
         Self {
             job_service,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
             read_client,
             job_ref,
             cached_data,
             page_token,
-            schema,
             metadata,
-            max_results,
+            page_size,
         }
     }
 
@@ -524,7 +525,7 @@ impl CompleteQuery {
 /// Builds a `jobs.get` request from a job reference, or `None` if the
 /// reference cannot identify a job. Dry-run queries return a job reference
 /// without a job ID.
-fn build_get_job(job_service: &JobService, job_ref: &JobReference) -> Option<GetJob> {
+pub(crate) fn build_get_job(job_service: &JobService, job_ref: &JobReference) -> Option<GetJob> {
     if job_ref.job_id.is_empty() {
         return None;
     }
@@ -582,6 +583,118 @@ pub(crate) async fn poll_query_results(
     }
 }
 
+// Helper function to build QueryMetadata from a Job.
+//
+// The generated code handle fields with same name on the root level, but some data
+// that is returned on jobs.query response are under JobStats for a Query Job when using
+// jobs.insert.
+fn build_query_metadata_from_job(resp: Job) -> QueryMetadata {
+    let mut metadata = QueryMetadata::from(resp);
+
+    let query_stats = metadata.statistics.as_ref().and_then(|s| s.query.as_ref());
+
+    metadata.job_complete = metadata.status.as_ref().map(|s| s.state == "DONE");
+    metadata.errors = metadata
+        .status
+        .as_ref()
+        .map(|s| s.errors.clone())
+        .unwrap_or_default();
+    metadata.schema = query_stats.and_then(|q| q.schema.clone());
+    metadata.total_bytes_processed =
+        query_stats
+            .and_then(|q| q.total_bytes_processed)
+            .or_else(|| {
+                metadata
+                    .statistics
+                    .as_ref()
+                    .and_then(|s| s.total_bytes_processed)
+            });
+    metadata.total_bytes_billed = query_stats.and_then(|q| q.total_bytes_billed);
+    metadata.total_slot_ms = query_stats
+        .and_then(|q| q.total_slot_ms)
+        .or_else(|| metadata.statistics.as_ref().and_then(|s| s.total_slot_ms));
+    metadata.cache_hit = query_stats.and_then(|q| q.cache_hit);
+    metadata.num_dml_affected_rows = query_stats.and_then(|q| q.num_dml_affected_rows);
+    metadata.dml_stats = query_stats.and_then(|q| q.dml_stats.clone());
+    metadata.statement_type = query_stats
+        .map(|q| q.statement_type.clone())
+        .unwrap_or_default();
+    metadata.session_info = metadata
+        .statistics
+        .as_ref()
+        .and_then(|s| s.session_info.clone());
+
+    metadata.creation_time = metadata
+        .statistics
+        .as_ref()
+        .and_then(|s| (s.creation_time > 0).then_some(s.creation_time));
+    metadata.start_time = metadata
+        .statistics
+        .as_ref()
+        .and_then(|s| (s.start_time > 0).then_some(s.start_time));
+    metadata.end_time = metadata
+        .statistics
+        .as_ref()
+        .and_then(|s| (s.end_time > 0).then_some(s.end_time));
+
+    if metadata.location.is_empty() {
+        metadata.location = metadata
+            .job_reference
+            .as_ref()
+            .and_then(|r| r.location.clone())
+            .unwrap_or_default();
+    }
+
+    metadata
+}
+
+// Helper function to build CompleteQueryMetadata from GetQueryResultsResponse while
+// preserving metadata from the initial query execution.
+fn build_complete_query_metadata_from_get_query_results(
+    initial_metadata: QueryMetadata,
+    res: GetQueryResultsResponse,
+    job_ref: &JobReference,
+) -> CompleteQueryMetadata {
+    let mut metadata = CompleteQueryMetadata::from(initial_metadata);
+    if res.schema.is_some() {
+        metadata.schema = res.schema;
+    }
+    if res.total_rows.is_some() {
+        metadata.total_rows = res.total_rows;
+    }
+    if !res.page_token.is_empty() {
+        metadata.page_token = res.page_token;
+    }
+    if res.total_bytes_processed.is_some() {
+        metadata.total_bytes_processed = res.total_bytes_processed;
+    }
+    if res.job_complete.is_some() {
+        metadata.job_complete = res.job_complete;
+    }
+    if !res.errors.is_empty() {
+        metadata.errors = res.errors;
+    }
+    if res.cache_hit.is_some() {
+        metadata.cache_hit = res.cache_hit;
+    }
+    if res.num_dml_affected_rows.is_some() {
+        metadata.num_dml_affected_rows = res.num_dml_affected_rows;
+    }
+    if !res.etag.is_empty() {
+        metadata.etag = res.etag;
+    }
+    if res.job_reference.is_some() {
+        metadata.job_reference = res.job_reference;
+    }
+    if metadata.location.is_empty()
+        && let Some(loc) = job_ref.location.clone()
+    {
+        metadata.location = loc;
+    }
+
+    metadata
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -603,11 +716,18 @@ mod tests {
         pub(crate) fn from_query_response(
             job_service: Arc<JobService>,
             mut query_res: QueryResponse,
-            max_results: Option<u32>,
+            page_size: Option<u32>,
         ) -> Self {
             let cached_rows = CachedData::Rows(VecDeque::from(std::mem::take(&mut query_res.rows)));
             let metadata = QueryMetadata::from(query_res);
-            Self::from_query_metadata(job_service, metadata, cached_rows, max_results, None)
+            Self::from_query_metadata(
+                job_service,
+                metadata,
+                cached_rows,
+                page_size,
+                #[cfg(google_cloud_unstable_gapic_streaming)]
+                None,
+            )
         }
     }
 
@@ -625,7 +745,14 @@ mod tests {
             .set_rows([wkt::Struct::new()])
             .set_cache_hit(true);
 
-        let query = Query::from_query_response(job_service, query_res, None, None, None);
+        let query = Query::from_query_response(
+            job_service,
+            query_res,
+            None,
+            None,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
+            None,
+        );
 
         let completed = query.until_done().await?;
         assert_eq!(completed.job_ref.as_ref().unwrap().job_id, "some_job_id");
@@ -644,7 +771,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_query_until_done_preserves_max_results() -> TestResult {
+    async fn test_query_until_done_preserves_page_size() -> TestResult {
         let job_service = create_job_service(MockJobService::new());
         let job_ref = JobReference::new()
             .set_project_id("some_project")
@@ -654,10 +781,17 @@ mod tests {
             .set_job_reference(job_ref.clone())
             .set_schema(TableSchema::new());
 
-        let query = Query::from_query_response(job_service, query_res, None, Some(42), None);
+        let query = Query::from_query_response(
+            job_service,
+            query_res,
+            None,
+            Some(42),
+            #[cfg(google_cloud_unstable_gapic_streaming)]
+            None,
+        );
 
         let completed = query.until_done().await?;
-        assert_eq!(completed.max_results, Some(42));
+        assert_eq!(completed.page_size, Some(42));
 
         Ok(())
     }
@@ -690,7 +824,14 @@ mod tests {
             .set_job_complete(false)
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(job_service, query_res, None, None, None);
+        let query = Query::from_query_response(
+            job_service,
+            query_res,
+            None,
+            None,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
+            None,
+        );
 
         let completed = query.until_done().await?;
         assert_eq!(completed.job_ref.as_ref().unwrap().job_id, "some_job_id");
@@ -770,7 +911,14 @@ mod tests {
             .set_job_complete(false)
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(job_service, query_res, None, None, None);
+        let query = Query::from_query_response(
+            job_service,
+            query_res,
+            None,
+            None,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
+            None,
+        );
 
         let err = query.until_done().await.unwrap_err();
         let errors = match err {
@@ -807,7 +955,14 @@ mod tests {
             .set_job_complete(false)
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(job_service, query_res, None, None, None);
+        let query = Query::from_query_response(
+            job_service,
+            query_res,
+            None,
+            None,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
+            None,
+        );
 
         let err = query.until_done().await.unwrap_err();
         let source = match err {
@@ -905,9 +1060,17 @@ mod tests {
 
         let query_builder = QueryBuilder::new(job_service.clone(), None, "SELECT 1".to_string())
             .with_project_id("some_project");
-        let retry_context = Some(RetryContext::new(query_builder));
+        let mut retry_context = RetryContext::new(query_builder);
+        retry_context.state.attempt_count = 1;
 
-        let query = Query::from_query_response(job_service, query_res, retry_context, None, None);
+        let query = Query::from_query_response(
+            job_service,
+            query_res,
+            Some(&retry_context),
+            None,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
+            None,
+        );
 
         let completed = query.until_done().await?;
         assert_eq!(
@@ -922,7 +1085,7 @@ mod tests {
         let mut mock = MockJobService::new();
         let mut seq = mockall::Sequence::new();
 
-        // First poll on initial_job_id fails with retryable error (attempt 0 -> 1)
+        // First poll on initial_job_id fails with retryable error (attempt 1)
         mock.expect_get_query_results()
             .in_sequence(&mut seq)
             .times(1)
@@ -935,7 +1098,7 @@ mod tests {
                 Ok(Response::from(res))
             });
 
-        // Reissue succeeds and returns reissued_job_id
+        // Reissue succeeds and returns reissued_job_id (attempt 2)
         mock.expect_query()
             .in_sequence(&mut seq)
             .times(1)
@@ -954,7 +1117,7 @@ mod tests {
                 ))
             });
 
-        // Second poll on reissued_job_id fails with retryable error, but attempt limit (1) is exhausted!
+        // Second poll on reissued_job_id fails with retryable error, but attempt limit (2) is exhausted!
         mock.expect_get_query_results()
             .in_sequence(&mut seq)
             .times(1)
@@ -980,10 +1143,18 @@ mod tests {
             QueryBuilder::new(job_service.clone(), None, "SELECT 1".to_string())
                 .with_project_id("some_project");
         query_builder.job_retry_policy =
-            Arc::new(RetryableJobErrors::default().with_attempt_limit(1));
-        let retry_context = Some(RetryContext::new(query_builder));
+            Arc::new(RetryableJobErrors::default().with_attempt_limit(2));
+        let mut retry_context = RetryContext::new(query_builder);
+        retry_context.state.attempt_count = 1;
 
-        let query = Query::from_query_response(job_service, query_res, retry_context, None, None);
+        let query = Query::from_query_response(
+            job_service,
+            query_res,
+            Some(&retry_context),
+            None,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
+            None,
+        );
 
         let err = query.until_done().await.unwrap_err();
         let errors = match err {
@@ -1018,8 +1189,14 @@ mod tests {
             .set_schema(TableSchema::new())
             .set_job_reference(job_ref);
 
-        let query =
-            Query::from_query_response(job_service.clone(), query_res.clone(), None, None, None);
+        let query = Query::from_query_response(
+            job_service.clone(),
+            query_res.clone(),
+            None,
+            None,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
+            None,
+        );
         let job = query.get_job().unwrap().send().await?;
         assert_eq!(job.user_email, "test@example.com");
 
@@ -1040,8 +1217,14 @@ mod tests {
             .set_schema(TableSchema::new())
             .set_job_reference(job_ref);
 
-        let query =
-            Query::from_query_response(job_service.clone(), query_res.clone(), None, None, None);
+        let query = Query::from_query_response(
+            job_service.clone(),
+            query_res.clone(),
+            None,
+            None,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
+            None,
+        );
         assert!(query.get_job().is_none(), "{query:?}");
 
         let complete_query = CompleteQuery::from_query_response(job_service, query_res, None);
@@ -1068,8 +1251,14 @@ mod tests {
             .set_schema(TableSchema::new())
             .set_job_reference(job_ref);
 
-        let query =
-            Query::from_query_response(job_service.clone(), query_res.clone(), None, None, None);
+        let query = Query::from_query_response(
+            job_service.clone(),
+            query_res.clone(),
+            None,
+            None,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
+            None,
+        );
         let req = query.get_job().unwrap();
         let err = req.send().await.unwrap_err();
         assert_eq!(err.status().unwrap().code, Code::NotFound);
@@ -1091,12 +1280,194 @@ mod tests {
             .set_job_reference(job_ref)
             .set_configuration(JobConfiguration::new().set_dry_run(true));
 
-        let query = Query::from_job(job_service, job, None, None, None);
+        let query = Query::from_job(
+            job_service,
+            job,
+            None,
+            None,
+            #[cfg(google_cloud_unstable_gapic_streaming)]
+            None,
+        );
         let err = query.until_done().await.unwrap_err();
         assert!(
             matches!(err, QueryError::DryRun),
             "expected DryRun error, got {err:?}"
         );
+        Ok(())
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn test_query_until_done_initial_poll_delay() -> TestResult {
+        let mut mock = MockJobService::new();
+        let mut seq = mockall::Sequence::new();
+        mock.expect_get_query_results()
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _| {
+                Ok(Response::from(
+                    GetQueryResultsResponse::new().set_job_complete(false),
+                ))
+            });
+        mock.expect_get_query_results()
+            .times(1)
+            .in_sequence(&mut seq)
+            .returning(|_, _| {
+                Ok(Response::from(
+                    GetQueryResultsResponse::new().set_job_complete(true),
+                ))
+            });
+
+        let job_service = create_job_service(mock);
+        let job_ref = JobReference::new()
+            .set_project_id("some_project")
+            .set_job_id("some_job_id");
+        let query_res = QueryResponse::new()
+            .set_job_complete(false)
+            .set_job_reference(job_ref);
+
+        let start = tokio::time::Instant::now();
+        let query = Query::from_query_response(job_service, query_res, None, None);
+        let _completed = query.until_done().await?;
+        let elapsed = start.elapsed();
+
+        assert!(
+            elapsed <= Duration::from_secs(1),
+            "expected initial poll delay <= 1s, got {elapsed:?}"
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn test_build_query_metadata_from_job() {
+        use google_cloud_bigquery_v2::model::{
+            JobConfigurationQuery, JobCreationReason, JobStatistics, JobStatistics2, JobStatus,
+        };
+
+        let job =
+            Job::new()
+                .set_id("rust-sdk-testing:US.job_123")
+                .set_kind("bigquery#job")
+                .set_etag("etag123")
+                .set_self_link("https://www.googleapis.com/bigquery/v2/...")
+                .set_user_email("user@example.com")
+                .set_principal_subject("user:user@example.com")
+                .set_job_creation_reason(JobCreationReason::new().set_code(
+                    google_cloud_bigquery_v2::model::job_creation_reason::Code::Requested,
+                ))
+                .set_job_reference(
+                    JobReference::new()
+                        .set_project_id("rust-sdk-testing")
+                        .set_job_id("job_123")
+                        .set_location("US"),
+                )
+                .set_configuration(
+                    JobConfiguration::new().set_query(
+                        JobConfigurationQuery::new()
+                            .set_query("SELECT 1 AS one")
+                            .set_use_legacy_sql(false),
+                    ),
+                )
+                .set_status(JobStatus::new().set_state("DONE"))
+                .set_statistics(
+                    JobStatistics::new()
+                        .set_creation_time(1790020718574i64)
+                        .set_start_time(1790020718592i64)
+                        .set_end_time(1790020718847i64)
+                        .set_total_bytes_processed(0i64)
+                        .set_query(
+                            JobStatistics2::new()
+                                .set_total_bytes_processed(0i64)
+                                .set_total_bytes_billed(0i64)
+                                .set_cache_hit(true)
+                                .set_statement_type("SELECT")
+                                .set_schema(TableSchema::new().set_fields([
+                                    TableFieldSchema::new().set_name("one").set_type("INTEGER"),
+                                ])),
+                        ),
+                );
+
+        let metadata = build_query_metadata_from_job(job);
+
+        assert_eq!(metadata.id, "rust-sdk-testing:US.job_123");
+        assert_eq!(metadata.job_complete, Some(true));
+        assert_eq!(metadata.creation_time, Some(1790020718574));
+        assert_eq!(metadata.start_time, Some(1790020718592));
+        assert_eq!(metadata.end_time, Some(1790020718847));
+        assert_eq!(metadata.cache_hit, Some(true));
+        assert_eq!(metadata.statement_type, "SELECT");
+        assert_eq!(metadata.location, "US");
+        assert_eq!(metadata.total_bytes_processed, Some(0));
+        assert_eq!(metadata.total_bytes_billed, Some(0));
+        assert!(metadata.schema.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_query_until_done_preserves_metadata_fields_from_job() -> TestResult {
+        use google_cloud_bigquery_v2::model::{
+            JobConfigurationQuery, JobCreationReason, JobStatistics, JobStatistics2, JobStatus,
+        };
+
+        let mut mock = MockJobService::new();
+        mock.expect_get_query_results()
+            .returning(|req, _| {
+                let res = GetQueryResultsResponse::new()
+                    .set_job_complete(true)
+                    .set_job_reference(JobReference::new().set_job_id(req.job_id))
+                    .set_schema(TableSchema::new())
+                    .set_rows(vec![wkt::Struct::new()])
+                    .set_cache_hit(true);
+                Ok(Response::from(res))
+            })
+            .times(1);
+
+        let job_service = create_job_service(mock);
+        let job =
+            Job::new()
+                .set_id("rust-sdk-testing:US.job_123")
+                .set_kind("bigquery#job")
+                .set_job_creation_reason(JobCreationReason::new().set_code(
+                    google_cloud_bigquery_v2::model::job_creation_reason::Code::Requested,
+                ))
+                .set_job_reference(
+                    JobReference::new()
+                        .set_project_id("rust-sdk-testing")
+                        .set_job_id("job_123")
+                        .set_location("US"),
+                )
+                .set_configuration(
+                    JobConfiguration::new().set_query(
+                        JobConfigurationQuery::new()
+                            .set_query("SELECT 1 AS one")
+                            .set_use_legacy_sql(false),
+                    ),
+                )
+                .set_status(JobStatus::new().set_state("DONE"))
+                .set_statistics(
+                    JobStatistics::new()
+                        .set_creation_time(1790020718574i64)
+                        .set_start_time(1790020718592i64)
+                        .set_end_time(1790020718847i64)
+                        .set_total_bytes_processed(0i64)
+                        .set_query(
+                            JobStatistics2::new()
+                                .set_total_bytes_processed(0i64)
+                                .set_total_bytes_billed(0i64)
+                                .set_cache_hit(true)
+                                .set_statement_type("SELECT"),
+                        ),
+                );
+
+        let query = Query::from_job(job_service, job, None, None);
+        let complete = query.until_done().await?;
+        let meta = complete.metadata();
+
+        assert_eq!(meta.creation_time, Some(1790020718574));
+        assert_eq!(meta.start_time, Some(1790020718592));
+        assert_eq!(meta.end_time, Some(1790020718847));
+        assert_eq!(meta.statement_type, "SELECT");
+        assert_eq!(meta.location, "US");
+        assert_eq!(meta.cache_hit, Some(true));
+
         Ok(())
     }
 }

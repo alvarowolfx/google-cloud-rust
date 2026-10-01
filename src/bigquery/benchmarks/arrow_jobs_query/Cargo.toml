@@ -26,8 +26,10 @@ workspace = true
 
 [dependencies]
 anyhow.workspace      = true
+bytes.workspace       = true
 clap                  = { workspace = true, features = ["derive", "env", "help", "std"] }
 google-cloud-bigquery = { workspace = true, features = ["default"] }
+google-cloud-type     = { workspace = true }
 tokio                 = { workspace = true, features = ["full"] }
 wkt.workspace         = true
 stats_alloc           = "0.1"

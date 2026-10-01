@@ -77,6 +77,7 @@ pub use google_cloud_gax::error::Error;
 #[allow(rustdoc::redundant_explicit_links)]
 pub mod stub;
 
+/// Concrete implementations of client library traits.
 ///
 /// # Example
 /// ```
@@ -95,7 +96,6 @@ pub mod stub;
 ///     Ok(())
 /// }
 /// ```
-/// Concrete implementations of this client library traits.
 pub mod client;
 
 /// Request builders.
@@ -116,6 +116,14 @@ pub(crate) mod transport;
 pub(crate) mod prost {
     include!("prost/includes.rs");
 }
+
+#[cfg(any(feature = "participants", feature = "sessions",))]
+#[doc(hidden)]
+#[allow(clippy::all)]
+#[allow(unused_imports)]
+#[allow(dead_code)]
+#[allow(missing_docs)]
+pub(crate) mod convert;
 
 /// The default host used by the service.
 #[cfg(any(
@@ -180,7 +188,6 @@ pub(crate) mod info {
             };
             ac.rest_header_value()
         });
-    #[allow(dead_code)]
     pub(crate) static X_GOOG_API_CLIENT_GRPC_HEADER: std::sync::LazyLock<String> =
         std::sync::LazyLock::new(|| {
             let ac = gaxi::api_header::XGoogApiClient {

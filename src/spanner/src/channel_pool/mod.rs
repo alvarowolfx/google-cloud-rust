@@ -12,8 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Channel pool management and transaction affinity.
+//! Channel pooling for Spanner.
+//!
+//! Provides capacity management, load-balanced channel selection (Power of Two Least Busy),
+//! health-aware error penalization, caller-owned transaction affinity pinning, and background
+//! scaling and priming for gRPC channels.
 
 pub(crate) mod affinity;
+mod config;
+pub(crate) mod entry;
+pub(crate) mod pool;
+pub(crate) mod scaler;
 
-pub(crate) use affinity::TransactionAffinity;
+#[cfg(test)]
+mod integration_tests;
+
+pub use config::{ChannelPoolConfig, DynamicChannelPoolConfig, StaticChannelPoolConfig};
+
+pub(crate) use affinity::{ChannelTarget, TransactionAffinity};
+pub(crate) use entry::ChannelLease;
+pub(crate) use pool::ChannelPool;

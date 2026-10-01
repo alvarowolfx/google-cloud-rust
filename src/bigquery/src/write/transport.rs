@@ -19,11 +19,11 @@ use gaxi::grpc::tonic::{Response as TonicResponse, Streaming};
 use tokio::sync::mpsc::Receiver;
 use tokio_stream::wrappers::ReceiverStream;
 
-mod info {
+pub(super) mod info {
     use std::sync::LazyLock;
 
     const NAME: &str = env!("CARGO_PKG_NAME");
-    const VERSION: &str = env!("CARGO_PKG_VERSION");
+    pub(crate) const VERSION: &str = env!("CARGO_PKG_VERSION");
     pub(super) static X_GOOG_API_CLIENT_HEADER: LazyLock<String> = LazyLock::new(|| {
         let ac = gaxi::api_header::XGoogApiClient {
             name: NAME,
@@ -68,30 +68,13 @@ impl Transport {
 }
 
 #[cfg(test)]
-pub(super) mod tests {
+mod tests {
     use super::*;
     use crate::google::cloud::bigquery::storage::v1::append_rows_response::{
         AppendResult, Response,
     };
-    use bigquery_grpc_mock::google::cloud::bigquery::storage::v1;
+    use crate::write::test::*;
     use bigquery_grpc_mock::{MockBigQueryWrite, start};
-    use google_cloud_auth::credentials::anonymous::Builder as Anonymous;
-
-    pub(crate) async fn test_transport(endpoint: String) -> anyhow::Result<Transport> {
-        let mut config = gaxi::options::ClientConfig::default();
-        config.cred = Some(Anonymous::new().build());
-        config.endpoint = Some(endpoint);
-        Ok(Transport::new(config).await?)
-    }
-
-    // Both crates have their own copies of the protos. We can just serialize
-    // then deserialize to convert between the two, as performance is not a
-    // concern for these unit tests.
-    pub(crate) fn convert(pb: &AppendRowsResponse) -> v1::AppendRowsResponse {
-        use prost::Message;
-        let v = pb.encode_to_vec();
-        v1::AppendRowsResponse::decode(v.as_slice()).expect("encoding is always valid.")
-    }
 
     #[tokio::test]
     async fn append_rows() -> anyhow::Result<()> {

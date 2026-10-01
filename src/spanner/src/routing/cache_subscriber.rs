@@ -387,12 +387,13 @@ async fn execute_subscriber_iteration(
         config.max_recipe_count,
         config.max_range_count,
     );
-    let channel = config.spanner.next_channel();
+    let channel_lease = config.spanner.pick_channel();
 
     debug!(database = %config.database, "Connecting to FetchCacheUpdate stream");
     let connect_future = config
         .spanner
-        .fetch_cache_update(request, RequestOptions::default(), channel)
+        .fetch_cache_update(request, RequestOptions::default(), channel_lease.channel())
+        .with_lifetime_guard(Arc::new(channel_lease.into_guard()))
         .send();
     tokio::pin!(connect_future);
 
@@ -507,6 +508,7 @@ mod tests {
     use crate::client::Channel;
     use crate::model::{CacheUpdate, Range};
     use crate::routing::connection_cache::ConnectionCache;
+    use crate::routing::endpoint_lifecycle::EndpointLifecycleManager;
     use crate::routing::key_range_cache::{KeyRangeCache, RangeMode};
     use crate::routing::key_recipe_cache::KeyRecipeCache;
     use crate::routing::server_connection::ServerConnection;
@@ -587,15 +589,21 @@ mod tests {
 
     fn sample_cache_updater() -> Arc<CacheUpdater> {
         let channel = Channel::new_for_test(DummyStub);
-        let default_connection =
-            ServerConnection::new("default.spanner.googleapis.com:443".to_string(), channel);
+        let default_connection = ServerConnection::new_default(
+            "default.spanner.googleapis.com:443".to_string(),
+            channel,
+        );
         let connection_cache = Arc::new(ConnectionCache::new(default_connection));
         let key_range_cache = Arc::new(KeyRangeCache::new());
         let key_recipe_cache = Arc::new(KeyRecipeCache::new());
+        let endpoint_lifecycle_manager =
+            Arc::new(EndpointLifecycleManager::new(Arc::clone(&connection_cache)));
         Arc::new(CacheUpdater::new(
+            "projects/test-project/instances/test-instance/databases/test-database",
             key_range_cache,
             key_recipe_cache,
             connection_cache,
+            endpoint_lifecycle_manager,
             ClientConfig::default(),
         ))
     }

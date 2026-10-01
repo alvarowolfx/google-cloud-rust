@@ -241,6 +241,68 @@ impl std::fmt::Debug for super::PartialUpdateClusterRequest {
     }
 }
 
+impl std::fmt::Debug for super::UpdateMemoryLayerRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug_struct = f.debug_struct("UpdateMemoryLayerRequest");
+        debug_struct.field("memory_layer", &self.memory_layer);
+        debug_struct.field("update_mask", &self.update_mask);
+        if !self._unknown_fields.is_empty() {
+            debug_struct.field("_unknown_fields", &self._unknown_fields);
+        }
+        debug_struct.finish()
+    }
+}
+
+impl std::fmt::Debug for super::UpdateMemoryLayerMetadata {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug_struct = f.debug_struct("UpdateMemoryLayerMetadata");
+        debug_struct.field("original_request", &self.original_request);
+        debug_struct.field("request_time", &self.request_time);
+        debug_struct.field("finish_time", &self.finish_time);
+        if !self._unknown_fields.is_empty() {
+            debug_struct.field("_unknown_fields", &self._unknown_fields);
+        }
+        debug_struct.finish()
+    }
+}
+
+impl std::fmt::Debug for super::ListMemoryLayersRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug_struct = f.debug_struct("ListMemoryLayersRequest");
+        debug_struct.field("parent", &self.parent);
+        debug_struct.field("page_size", &self.page_size);
+        debug_struct.field("page_token", &self.page_token);
+        if !self._unknown_fields.is_empty() {
+            debug_struct.field("_unknown_fields", &self._unknown_fields);
+        }
+        debug_struct.finish()
+    }
+}
+
+impl std::fmt::Debug for super::ListMemoryLayersResponse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug_struct = f.debug_struct("ListMemoryLayersResponse");
+        debug_struct.field("memory_layers", &self.memory_layers);
+        debug_struct.field("failed_locations", &self.failed_locations);
+        debug_struct.field("next_page_token", &self.next_page_token);
+        if !self._unknown_fields.is_empty() {
+            debug_struct.field("_unknown_fields", &self._unknown_fields);
+        }
+        debug_struct.finish()
+    }
+}
+
+impl std::fmt::Debug for super::GetMemoryLayerRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug_struct = f.debug_struct("GetMemoryLayerRequest");
+        debug_struct.field("name", &self.name);
+        if !self._unknown_fields.is_empty() {
+            debug_struct.field("_unknown_fields", &self._unknown_fields);
+        }
+        debug_struct.finish()
+    }
+}
+
 impl std::fmt::Debug for super::CreateAppProfileRequest {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut debug_struct = f.debug_struct("CreateAppProfileRequest");
@@ -1356,6 +1418,31 @@ impl std::fmt::Debug for super::cluster::EncryptionConfig {
     }
 }
 
+impl std::fmt::Debug for super::MemoryLayer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug_struct = f.debug_struct("MemoryLayer");
+        debug_struct.field("name", &self.name);
+        debug_struct.field("memory_config", &self.memory_config);
+        debug_struct.field("etag", &self.etag);
+        debug_struct.field("state", &self.state);
+        if !self._unknown_fields.is_empty() {
+            debug_struct.field("_unknown_fields", &self._unknown_fields);
+        }
+        debug_struct.finish()
+    }
+}
+
+impl std::fmt::Debug for super::memory_layer::MemoryConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug_struct = f.debug_struct("MemoryConfig");
+        debug_struct.field("storage_size_gib", &self.storage_size_gib);
+        if !self._unknown_fields.is_empty() {
+            debug_struct.field("_unknown_fields", &self._unknown_fields);
+        }
+        debug_struct.finish()
+    }
+}
+
 impl std::fmt::Debug for super::AppProfile {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut debug_struct = f.debug_struct("AppProfile");
@@ -1412,6 +1499,17 @@ impl std::fmt::Debug for super::app_profile::StandardIsolation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut debug_struct = f.debug_struct("StandardIsolation");
         debug_struct.field("priority", &self.priority);
+        debug_struct.field("memory_config", &self.memory_config);
+        if !self._unknown_fields.is_empty() {
+            debug_struct.field("_unknown_fields", &self._unknown_fields);
+        }
+        debug_struct.finish()
+    }
+}
+
+impl std::fmt::Debug for super::app_profile::standard_isolation::MemoryConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug_struct = f.debug_struct("MemoryConfig");
         if !self._unknown_fields.is_empty() {
             debug_struct.field("_unknown_fields", &self._unknown_fields);
         }
@@ -1508,6 +1606,10 @@ impl std::fmt::Debug for super::Table {
         debug_struct.field("restore_info", &self.restore_info);
         debug_struct.field("change_stream_config", &self.change_stream_config);
         debug_struct.field("deletion_protection", &self.deletion_protection);
+        debug_struct.field(
+            "effective_automated_backup_policy",
+            &self.effective_automated_backup_policy,
+        );
         debug_struct.field("tiered_storage_config", &self.tiered_storage_config);
         debug_struct.field("row_key_schema", &self.row_key_schema);
         debug_struct.field("automated_backup_config", &self.automated_backup_config);
@@ -1536,6 +1638,8 @@ impl std::fmt::Debug for super::table::AutomatedBackupPolicy {
         debug_struct.field("retention_period", &self.retention_period);
         debug_struct.field("frequency", &self.frequency);
         debug_struct.field("locations", &self.locations);
+        debug_struct.field("keep_hot_duration", &self.keep_hot_duration);
+        debug_struct.field("disabled", &self.disabled);
         if !self._unknown_fields.is_empty() {
             debug_struct.field("_unknown_fields", &self._unknown_fields);
         }
@@ -1718,6 +1822,17 @@ impl std::fmt::Debug for super::ProtoSchema {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut debug_struct = f.debug_struct("ProtoSchema");
         debug_struct.field("proto_descriptors", &self.proto_descriptors);
+        if !self._unknown_fields.is_empty() {
+            debug_struct.field("_unknown_fields", &self._unknown_fields);
+        }
+        debug_struct.finish()
+    }
+}
+
+impl std::fmt::Debug for super::AvroSchema {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug_struct = f.debug_struct("AvroSchema");
+        debug_struct.field("json_schemas", &self.json_schemas);
         if !self._unknown_fields.is_empty() {
             debug_struct.field("_unknown_fields", &self._unknown_fields);
         }

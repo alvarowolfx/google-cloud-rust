@@ -13,8 +13,9 @@
 // limitations under the License.
 
 use super::error::{AppendError, AppendResult};
+use super::optimizer::SendOptimizer;
 use super::stream::Stream;
-use super::transport::Transport;
+use super::transport::{Transport, info::VERSION};
 use crate::Result;
 use crate::google::cloud::bigquery::storage::v1::{AppendRowsRequest, AppendRowsResponse};
 use gaxi::grpc::from_status::to_gax_error;
@@ -70,6 +71,13 @@ async fn run_stream_task(inner: Arc<Transport>, mut req_rx: mpsc::UnboundedRecei
         return;
     };
 
+    // Identify the client library to the server on the initial request.
+    let mut req = initial_req.req;
+    req.trace_id = format!("rust-writer:{VERSION}");
+
+    // Initialize the send optimizer.
+    let mut optimizer = SendOptimizer::new(&req);
+
     // A queue of responses we need to satisfy
     let mut resp_txs = VecDeque::new();
     resp_txs.push_back(initial_req.resp_tx);
@@ -78,7 +86,7 @@ async fn run_stream_task(inner: Arc<Transport>, mut req_rx: mpsc::UnboundedRecei
     let Stream {
         mut stream,
         request_tx,
-    } = match Stream::new(inner, initial_req.req).await {
+    } = match Stream::new(inner, req).await {
         Ok(s) => s,
         Err(e) => {
             process_gax_response(&mut resp_txs, Err(e));
@@ -91,13 +99,21 @@ async fn run_stream_task(inner: Arc<Transport>, mut req_rx: mpsc::UnboundedRecei
             req = req_rx.recv() => {
                 match req {
                     Some(r) => {
+                        let mut req = r.req;
+
+                        // Drop redundant fields from the request.
+                        optimizer.optimize(&mut req);
+
                         // Keep track of the response channel.
                         resp_txs.push_back(r.resp_tx);
 
                         // Forward the request to the stream.
-                        let _ = request_tx.send(r.req).await;
+                        let _ = request_tx.send(req).await;
                     }
-                    None => break drain_stream(stream, resp_txs).await,
+                    None => {
+                        drop(request_tx);
+                        break drain_stream(stream, resp_txs).await;
+                    }
                 }
             }
             resp = stream.message() => {
@@ -132,31 +148,52 @@ fn process_gax_response(
     resp: Result<AppendRowsResponse>,
 ) {
     // Pop the response channel associated with this response.
-    let resp_tx = resp_txs
-        .pop_front()
-        .expect("the service sends one response per request");
+    let Some(resp_tx) = resp_txs.pop_front() else {
+        // Note that the server may close an idle stream that has no requests
+        // queued up. If so, the runner task will terminate gracefully.
+        return;
+    };
 
     // Forward the result.
     let _ = resp_tx.send(resp.map_err(AppendError::from));
 }
 
 #[cfg(test)]
-pub(crate) mod tests {
-    use super::super::transport::tests::*;
+mod tests {
     use super::*;
-    use crate::google::cloud::bigquery::storage::v1::append_rows_response::{
-        AppendResult, Response,
-    };
+    use crate::write::test::*;
+    use bigquery_grpc_mock::google::cloud::bigquery::storage::v1 as mock_v1;
     use bigquery_grpc_mock::{MockBigQueryWrite, start};
     use gaxi::grpc::tonic::Response as TonicResponse;
     use google_cloud_gax::error::rpc::Code;
 
+    /// Creates a `MockBigQueryWrite` whose `append_rows` handler waits for an
+    /// incoming request on the gRPC stream before releasing each queued
+    /// response from `response_rx`.
+    fn mock_append_rows(
+        mut response_rx: mpsc::Receiver<TonicResult<mock_v1::AppendRowsResponse>>,
+    ) -> MockBigQueryWrite {
+        let mut mock = MockBigQueryWrite::new();
+        mock.expect_append_rows().return_once(move |request| {
+            let mut request_rx = request.into_inner();
+            let (gated_tx, gated_rx) = mpsc::channel(10);
+            tokio::spawn(async move {
+                while let Some(resp) = response_rx.recv().await {
+                    let _ = request_rx.recv().await;
+                    if gated_tx.send(resp).await.is_err() {
+                        break;
+                    }
+                }
+            });
+            Ok(TonicResponse::from(gated_rx))
+        });
+        mock
+    }
+
     #[tokio::test]
     async fn no_requests() -> anyhow::Result<()> {
         let (_, response_rx) = mpsc::channel(1);
-        let mut mock = MockBigQueryWrite::new();
-        mock.expect_append_rows()
-            .return_once(|_| Ok(TonicResponse::from(response_rx)));
+        let mock = mock_append_rows(response_rx);
         let (endpoint, _server) = start("0.0.0.0:0", mock).await?;
         let transport = Arc::new(test_transport(endpoint).await?);
 
@@ -172,9 +209,7 @@ pub(crate) mod tests {
     #[tokio::test]
     async fn success() -> anyhow::Result<()> {
         let (response_tx, response_rx) = mpsc::channel(10);
-        let mut mock = MockBigQueryWrite::new();
-        mock.expect_append_rows()
-            .return_once(|_| Ok(TonicResponse::from(response_rx)));
+        let mock = mock_append_rows(response_rx);
         let (endpoint, _server) = start("0.0.0.0:0", mock).await?;
         let transport = Arc::new(test_transport(endpoint).await?);
 
@@ -262,9 +297,7 @@ pub(crate) mod tests {
     #[tokio::test]
     async fn error_mid_stream() -> anyhow::Result<()> {
         let (response_tx, response_rx) = mpsc::channel(10);
-        let mut mock = MockBigQueryWrite::new();
-        mock.expect_append_rows()
-            .return_once(|_| Ok(TonicResponse::from(response_rx)));
+        let mock = mock_append_rows(response_rx);
         let (endpoint, _server) = start("0.0.0.0:0", mock).await?;
         let transport = Arc::new(test_transport(endpoint).await?);
 
@@ -326,9 +359,7 @@ pub(crate) mod tests {
     #[tokio::test]
     async fn sender_dropped_mid_stream() -> anyhow::Result<()> {
         let (response_tx, response_rx) = mpsc::channel(10);
-        let mut mock = MockBigQueryWrite::new();
-        mock.expect_append_rows()
-            .return_once(|_| Ok(TonicResponse::from(response_rx)));
+        let mock = mock_append_rows(response_rx);
         let (endpoint, _server) = start("0.0.0.0:0", mock).await?;
         let transport = Arc::new(test_transport(endpoint).await?);
 
@@ -387,9 +418,7 @@ pub(crate) mod tests {
         // If the stream ends without responding to us, the service broke its contract. It is easy
         // enough to be defensive.
         let (response_tx, response_rx) = mpsc::channel(10);
-        let mut mock = MockBigQueryWrite::new();
-        mock.expect_append_rows()
-            .return_once(|_| Ok(TonicResponse::from(response_rx)));
+        let mock = mock_append_rows(response_rx);
         let (endpoint, _server) = start("0.0.0.0:0", mock).await?;
         let transport = Arc::new(test_transport(endpoint).await?);
 
@@ -437,21 +466,195 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    pub(crate) fn test_request(index: i64) -> AppendRowsRequest {
-        AppendRowsRequest {
-            write_stream: "projects/p/datasets/d/tables/t/streams/s".to_string(),
-            offset: Some(index),
-            ..Default::default()
-        }
+    #[tokio::test]
+    async fn stream_closes_when_client_drops_sender() -> anyhow::Result<()> {
+        let (response_tx, response_rx) = mpsc::channel(10);
+        let mut mock = MockBigQueryWrite::new();
+
+        mock.expect_append_rows().return_once(|request| {
+            let mut request_rx = request.into_inner();
+            tokio::spawn(async move {
+                while request_rx.recv().await.is_some() {}
+                drop(response_tx);
+            });
+            Ok(TonicResponse::from(response_rx))
+        });
+
+        let (endpoint, _server) = start("0.0.0.0:0", mock).await?;
+        let transport = Arc::new(test_transport(endpoint).await?);
+
+        let Runner { req_tx, handle } = Runner::new(transport);
+
+        let (resp_tx, _resp_rx) = oneshot::channel();
+        let write = WriteRequest {
+            req: test_request(1),
+            resp_tx,
+        };
+        req_tx.send(write)?;
+        drop(req_tx);
+
+        handle.await?;
+
+        Ok(())
     }
 
-    pub(crate) fn test_response(index: i64) -> AppendRowsResponse {
-        AppendRowsResponse {
-            response: Some(Response::AppendResult(AppendResult {
-                offset: Some(index),
-            })),
-            write_stream: "projects/p/datasets/d/tables/t/streams/s".to_string(),
-            ..Default::default()
-        }
+    #[tokio::test]
+    async fn stream_error_without_pending_requests() -> anyhow::Result<()> {
+        // This is a regression test for
+        // https://github.com/googleapis/google-cloud-rust/issues/6815
+
+        let (response_tx, response_rx) = mpsc::channel(10);
+        let mut mock = MockBigQueryWrite::new();
+        mock.expect_append_rows()
+            .return_once(|_| Ok(TonicResponse::from(response_rx)));
+        let (endpoint, _server) = start("0.0.0.0:0", mock).await?;
+        let transport = Arc::new(test_transport(endpoint).await?);
+
+        let Runner { req_tx, handle } = Runner::new(transport);
+
+        // Perform a write, opening the stream.
+        let (resp_tx, resp_rx) = oneshot::channel();
+        let write = WriteRequest {
+            req: test_request(1),
+            resp_tx,
+        };
+        req_tx.send(write)?;
+
+        // Respond to the write, draining the request queue.
+        response_tx.send(Ok(convert(&test_response(1)))).await?;
+        let _ = resp_rx.await??;
+
+        // Close the stream with an error
+        response_tx
+            .send(Err(TonicStatus::failed_precondition("fail")))
+            .await?;
+
+        handle.await?;
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn trace_id() -> anyhow::Result<()> {
+        // We use this channel to surface writes (requests) from outside our
+        // mock expectation.
+        let (recover_writes_tx, mut recover_writes_rx) = mpsc::channel(10);
+        let (response_tx, response_rx) = mpsc::channel(10);
+        let mut mock = MockBigQueryWrite::new();
+        mock.expect_append_rows().return_once(move |request| {
+            tokio::spawn(async move {
+                // Note that this task stays alive as long as we hold
+                // `recover_writes_rx`.
+                let mut request_rx = request.into_inner();
+                while let Some(request) = request_rx.recv().await {
+                    recover_writes_tx
+                        .send(request)
+                        .await
+                        .expect("forwarding writes always succeeds");
+                }
+            });
+            Ok(TonicResponse::from(response_rx))
+        });
+        let (endpoint, _server) = start("0.0.0.0:0", mock).await?;
+        let transport = Arc::new(test_transport(endpoint).await?);
+
+        let Runner { req_tx, handle } = Runner::new(transport);
+
+        // write 1
+        let (resp_tx1, _) = oneshot::channel();
+        let write1 = WriteRequest {
+            req: test_request(1),
+            resp_tx: resp_tx1,
+        };
+        req_tx.send(write1)?;
+
+        // write 2
+        let (resp_tx2, _) = oneshot::channel();
+        let write2 = WriteRequest {
+            req: test_request(2),
+            resp_tx: resp_tx2,
+        };
+        req_tx.send(write2)?;
+
+        let initial_req = recover_writes_rx
+            .recv()
+            .await
+            .expect("should receive a request")?;
+        assert!(
+            initial_req.trace_id.starts_with("rust-writer:"),
+            "got trace_id: {}",
+            initial_req.trace_id
+        );
+
+        let second_req = recover_writes_rx
+            .recv()
+            .await
+            .expect("should receive a second request")?;
+        assert_eq!(second_req.trace_id, "");
+
+        drop(response_tx);
+        handle.await?;
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn send_optimization() -> anyhow::Result<()> {
+        // We use this channel to surface writes (requests) from outside our
+        // mock expectation.
+        let (recover_writes_tx, mut recover_writes_rx) = mpsc::channel(10);
+        let (response_tx, response_rx) = mpsc::channel(10);
+        let mut mock = MockBigQueryWrite::new();
+        mock.expect_append_rows().return_once(move |request| {
+            tokio::spawn(async move {
+                // Note that this task stays alive as long as we hold
+                // `recover_writes_rx`.
+                let mut request_rx = request.into_inner();
+                while let Some(request) = request_rx.recv().await {
+                    recover_writes_tx
+                        .send(request)
+                        .await
+                        .expect("forwarding writes always succeeds");
+                }
+            });
+            Ok(TonicResponse::from(response_rx))
+        });
+        let (endpoint, _server) = start("0.0.0.0:0", mock).await?;
+        let transport = Arc::new(test_transport(endpoint).await?);
+
+        let Runner { req_tx, handle } = Runner::new(transport);
+
+        // write 1
+        let (resp_tx1, _) = oneshot::channel();
+        let write1 = WriteRequest {
+            req: test_request(1),
+            resp_tx: resp_tx1,
+        };
+        req_tx.send(write1)?;
+
+        // write 2
+        let (resp_tx2, _) = oneshot::channel();
+        let write2 = WriteRequest {
+            req: test_request(2),
+            resp_tx: resp_tx2,
+        };
+        req_tx.send(write2)?;
+
+        let initial_req = recover_writes_rx
+            .recv()
+            .await
+            .expect("should receive a request")?;
+        assert_eq!(initial_req.write_stream, write_stream());
+
+        let second_req = recover_writes_rx
+            .recv()
+            .await
+            .expect("should receive a second request")?;
+        assert_eq!(second_req.write_stream, "");
+
+        drop(response_tx);
+        handle.await?;
+
+        Ok(())
     }
 }

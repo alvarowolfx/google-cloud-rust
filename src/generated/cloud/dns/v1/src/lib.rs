@@ -16,7 +16,7 @@
 
 //! Google Cloud Client Libraries for Rust - Cloud DNS
 //!
-//! This client library was generated from the "20260714" revision of the API.
+//! This client library was generated from the "20260915" revision of the API.
 //!
 //! This crate contains traits, types, and functions to interact with Cloud DNS
 //! Most applications will use the structs defined in the [client] module.
@@ -61,6 +61,7 @@ pub use google_cloud_gax::error::Error;
 #[allow(rustdoc::redundant_explicit_links)]
 pub mod stub;
 
+/// Concrete implementations of client library traits.
 ///
 /// # Example
 /// ```
@@ -75,7 +76,6 @@ pub mod stub;
 ///     Ok(())
 /// }
 /// ```
-/// Concrete implementations of this client library traits.
 pub mod client;
 
 /// Request builders.
@@ -113,5 +113,4 @@ pub(crate) use google_cloud_gax::options::RequestOptions;
 pub(crate) use google_cloud_gax::options::internal::RequestBuilder;
 pub(crate) use google_cloud_gax::response::Response;
 
-#[allow(missing_docs)]
 pub mod operation;

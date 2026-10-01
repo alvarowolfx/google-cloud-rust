@@ -161,6 +161,58 @@ impl ClientBuilder {
         self
     }
 
+    /// Configure the retry policy.
+    ///
+    /// The client libraries can automatically retry operations that fail. The
+    /// retry policy controls what errors are considered retryable, sets limits
+    /// on the number of attempts or the time trying to make attempts.
+    ///
+    /// # Example
+    /// ```
+    /// # use google_cloud_bigquery::client::BigQuery;
+    /// # async fn sample() -> anyhow::Result<()> {
+    /// use google_cloud_bigquery::query::retry_policy::RetryableErrors;
+    /// use google_cloud_gax::retry_policy::RetryPolicyExt;
+    /// let client = BigQuery::builder()
+    ///     .with_retry_policy(RetryableErrors.with_attempt_limit(3))
+    ///     .build()
+    ///     .await?;
+    /// # Ok(()) }
+    /// ```
+    pub fn with_retry_policy<V: Into<google_cloud_gax::retry_policy::RetryPolicyArg>>(
+        mut self,
+        v: V,
+    ) -> Self {
+        self.config.retry_policy = Some(v.into().into());
+        self
+    }
+
+    /// Configure the retry backoff policy.
+    ///
+    /// The client libraries can automatically retry operations that fail. The
+    /// backoff policy controls how long to wait in between retry attempts.
+    ///
+    /// # Example
+    /// ```
+    /// # use google_cloud_bigquery::client::BigQuery;
+    /// # async fn sample() -> anyhow::Result<()> {
+    /// use google_cloud_gax::exponential_backoff::ExponentialBackoff;
+    /// use std::time::Duration;
+    /// let policy = ExponentialBackoff::default();
+    /// let client = BigQuery::builder()
+    ///     .with_backoff_policy(policy)
+    ///     .build()
+    ///     .await?;
+    /// # Ok(()) }
+    /// ```
+    pub fn with_backoff_policy<V: Into<google_cloud_gax::backoff_policy::BackoffPolicyArg>>(
+        mut self,
+        v: V,
+    ) -> Self {
+        self.config.backoff_policy = Some(v.into().into());
+        self
+    }
+
     /// Enables or disables BigQuery Storage Read API acceleration for query result reading.
     ///
     /// When enabled, large query result sets will be streamed directly using the high-performance
@@ -216,7 +268,9 @@ impl ClientBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::query::retry_policy::RetryableErrors;
     use google_cloud_auth::credentials::anonymous::Builder as Anonymous;
+    use google_cloud_gax::exponential_backoff::ExponentialBackoff;
 
     #[test]
     fn defaults() -> anyhow::Result<()> {
@@ -225,6 +279,8 @@ mod tests {
         assert!(builder.config.universe_domain.is_none(), "{builder:?}");
         assert!(builder.config.cred.is_none(), "{builder:?}");
         assert!(!builder.config.tracing);
+        assert!(builder.config.retry_policy.is_none(), "{builder:?}");
+        assert!(builder.config.backoff_policy.is_none(), "{builder:?}");
         assert!(builder.project_id.is_none(), "{builder:?}");
         assert!(builder.storage_read_enabled, "{builder:?}");
 
@@ -238,6 +294,8 @@ mod tests {
             .with_endpoint("test-endpoint.com")
             .with_universe_domain("test-universe.com")
             .with_credentials(Anonymous::new().build())
+            .with_retry_policy(RetryableErrors)
+            .with_backoff_policy(ExponentialBackoff::default())
             .with_tracing();
 
         assert_eq!(builder.project_id, Some("test-project".to_string()));
@@ -251,6 +309,8 @@ mod tests {
         );
         assert!(builder.config.cred.is_some(), "{builder:?}");
         assert!(builder.config.tracing);
+        assert!(builder.config.retry_policy.is_some(), "{builder:?}");
+        assert!(builder.config.backoff_policy.is_some(), "{builder:?}");
 
         Ok(())
     }

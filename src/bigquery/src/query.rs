@@ -22,7 +22,7 @@ mod execution;
 pub(super) mod from_sql;
 mod iterator;
 mod query_handle;
-mod retry_policy;
+pub mod retry_policy;
 mod row;
 mod schema;
 #[cfg(google_cloud_unstable_gapic_streaming)]
@@ -35,7 +35,7 @@ pub use iterator::RowIterator;
 pub use query_handle::{CompleteQuery, Query};
 pub(crate) use schema::Schema;
 
-pub use from_sql::FromSql;
+pub use from_sql::{FromSql, SqlValue};
 pub use google_cloud_bigquery_derive::{FromRow, FromSql};
 pub use row::{ColumnIndex, Row};
 
