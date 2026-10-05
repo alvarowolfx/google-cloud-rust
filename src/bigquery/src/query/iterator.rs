@@ -218,7 +218,12 @@ impl RowIterator {
             return Ok(());
         };
 
-        let (fetched_rows, next_token) = self.fetch_page(token).await?;
+        let job_ref = self.job_ref.as_ref().expect(
+            "only queries with a job reference should have page tokens and can fetch more pages",
+        );
+
+        let (fetched_rows, next_token) =
+            Self::fetch_page(&self.job_service, job_ref, self.page_size, token).await?;
         if fetched_rows.is_empty() && next_token.as_deref() == Some(token) {
             self.page_token = None;
         } else {
@@ -229,14 +234,15 @@ impl RowIterator {
     }
 
     // Fetches the next page of results and the next page token.
-    async fn fetch_page(&self, token: &str) -> Result<(Vec<wkt::Struct>, Option<String>)> {
-        let job_ref = self.job_ref.as_ref().expect(
-            "only queries with a job reference should have page tokens and can fetch more pages",
-        );
-
+    async fn fetch_page(
+        job_service: &JobService,
+        job_ref: &JobReference,
+        page_size: Option<u32>,
+        token: &str,
+    ) -> Result<(Vec<wkt::Struct>, Option<String>)> {
         let mut req = GetQueryResultsRequest::new()
             .set_project_id(job_ref.project_id.clone())
-            .set_or_clear_max_results(self.page_size)
+            .set_or_clear_max_results(page_size)
             .set_job_id(job_ref.job_id.clone())
             .set_page_token(token)
             .set_format_options(DataFormatOptions::new().set_use_int64_timestamp(true));
@@ -244,8 +250,7 @@ impl RowIterator {
             req = req.set_location(location);
         }
 
-        let res = self
-            .job_service
+        let res = job_service
             .get_query_results()
             .with_request(req)
             .send()
