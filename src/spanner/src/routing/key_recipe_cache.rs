@@ -18,9 +18,6 @@
 //! so that subsequent read and query RPCs can encode binary routing keys locally without relying on the
 //! Spanner Frontend (SpanFE) proxy to resolve tablet shard boundaries.
 
-// TODO(#6236): Remove dead_code allowance once request routing interceptors utilize KeyRecipeCache in subsequent PRs.
-#![allow(dead_code)]
-
 use crate::model::key_recipe::Target;
 use crate::model::{ExecuteSqlRequest, KeyRecipe, ReadRequest, RecipeList};
 use crate::routing::clock_cache::{ClockEntry, ClockStore};
@@ -32,7 +29,7 @@ use std::collections::HashMap;
 use std::fmt::{self, Debug, Formatter};
 use std::mem::take;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
+use std::sync::{Arc, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 /// Default maximum number of SQL query recipes cached simultaneously.
 ///
@@ -85,16 +82,27 @@ impl KeyRecipeCache {
         self.next_operation_uid.fetch_add(1, Ordering::Relaxed)
     }
 
+    /// Acquires a shared read lock on the recipe store, recovering from lock poisoning via `into_inner()`.
+    ///
+    /// # Poison Recovery Rationale
+    /// `RecipeStore` caches in-memory key extraction recipes (`tables`, `indexes`, `queries`,
+    /// `prepared_queries`, `prepared_reads`) and schema generation metadata. Standard library
+    /// collections (`HashMap` and bounded clock cache) remain memory-safe and structurally sound
+    /// in Rust even if an earlier thread panicked while reading or writing. Individual recipes are
+    /// wrapped in immutable `Arc<KeyRecipe>` handles; any partially applied or interrupted update is
+    /// safely overwritten by subsequent server `CacheUpdate` messages. Recovering the guard via
+    /// `into_inner()` prevents an isolated panic in an application query or background task from
+    /// permanently disabling recipe caching and breaking location-aware routing across all requests.
     fn read_store(&self) -> RwLockReadGuard<'_, RecipeStore> {
-        self.store
-            .read()
-            .expect("key recipe cache read lock poisoned")
+        self.store.read().unwrap_or_else(PoisonError::into_inner)
     }
 
+    /// Acquires an exclusive write lock on the recipe store, recovering from lock poisoning via `into_inner()`.
+    ///
+    /// # Poison Recovery Rationale
+    /// See [`read_store`](Self::read_store).
     fn write_store(&self) -> RwLockWriteGuard<'_, RecipeStore> {
-        self.store
-            .write()
-            .expect("key recipe cache write lock poisoned")
+        self.store.write().unwrap_or_else(PoisonError::into_inner)
     }
 
     /// Returns the cached recipe for a given database table name (`Read` RPC), if present.
@@ -202,75 +210,6 @@ impl KeyRecipeCache {
         )
     }
 
-    /// Inserts a [`KeyRecipe`] into the cache.
-    ///
-    /// # Concurrency Optimization
-    /// Clones `recipe.target` (`String::clone` for table/index names) and wraps `recipe`
-    /// in an [`Arc`] before acquiring the write lock (`self.store.write()`). This ensures that all
-    /// heap allocations occur outside the critical section, reducing lock hold duration to a pure
-    /// $O(1)$ hashmap insertion.
-    ///
-    /// The lock guard is explicitly dropped before any displaced overwritten recipe is deallocated,
-    /// ensuring heap deallocations for overwritten entries occur outside the critical section.
-    /// (Evicted entries from bounded query store capacity limits are dropped on removal under the write guard,
-    /// which is an $O(1)$ atomic reference counter decrement).
-    ///
-    /// Returns `true` if the recipe contained a target and was stored in the cache;
-    /// returns `false` if `recipe.target` was `None`.
-    pub(crate) fn insert(&self, recipe: KeyRecipe) -> bool {
-        let Some(target) = recipe.target.clone() else {
-            return false;
-        };
-        let recipe_arc = Arc::new(recipe);
-        let mut guard = self.write_store();
-        let _previous_recipe = match target {
-            Target::TableName(name) => guard.tables.insert(name, recipe_arc),
-            Target::IndexName(name) => guard.indexes.insert(name, recipe_arc),
-            Target::OperationUid(operation_uid) => guard.queries.insert(operation_uid, recipe_arc),
-        };
-        // Explicitly drop the lock guard before `_previous_recipe` is dropped so that if an existing
-        // recipe with reference count 1 was overwritten, its heap deallocation occurs
-        // outside the critical section.
-        drop(guard);
-        true
-    }
-
-    /// Ingests an iterator of [`KeyRecipe`]s into the cache in a single batch,
-    /// acquiring the write lock only once.
-    pub(crate) fn insert_batch<I>(&self, recipes: I)
-    where
-        I: IntoIterator<Item = KeyRecipe>,
-    {
-        let iterator = recipes.into_iter();
-        let (lower_bound, _) = iterator.size_hint();
-        // Prepare target and Arc outside the write lock to minimize lock hold duration.
-        let mut prepared = Vec::with_capacity(lower_bound);
-        for recipe in iterator {
-            if let Some(target) = recipe.target.clone() {
-                prepared.push((target, Arc::new(recipe)));
-            }
-        }
-        if prepared.is_empty() {
-            return;
-        }
-        let mut displaced_recipes = Vec::new();
-        let mut guard = self.write_store();
-        for (target, recipe_arc) in prepared {
-            let previous_recipe = match target {
-                Target::TableName(name) => guard.tables.insert(name, recipe_arc),
-                Target::IndexName(name) => guard.indexes.insert(name, recipe_arc),
-                Target::OperationUid(operation_uid) => {
-                    guard.queries.insert(operation_uid, recipe_arc)
-                }
-            };
-            if let Some(displaced) = previous_recipe {
-                displaced_recipes.push(displaced);
-            }
-        }
-        drop(guard);
-        drop(displaced_recipes);
-    }
-
     /// Ingests all recipes and schema generation from a [`RecipeList`] returned in [`CacheUpdate`](crate::model::CacheUpdate).
     ///
     /// # Schema Generation Invalidation & Ordering:
@@ -375,11 +314,6 @@ impl KeyRecipeCache {
     pub(crate) fn prepared_reads_len(&self) -> usize {
         self.read_store().prepared_reads.len()
     }
-
-    /// Returns `true` if the cache is empty.
-    pub(crate) fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
 }
 
 /// Trait abstracting over prepared query and read descriptors to enable unified cache lookup and preparation.
@@ -419,6 +353,7 @@ impl PreparedOperation for PreparedRead {
 
 /// Container for invalidated cache collections, returned by [`RecipeStore::invalidate_all`]
 /// to allow dropping memory allocations outside the write lock.
+#[allow(dead_code)] // Retained for deallocation outside write lock upon drop
 struct InvalidatedEntries {
     tables: HashMap<String, Arc<KeyRecipe>>,
     indexes: HashMap<String, Arc<KeyRecipe>>,
@@ -476,14 +411,179 @@ impl RecipeStore {
 }
 
 #[cfg(test)]
+impl KeyRecipeCache {
+    /// Ingests a single [`KeyRecipe`] into the cache under a write lock.
+    ///
+    /// The lock guard is explicitly dropped before any displaced overwritten recipe is deallocated,
+    /// ensuring heap deallocations for overwritten entries occur outside the critical section.
+    /// (Evicted entries from bounded query store capacity limits are dropped on removal under the write guard,
+    /// which is an $O(1)$ atomic reference counter decrement).
+    ///
+    /// Returns `true` if the recipe contained a target and was stored in the cache;
+    /// returns `false` if `recipe.target` was `None`.
+    pub(crate) fn insert(&self, recipe: KeyRecipe) -> bool {
+        let Some(target) = recipe.target.clone() else {
+            return false;
+        };
+        let recipe_arc = Arc::new(recipe);
+        let mut guard = self.write_store();
+        let _previous_recipe = match target {
+            Target::TableName(name) => guard.tables.insert(name, recipe_arc),
+            Target::IndexName(name) => guard.indexes.insert(name, recipe_arc),
+            Target::OperationUid(operation_uid) => guard.queries.insert(operation_uid, recipe_arc),
+        };
+        // Explicitly drop the lock guard before `_previous_recipe` is dropped so that if an existing
+        // recipe with reference count 1 was overwritten, its heap deallocation occurs
+        // outside the critical section.
+        drop(guard);
+        true
+    }
+
+    /// Ingests an iterator of [`KeyRecipe`]s into the cache in a single batch,
+    /// acquiring the write lock only once.
+    pub(crate) fn insert_batch<I>(&self, recipes: I)
+    where
+        I: IntoIterator<Item = KeyRecipe>,
+    {
+        let iterator = recipes.into_iter();
+        let (lower_bound, _) = iterator.size_hint();
+        // Prepare target and Arc outside the write lock to minimize lock hold duration.
+        let mut prepared = Vec::with_capacity(lower_bound);
+        for recipe in iterator {
+            if let Some(target) = recipe.target.clone() {
+                prepared.push((target, Arc::new(recipe)));
+            }
+        }
+        if prepared.is_empty() {
+            return;
+        }
+        let mut displaced_recipes = Vec::new();
+        let mut guard = self.write_store();
+        for (target, recipe_arc) in prepared {
+            let previous_recipe = match target {
+                Target::TableName(name) => guard.tables.insert(name, recipe_arc),
+                Target::IndexName(name) => guard.indexes.insert(name, recipe_arc),
+                Target::OperationUid(operation_uid) => {
+                    guard.queries.insert(operation_uid, recipe_arc)
+                }
+            };
+            if let Some(displaced) = previous_recipe {
+                displaced_recipes.push(displaced);
+            }
+        }
+        drop(guard);
+        drop(displaced_recipes);
+    }
+
+    /// Returns `true` if the cache is empty.
+    pub(crate) fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::model::key_recipe::Part;
+    use std::panic::{AssertUnwindSafe, catch_unwind};
     use std::thread;
 
     #[test]
     fn key_recipe_cache_implements_send_sync_debug() {
         static_assertions::assert_impl_all!(KeyRecipeCache: Send, Sync, Debug);
+    }
+
+    #[test]
+    fn key_recipe_cache_recovers_from_poisoned_write_lock() {
+        let cache = KeyRecipeCache::new();
+        let users_recipe = KeyRecipe::new().set_table_name("Users");
+        let index_recipe = KeyRecipe::new().set_index_name("UsersByEmail");
+        assert!(
+            cache.insert(users_recipe),
+            "table recipe insert must succeed"
+        );
+        assert!(
+            cache.insert(index_recipe),
+            "index recipe insert must succeed"
+        );
+        assert_eq!(cache.len(), 2, "cache length must be 2");
+
+        // Intentionally poison the store RwLock by panicking while holding an exclusive write lock.
+        let panic_result = catch_unwind(AssertUnwindSafe(|| {
+            let _guard = cache.store.write().expect("lock store for panic test");
+            panic!("deliberately poisoning write lock for test");
+        }));
+        assert!(panic_result.is_err(), "catch_unwind must capture panic");
+        assert!(
+            cache.store.is_poisoned(),
+            "store RwLock must be poisoned after write lock panic"
+        );
+
+        // Verify that read lookups recover seamlessly via into_inner().
+        let cached_table = cache
+            .get_table_recipe("Users")
+            .expect("table recipe lookup must succeed despite poisoned lock");
+        assert_eq!(
+            cached_table.table_name().expect("table name present"),
+            "Users",
+            "cached table name must match"
+        );
+
+        let cached_index = cache
+            .get_index_recipe("UsersByEmail")
+            .expect("index recipe lookup must succeed despite poisoned lock");
+        assert_eq!(
+            cached_index.index_name().expect("index name present"),
+            "UsersByEmail",
+            "cached index name must match"
+        );
+
+        assert_eq!(
+            cache.len(),
+            2,
+            "cache len must return 2 despite poisoned lock"
+        );
+        assert!(
+            !cache.is_empty(),
+            "cache must not be empty despite poisoned lock"
+        );
+
+        // Verify that write operations recover seamlessly via into_inner().
+        let accounts_recipe = KeyRecipe::new().set_table_name("Accounts");
+        assert!(
+            cache.insert(accounts_recipe),
+            "inserting new recipe must succeed despite poisoned lock"
+        );
+        assert_eq!(
+            cache.len(),
+            3,
+            "cache len must reflect new entry despite poisoned lock"
+        );
+
+        let request = ExecuteSqlRequest::new().set_sql("SELECT 1");
+        let operation_uid = cache
+            .get_or_prepare_query(&request)
+            .expect("get_or_prepare_query must succeed despite poisoned lock");
+        assert!(
+            operation_uid > 0,
+            "allocated operation UID must be positive"
+        );
+
+        // Verify that clear() recovers and resets state under poisoned lock.
+        cache.clear();
+        assert!(
+            cache.is_empty(),
+            "cache must be empty after clear on poisoned lock"
+        );
+        assert_eq!(
+            cache.len(),
+            0,
+            "cache len must be 0 after clear on poisoned lock"
+        );
+        assert!(
+            cache.get_table_recipe("Users").is_none(),
+            "cleared table recipe must not be present"
+        );
     }
 
     #[test]

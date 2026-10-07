@@ -283,6 +283,7 @@ mod tests {
         assert!(builder.config.backoff_policy.is_none(), "{builder:?}");
         assert!(builder.project_id.is_none(), "{builder:?}");
         assert!(builder.storage_read_enabled, "{builder:?}");
+        assert!(builder.storage_read_endpoint.is_none(), "{builder:?}");
 
         Ok(())
     }
@@ -296,7 +297,9 @@ mod tests {
             .with_credentials(Anonymous::new().build())
             .with_retry_policy(RetryableErrors)
             .with_backoff_policy(ExponentialBackoff::default())
-            .with_tracing();
+            .with_tracing()
+            .with_storage_read(true)
+            .with_storage_read_endpoint("test-storage-endpoint.com");
 
         assert_eq!(builder.project_id, Some("test-project".to_string()));
         assert_eq!(
@@ -311,6 +314,11 @@ mod tests {
         assert!(builder.config.tracing);
         assert!(builder.config.retry_policy.is_some(), "{builder:?}");
         assert!(builder.config.backoff_policy.is_some(), "{builder:?}");
+        assert!(builder.storage_read_enabled);
+        assert_eq!(
+            builder.storage_read_endpoint,
+            Some("test-storage-endpoint.com".to_string())
+        );
 
         Ok(())
     }

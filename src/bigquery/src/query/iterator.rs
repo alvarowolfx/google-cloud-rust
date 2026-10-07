@@ -14,7 +14,6 @@
 
 use crate::error::RowError;
 use crate::query::query_handle::CachedData;
-#[cfg(google_cloud_unstable_gapic_streaming)]
 use crate::query::storage_reader::StorageReader;
 use crate::query::{CompleteQuery, Row, Schema};
 use arrow::ipc::reader::StreamReader;
@@ -63,17 +62,16 @@ pub struct RowIterator {
     row_index: usize,
     rows: VecDeque<wkt::Struct>,
     page_size: Option<u32>,
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     storage_reader: Option<StorageReader>,
 }
 
 impl RowIterator {
     pub(crate) fn new(q: CompleteQuery) -> Self {
-        let (rows, record_batches, schema, _has_cached) = match q.cached_data {
+        let (rows, record_batches, schema, has_cached) = match q.cached_data {
             CachedData::Rows(rows) => {
                 let has = !rows.is_empty();
                 // DDL/DML queries have no schema.
-                let schema = q.metadata.schema.clone().unwrap_or_default();
+                let schema = q.metadata.schema.unwrap_or_default();
                 (rows, VecDeque::new(), Arc::new(Schema::new(schema)), has)
             }
             CachedData::Arrow {
@@ -96,11 +94,10 @@ impl RowIterator {
             }
         };
 
-        #[cfg(google_cloud_unstable_gapic_streaming)]
         let storage_reader =
             if let (Some(read_client), Some(job_ref)) = (q.read_client, q.job_ref.clone()) {
                 let total_rows = q.metadata.total_rows.unwrap_or(0);
-                if (q.page_token.is_some() || !_has_cached)
+                if (q.page_token.is_some() || !has_cached)
                     && (total_rows == 0
                         || total_rows > crate::query::storage_reader::rest_row_threshold())
                 {
@@ -126,7 +123,6 @@ impl RowIterator {
             row_index: 0,
             rows,
             page_size: q.page_size,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             storage_reader,
         }
     }
@@ -183,7 +179,6 @@ impl RowIterator {
                 self.row_index = 0;
             }
 
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             if let Some(ref mut storage_reader) = self.storage_reader {
                 match storage_reader.next_batch().await {
                     Ok(Some(batch)) => {
@@ -546,7 +541,6 @@ mod tests {
         };
         let q = CompleteQuery {
             job_service,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             read_client: None,
             job_ref: None,
             cached_data: CachedData::Arrow {

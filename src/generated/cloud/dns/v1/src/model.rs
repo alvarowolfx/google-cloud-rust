@@ -306,8 +306,7 @@ pub mod change {
         Done,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [Status::value] or
-        /// [Status::name].
+        /// Applications can examine the value using [Status::name].
         UnknownValue(status::UnknownValue),
     }
 
@@ -320,22 +319,7 @@ pub mod change {
     }
 
     impl Status {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::Pending => std::option::Option::Some(0),
-                Self::Done => std::option::Option::Some(1),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::Pending => std::option::Option::Some("pending"),
@@ -345,28 +329,9 @@ pub mod change {
         }
     }
 
-    impl std::default::Default for Status {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for Status {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for Status {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::Pending,
-                1 => Self::Done,
-                _ => Self::UnknownValue(status::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -401,8 +366,9 @@ pub mod change {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer
-                .deserialize_any(wkt::internal::EnumVisitor::<Status>::new("..Change.status"))
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<Status>::new(
+                "..Change.status",
+            ))
         }
     }
 }
@@ -962,8 +928,7 @@ pub mod dns_key {
         Ecdsap384Sha384,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [Algorithm::value] or
-        /// [Algorithm::name].
+        /// Applications can examine the value using [Algorithm::name].
         UnknownValue(algorithm::UnknownValue),
     }
 
@@ -976,25 +941,7 @@ pub mod dns_key {
     }
 
     impl Algorithm {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::Rsasha1 => std::option::Option::Some(0),
-                Self::Rsasha256 => std::option::Option::Some(1),
-                Self::Rsasha512 => std::option::Option::Some(2),
-                Self::Ecdsap256Sha256 => std::option::Option::Some(3),
-                Self::Ecdsap384Sha384 => std::option::Option::Some(4),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::Rsasha1 => std::option::Option::Some("rsasha1"),
@@ -1007,31 +954,9 @@ pub mod dns_key {
         }
     }
 
-    impl std::default::Default for Algorithm {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for Algorithm {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for Algorithm {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::Rsasha1,
-                1 => Self::Rsasha256,
-                2 => Self::Rsasha512,
-                3 => Self::Ecdsap256Sha256,
-                4 => Self::Ecdsap384Sha384,
-                _ => Self::UnknownValue(algorithm::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -1072,7 +997,7 @@ pub mod dns_key {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<Algorithm>::new(
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<Algorithm>::new(
                 "..DnsKey.algorithm",
             ))
         }
@@ -1102,8 +1027,7 @@ pub mod dns_key {
         ZoneSigning,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [Type::value] or
-        /// [Type::name].
+        /// Applications can examine the value using [Type::name].
         UnknownValue(r#type::UnknownValue),
     }
 
@@ -1116,22 +1040,7 @@ pub mod dns_key {
     }
 
     impl Type {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::KeySigning => std::option::Option::Some(0),
-                Self::ZoneSigning => std::option::Option::Some(1),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::KeySigning => std::option::Option::Some("keySigning"),
@@ -1141,28 +1050,9 @@ pub mod dns_key {
         }
     }
 
-    impl std::default::Default for Type {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for Type {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for Type {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::KeySigning,
-                1 => Self::ZoneSigning,
-                _ => Self::UnknownValue(r#type::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -1197,7 +1087,9 @@ pub mod dns_key {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<Type>::new("..DnsKey.type"))
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<Type>::new(
+                "..DnsKey.type",
+            ))
         }
     }
 }
@@ -1325,8 +1217,7 @@ pub mod dns_key_digest {
         Sha384,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [Type::value] or
-        /// [Type::name].
+        /// Applications can examine the value using [Type::name].
         UnknownValue(r#type::UnknownValue),
     }
 
@@ -1339,23 +1230,7 @@ pub mod dns_key_digest {
     }
 
     impl Type {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::Sha1 => std::option::Option::Some(0),
-                Self::Sha256 => std::option::Option::Some(1),
-                Self::Sha384 => std::option::Option::Some(2),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::Sha1 => std::option::Option::Some("sha1"),
@@ -1366,29 +1241,9 @@ pub mod dns_key_digest {
         }
     }
 
-    impl std::default::Default for Type {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for Type {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for Type {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::Sha1,
-                1 => Self::Sha256,
-                2 => Self::Sha384,
-                _ => Self::UnknownValue(r#type::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -1425,7 +1280,7 @@ pub mod dns_key_digest {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<Type>::new(
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<Type>::new(
                 "..DnsKeyDigest.type",
             ))
         }
@@ -1631,8 +1486,7 @@ pub mod dns_key_spec {
         Ecdsap384Sha384,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [Algorithm::value] or
-        /// [Algorithm::name].
+        /// Applications can examine the value using [Algorithm::name].
         UnknownValue(algorithm::UnknownValue),
     }
 
@@ -1645,25 +1499,7 @@ pub mod dns_key_spec {
     }
 
     impl Algorithm {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::Rsasha1 => std::option::Option::Some(0),
-                Self::Rsasha256 => std::option::Option::Some(1),
-                Self::Rsasha512 => std::option::Option::Some(2),
-                Self::Ecdsap256Sha256 => std::option::Option::Some(3),
-                Self::Ecdsap384Sha384 => std::option::Option::Some(4),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::Rsasha1 => std::option::Option::Some("rsasha1"),
@@ -1676,31 +1512,9 @@ pub mod dns_key_spec {
         }
     }
 
-    impl std::default::Default for Algorithm {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for Algorithm {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for Algorithm {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::Rsasha1,
-                1 => Self::Rsasha256,
-                2 => Self::Rsasha512,
-                3 => Self::Ecdsap256Sha256,
-                4 => Self::Ecdsap384Sha384,
-                _ => Self::UnknownValue(algorithm::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -1741,7 +1555,7 @@ pub mod dns_key_spec {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<Algorithm>::new(
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<Algorithm>::new(
                 "..DnsKeySpec.algorithm",
             ))
         }
@@ -1771,8 +1585,7 @@ pub mod dns_key_spec {
         ZoneSigning,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [KeyType::value] or
-        /// [KeyType::name].
+        /// Applications can examine the value using [KeyType::name].
         UnknownValue(key_type::UnknownValue),
     }
 
@@ -1785,22 +1598,7 @@ pub mod dns_key_spec {
     }
 
     impl KeyType {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::KeySigning => std::option::Option::Some(0),
-                Self::ZoneSigning => std::option::Option::Some(1),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::KeySigning => std::option::Option::Some("keySigning"),
@@ -1810,28 +1608,9 @@ pub mod dns_key_spec {
         }
     }
 
-    impl std::default::Default for KeyType {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for KeyType {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for KeyType {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::KeySigning,
-                1 => Self::ZoneSigning,
-                _ => Self::UnknownValue(key_type::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -1866,7 +1645,7 @@ pub mod dns_key_spec {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<KeyType>::new(
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<KeyType>::new(
                 "..DnsKeySpec.keyType",
             ))
         }
@@ -1997,6 +1776,26 @@ impl google_cloud_gax::paginator::internal::PageableResponse for DnsKeysListResp
     fn next_page_token(&self) -> std::string::String {
         use std::clone::Clone;
         self.next_page_token.clone().unwrap_or_default()
+    }
+}
+
+/// A generic empty message that you can re-use to avoid defining duplicated empty messages in your APIs. A typical example is to use it as the request or the response type of an API method. For instance: service Foo { rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty); }
+#[derive(Clone, Default, PartialEq)]
+#[non_exhaustive]
+pub struct Empty {
+    pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+}
+
+impl Empty {
+    /// Creates a new default instance.
+    pub fn new() -> Self {
+        std::default::Default::default()
+    }
+}
+
+impl wkt::message::Message for Empty {
+    fn typename() -> &'static str {
+        "type.googleapis.com/.Empty"
     }
 }
 
@@ -2348,8 +2147,7 @@ pub mod google_iam_v_1_audit_log_config {
         DataRead,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [LogType::value] or
-        /// [LogType::name].
+        /// Applications can examine the value using [LogType::name].
         UnknownValue(log_type::UnknownValue),
     }
 
@@ -2362,24 +2160,7 @@ pub mod google_iam_v_1_audit_log_config {
     }
 
     impl LogType {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::Unspecified => std::option::Option::Some(0),
-                Self::AdminRead => std::option::Option::Some(1),
-                Self::DataWrite => std::option::Option::Some(2),
-                Self::DataRead => std::option::Option::Some(3),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::Unspecified => std::option::Option::Some("LOG_TYPE_UNSPECIFIED"),
@@ -2391,30 +2172,9 @@ pub mod google_iam_v_1_audit_log_config {
         }
     }
 
-    impl std::default::Default for LogType {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for LogType {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for LogType {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::Unspecified,
-                1 => Self::AdminRead,
-                2 => Self::DataWrite,
-                3 => Self::DataRead,
-                _ => Self::UnknownValue(log_type::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -2453,7 +2213,7 @@ pub mod google_iam_v_1_audit_log_config {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<LogType>::new(
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<LogType>::new(
                 "..GoogleIamV1AuditLogConfig.logType",
             ))
         }
@@ -2990,6 +2750,121 @@ impl wkt::message::Message for GoogleIamV1TestIamPermissionsResponse {
     }
 }
 
+/// The response message for Operations.ListOperations.
+#[derive(Clone, Default, PartialEq)]
+#[non_exhaustive]
+pub struct GoogleLongrunningListOperationsResponse {
+    /// The standard List next-page token.
+    pub next_page_token: std::option::Option<std::string::String>,
+
+    /// A list of operations that matches the specified filter in the request.
+    pub operations: std::vec::Vec<crate::model::GoogleLongrunningOperation>,
+
+    /// Unordered list. Unreachable resources. Populated when the request sets `ListOperationsRequest.return_partial_success` and reads across collections. For example, when attempting to list all resources across all supported locations.
+    pub unreachable: std::vec::Vec<std::string::String>,
+
+    pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+}
+
+impl GoogleLongrunningListOperationsResponse {
+    /// Creates a new default instance.
+    pub fn new() -> Self {
+        std::default::Default::default()
+    }
+
+    /// Sets the value of [next_page_token][crate::model::GoogleLongrunningListOperationsResponse::next_page_token].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::GoogleLongrunningListOperationsResponse;
+    /// let x = GoogleLongrunningListOperationsResponse::new().set_next_page_token("example");
+    /// ```
+    pub fn set_next_page_token<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.next_page_token = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [next_page_token][crate::model::GoogleLongrunningListOperationsResponse::next_page_token].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::GoogleLongrunningListOperationsResponse;
+    /// let x = GoogleLongrunningListOperationsResponse::new().set_or_clear_next_page_token(Some("example"));
+    /// let x = GoogleLongrunningListOperationsResponse::new().set_or_clear_next_page_token(None::<String>);
+    /// ```
+    pub fn set_or_clear_next_page_token<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.next_page_token = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [operations][crate::model::GoogleLongrunningListOperationsResponse::operations].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::GoogleLongrunningListOperationsResponse;
+    /// use google_cloud_dns_v1::model::GoogleLongrunningOperation;
+    /// let x = GoogleLongrunningListOperationsResponse::new()
+    ///     .set_operations([
+    ///         GoogleLongrunningOperation::default()/* use setters */,
+    ///         GoogleLongrunningOperation::default()/* use (different) setters */,
+    ///     ]);
+    /// ```
+    pub fn set_operations<T, V>(mut self, v: T) -> Self
+    where
+        T: std::iter::IntoIterator<Item = V>,
+        V: std::convert::Into<crate::model::GoogleLongrunningOperation>,
+    {
+        use std::iter::Iterator;
+        self.operations = v.into_iter().map(|i| i.into()).collect();
+        self
+    }
+
+    /// Sets the value of [unreachable][crate::model::GoogleLongrunningListOperationsResponse::unreachable].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::GoogleLongrunningListOperationsResponse;
+    /// let x = GoogleLongrunningListOperationsResponse::new().set_unreachable(["a", "b", "c"]);
+    /// ```
+    pub fn set_unreachable<T, V>(mut self, v: T) -> Self
+    where
+        T: std::iter::IntoIterator<Item = V>,
+        V: std::convert::Into<std::string::String>,
+    {
+        use std::iter::Iterator;
+        self.unreachable = v.into_iter().map(|i| i.into()).collect();
+        self
+    }
+}
+
+impl wkt::message::Message for GoogleLongrunningListOperationsResponse {
+    fn typename() -> &'static str {
+        "type.googleapis.com/.GoogleLongrunningListOperationsResponse"
+    }
+}
+
+#[doc(hidden)]
+impl google_cloud_gax::paginator::internal::PageableResponse
+    for GoogleLongrunningListOperationsResponse
+{
+    type PageItem = crate::model::GoogleLongrunningOperation;
+
+    fn items(self) -> std::vec::Vec<Self::PageItem> {
+        self.operations
+    }
+
+    fn next_page_token(&self) -> std::string::String {
+        use std::clone::Clone;
+        self.next_page_token.clone().unwrap_or_default()
+    }
+}
+
 /// This resource represents a long-running operation that is the result of a network API call.
 #[derive(Clone, Default, PartialEq)]
 #[non_exhaustive]
@@ -3183,6 +3058,394 @@ impl GoogleLongrunningOperation {
 impl wkt::message::Message for GoogleLongrunningOperation {
     fn typename() -> &'static str {
         "type.googleapis.com/.GoogleLongrunningOperation"
+    }
+}
+
+/// The response message for Locations.ListLocations.
+#[derive(Clone, Default, PartialEq)]
+#[non_exhaustive]
+pub struct ListLocationsResponse {
+    /// A list of locations that matches the specified filter in the request.
+    pub locations: std::vec::Vec<crate::model::Location>,
+
+    /// The standard List next-page token.
+    pub next_page_token: std::option::Option<std::string::String>,
+
+    pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+}
+
+impl ListLocationsResponse {
+    /// Creates a new default instance.
+    pub fn new() -> Self {
+        std::default::Default::default()
+    }
+
+    /// Sets the value of [locations][crate::model::ListLocationsResponse::locations].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::ListLocationsResponse;
+    /// use google_cloud_dns_v1::model::Location;
+    /// let x = ListLocationsResponse::new()
+    ///     .set_locations([
+    ///         Location::default()/* use setters */,
+    ///         Location::default()/* use (different) setters */,
+    ///     ]);
+    /// ```
+    pub fn set_locations<T, V>(mut self, v: T) -> Self
+    where
+        T: std::iter::IntoIterator<Item = V>,
+        V: std::convert::Into<crate::model::Location>,
+    {
+        use std::iter::Iterator;
+        self.locations = v.into_iter().map(|i| i.into()).collect();
+        self
+    }
+
+    /// Sets the value of [next_page_token][crate::model::ListLocationsResponse::next_page_token].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::ListLocationsResponse;
+    /// let x = ListLocationsResponse::new().set_next_page_token("example");
+    /// ```
+    pub fn set_next_page_token<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.next_page_token = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [next_page_token][crate::model::ListLocationsResponse::next_page_token].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::ListLocationsResponse;
+    /// let x = ListLocationsResponse::new().set_or_clear_next_page_token(Some("example"));
+    /// let x = ListLocationsResponse::new().set_or_clear_next_page_token(None::<String>);
+    /// ```
+    pub fn set_or_clear_next_page_token<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.next_page_token = v.map(|x| x.into());
+        self
+    }
+}
+
+impl wkt::message::Message for ListLocationsResponse {
+    fn typename() -> &'static str {
+        "type.googleapis.com/.ListLocationsResponse"
+    }
+}
+
+#[doc(hidden)]
+impl google_cloud_gax::paginator::internal::PageableResponse for ListLocationsResponse {
+    type PageItem = crate::model::Location;
+
+    fn items(self) -> std::vec::Vec<Self::PageItem> {
+        self.locations
+    }
+
+    fn next_page_token(&self) -> std::string::String {
+        use std::clone::Clone;
+        self.next_page_token.clone().unwrap_or_default()
+    }
+}
+
+/// Response message for OutboundEndpointsService.ListOutboundEndpoints
+#[derive(Clone, Default, PartialEq)]
+#[non_exhaustive]
+pub struct ListOutboundEndpointsResponse {
+    /// A token to retrieve the next page of results. Set to empty if there are no remaining results.
+    pub next_page_token: std::option::Option<std::string::String>,
+
+    /// The list of OutboundEndpoints.
+    pub outbound_endpoints: std::vec::Vec<crate::model::OutboundEndpoint>,
+
+    /// Unordered list. The resource names of the unreachable locations. Format: `projects/{project}/locations/{location}`
+    pub unreachable: std::vec::Vec<std::string::String>,
+
+    pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+}
+
+impl ListOutboundEndpointsResponse {
+    /// Creates a new default instance.
+    pub fn new() -> Self {
+        std::default::Default::default()
+    }
+
+    /// Sets the value of [next_page_token][crate::model::ListOutboundEndpointsResponse::next_page_token].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::ListOutboundEndpointsResponse;
+    /// let x = ListOutboundEndpointsResponse::new().set_next_page_token("example");
+    /// ```
+    pub fn set_next_page_token<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.next_page_token = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [next_page_token][crate::model::ListOutboundEndpointsResponse::next_page_token].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::ListOutboundEndpointsResponse;
+    /// let x = ListOutboundEndpointsResponse::new().set_or_clear_next_page_token(Some("example"));
+    /// let x = ListOutboundEndpointsResponse::new().set_or_clear_next_page_token(None::<String>);
+    /// ```
+    pub fn set_or_clear_next_page_token<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.next_page_token = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [outbound_endpoints][crate::model::ListOutboundEndpointsResponse::outbound_endpoints].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::ListOutboundEndpointsResponse;
+    /// use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// let x = ListOutboundEndpointsResponse::new()
+    ///     .set_outbound_endpoints([
+    ///         OutboundEndpoint::default()/* use setters */,
+    ///         OutboundEndpoint::default()/* use (different) setters */,
+    ///     ]);
+    /// ```
+    pub fn set_outbound_endpoints<T, V>(mut self, v: T) -> Self
+    where
+        T: std::iter::IntoIterator<Item = V>,
+        V: std::convert::Into<crate::model::OutboundEndpoint>,
+    {
+        use std::iter::Iterator;
+        self.outbound_endpoints = v.into_iter().map(|i| i.into()).collect();
+        self
+    }
+
+    /// Sets the value of [unreachable][crate::model::ListOutboundEndpointsResponse::unreachable].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::ListOutboundEndpointsResponse;
+    /// let x = ListOutboundEndpointsResponse::new().set_unreachable(["a", "b", "c"]);
+    /// ```
+    pub fn set_unreachable<T, V>(mut self, v: T) -> Self
+    where
+        T: std::iter::IntoIterator<Item = V>,
+        V: std::convert::Into<std::string::String>,
+    {
+        use std::iter::Iterator;
+        self.unreachable = v.into_iter().map(|i| i.into()).collect();
+        self
+    }
+}
+
+impl wkt::message::Message for ListOutboundEndpointsResponse {
+    fn typename() -> &'static str {
+        "type.googleapis.com/.ListOutboundEndpointsResponse"
+    }
+}
+
+#[doc(hidden)]
+impl google_cloud_gax::paginator::internal::PageableResponse for ListOutboundEndpointsResponse {
+    type PageItem = crate::model::OutboundEndpoint;
+
+    fn items(self) -> std::vec::Vec<Self::PageItem> {
+        self.outbound_endpoints
+    }
+
+    fn next_page_token(&self) -> std::string::String {
+        use std::clone::Clone;
+        self.next_page_token.clone().unwrap_or_default()
+    }
+}
+
+/// A resource that represents a Google Cloud location.
+#[derive(Clone, Default, PartialEq)]
+#[non_exhaustive]
+pub struct Location {
+    /// The friendly name for this location, typically a nearby city name. For example, "Tokyo".
+    pub display_name: std::option::Option<std::string::String>,
+
+    /// Cross-service attributes for the location. For example {"cloud.googleapis.com/region": "us-east1"}
+    pub labels: std::collections::HashMap<std::string::String, std::string::String>,
+
+    /// The canonical id for this location. For example: `"us-east1"`.
+    pub location_id: std::option::Option<std::string::String>,
+
+    /// Service-specific metadata. For example the available capacity at the given location.
+    pub metadata: std::option::Option<wkt::Any>,
+
+    /// Resource name for the location, which may vary between implementations. For example: `"projects/example-project/locations/us-east1"`
+    pub name: std::option::Option<std::string::String>,
+
+    pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+}
+
+impl Location {
+    /// Creates a new default instance.
+    pub fn new() -> Self {
+        std::default::Default::default()
+    }
+
+    /// Sets the value of [display_name][crate::model::Location::display_name].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::Location;
+    /// let x = Location::new().set_display_name("example");
+    /// ```
+    pub fn set_display_name<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.display_name = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [display_name][crate::model::Location::display_name].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::Location;
+    /// let x = Location::new().set_or_clear_display_name(Some("example"));
+    /// let x = Location::new().set_or_clear_display_name(None::<String>);
+    /// ```
+    pub fn set_or_clear_display_name<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.display_name = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [labels][crate::model::Location::labels].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::Location;
+    /// let x = Location::new().set_labels([
+    ///     ("key0", "abc"),
+    ///     ("key1", "xyz"),
+    /// ]);
+    /// ```
+    pub fn set_labels<T, K, V>(mut self, v: T) -> Self
+    where
+        T: std::iter::IntoIterator<Item = (K, V)>,
+        K: std::convert::Into<std::string::String>,
+        V: std::convert::Into<std::string::String>,
+    {
+        use std::iter::Iterator;
+        self.labels = v.into_iter().map(|(k, v)| (k.into(), v.into())).collect();
+        self
+    }
+
+    /// Sets the value of [location_id][crate::model::Location::location_id].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::Location;
+    /// let x = Location::new().set_location_id("example");
+    /// ```
+    pub fn set_location_id<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.location_id = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [location_id][crate::model::Location::location_id].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::Location;
+    /// let x = Location::new().set_or_clear_location_id(Some("example"));
+    /// let x = Location::new().set_or_clear_location_id(None::<String>);
+    /// ```
+    pub fn set_or_clear_location_id<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.location_id = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [metadata][crate::model::Location::metadata].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::Location;
+    /// use wkt::Any;
+    /// let x = Location::new().set_metadata(Any::default()/* use setters */);
+    /// ```
+    pub fn set_metadata<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<wkt::Any>,
+    {
+        self.metadata = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [metadata][crate::model::Location::metadata].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::Location;
+    /// use wkt::Any;
+    /// let x = Location::new().set_or_clear_metadata(Some(Any::default()/* use setters */));
+    /// let x = Location::new().set_or_clear_metadata(None::<Any>);
+    /// ```
+    pub fn set_or_clear_metadata<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<wkt::Any>,
+    {
+        self.metadata = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [name][crate::model::Location::name].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::Location;
+    /// let x = Location::new().set_name("example");
+    /// ```
+    pub fn set_name<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.name = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [name][crate::model::Location::name].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::Location;
+    /// let x = Location::new().set_or_clear_name(Some("example"));
+    /// let x = Location::new().set_or_clear_name(None::<String>);
+    /// ```
+    pub fn set_or_clear_name<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.name = v.map(|x| x.into());
+        self
+    }
+}
+
+impl wkt::message::Message for Location {
+    fn typename() -> &'static str {
+        "type.googleapis.com/.Location"
     }
 }
 
@@ -3807,8 +4070,7 @@ pub mod managed_zone {
         Private,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [Visibility::value] or
-        /// [Visibility::name].
+        /// Applications can examine the value using [Visibility::name].
         UnknownValue(visibility::UnknownValue),
     }
 
@@ -3821,22 +4083,7 @@ pub mod managed_zone {
     }
 
     impl Visibility {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::Public => std::option::Option::Some(0),
-                Self::Private => std::option::Option::Some(1),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::Public => std::option::Option::Some("public"),
@@ -3846,28 +4093,9 @@ pub mod managed_zone {
         }
     }
 
-    impl std::default::Default for Visibility {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for Visibility {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for Visibility {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::Public,
-                1 => Self::Private,
-                _ => Self::UnknownValue(visibility::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -3902,7 +4130,7 @@ pub mod managed_zone {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<Visibility>::new(
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<Visibility>::new(
                 "..ManagedZone.visibility",
             ))
         }
@@ -4179,8 +4407,7 @@ pub mod managed_zone_dns_sec_config {
         Nsec3,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [NonExistence::value] or
-        /// [NonExistence::name].
+        /// Applications can examine the value using [NonExistence::name].
         UnknownValue(non_existence::UnknownValue),
     }
 
@@ -4193,22 +4420,7 @@ pub mod managed_zone_dns_sec_config {
     }
 
     impl NonExistence {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::Nsec => std::option::Option::Some(0),
-                Self::Nsec3 => std::option::Option::Some(1),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::Nsec => std::option::Option::Some("nsec"),
@@ -4218,28 +4430,9 @@ pub mod managed_zone_dns_sec_config {
         }
     }
 
-    impl std::default::Default for NonExistence {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for NonExistence {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for NonExistence {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::Nsec,
-                1 => Self::Nsec3,
-                _ => Self::UnknownValue(non_existence::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -4274,7 +4467,7 @@ pub mod managed_zone_dns_sec_config {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<NonExistence>::new(
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<NonExistence>::new(
                 "..ManagedZoneDnsSecConfig.nonExistence",
             ))
         }
@@ -4306,8 +4499,7 @@ pub mod managed_zone_dns_sec_config {
         Transfer,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [State::value] or
-        /// [State::name].
+        /// Applications can examine the value using [State::name].
         UnknownValue(state::UnknownValue),
     }
 
@@ -4320,23 +4512,7 @@ pub mod managed_zone_dns_sec_config {
     }
 
     impl State {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::Off => std::option::Option::Some(0),
-                Self::On => std::option::Option::Some(1),
-                Self::Transfer => std::option::Option::Some(2),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::Off => std::option::Option::Some("off"),
@@ -4347,29 +4523,9 @@ pub mod managed_zone_dns_sec_config {
         }
     }
 
-    impl std::default::Default for State {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for State {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for State {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::Off,
-                1 => Self::On,
-                2 => Self::Transfer,
-                _ => Self::UnknownValue(state::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -4406,7 +4562,7 @@ pub mod managed_zone_dns_sec_config {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<State>::new(
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<State>::new(
                 "..ManagedZoneDnsSecConfig.state",
             ))
         }
@@ -4419,6 +4575,10 @@ pub mod managed_zone_dns_sec_config {
 pub struct ManagedZoneForwardingConfig {
     #[allow(missing_docs)]
     pub kind: std::option::Option<std::string::String>,
+
+    /// The list of outbound endpoints to use for queries.
+    pub outbound_endpoints:
+        std::vec::Vec<crate::model::ManagedZoneForwardingConfigOutboundEndpoint>,
 
     /// List of target name servers to forward to. Cloud DNS selects the best available name server if more than one target is given.
     pub target_name_servers:
@@ -4461,6 +4621,28 @@ impl ManagedZoneForwardingConfig {
         T: std::convert::Into<std::string::String>,
     {
         self.kind = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [outbound_endpoints][crate::model::ManagedZoneForwardingConfig::outbound_endpoints].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::ManagedZoneForwardingConfig;
+    /// use google_cloud_dns_v1::model::ManagedZoneForwardingConfigOutboundEndpoint;
+    /// let x = ManagedZoneForwardingConfig::new()
+    ///     .set_outbound_endpoints([
+    ///         ManagedZoneForwardingConfigOutboundEndpoint::default()/* use setters */,
+    ///         ManagedZoneForwardingConfigOutboundEndpoint::default()/* use (different) setters */,
+    ///     ]);
+    /// ```
+    pub fn set_outbound_endpoints<T, V>(mut self, v: T) -> Self
+    where
+        T: std::iter::IntoIterator<Item = V>,
+        V: std::convert::Into<crate::model::ManagedZoneForwardingConfigOutboundEndpoint>,
+    {
+        use std::iter::Iterator;
+        self.outbound_endpoints = v.into_iter().map(|i| i.into()).collect();
         self
     }
 
@@ -4720,8 +4902,7 @@ pub mod managed_zone_forwarding_config_name_server_target {
         Private,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [ForwardingPath::value] or
-        /// [ForwardingPath::name].
+        /// Applications can examine the value using [ForwardingPath::name].
         UnknownValue(forwarding_path::UnknownValue),
     }
 
@@ -4734,22 +4915,7 @@ pub mod managed_zone_forwarding_config_name_server_target {
     }
 
     impl ForwardingPath {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::Default => std::option::Option::Some(0),
-                Self::Private => std::option::Option::Some(1),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::Default => std::option::Option::Some("default"),
@@ -4759,28 +4925,9 @@ pub mod managed_zone_forwarding_config_name_server_target {
         }
     }
 
-    impl std::default::Default for ForwardingPath {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for ForwardingPath {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for ForwardingPath {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::Default,
-                1 => Self::Private,
-                _ => Self::UnknownValue(forwarding_path::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -4815,10 +4962,98 @@ pub mod managed_zone_forwarding_config_name_server_target {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<ForwardingPath>::new(
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<ForwardingPath>::new(
                 "..ManagedZoneForwardingConfigNameServerTarget.forwardingPath",
             ))
         }
+    }
+}
+
+#[allow(missing_docs)]
+#[derive(Clone, Default, PartialEq)]
+#[non_exhaustive]
+pub struct ManagedZoneForwardingConfigOutboundEndpoint {
+    #[allow(missing_docs)]
+    pub kind: std::option::Option<std::string::String>,
+
+    /// Specified as a resource path including project and region. This should be formatted like projects/{project}/locations/{location}/outboundEndpoints/{endpoint}
+    pub name: std::option::Option<std::string::String>,
+
+    pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+}
+
+impl ManagedZoneForwardingConfigOutboundEndpoint {
+    /// Creates a new default instance.
+    pub fn new() -> Self {
+        std::default::Default::default()
+    }
+
+    /// Sets the value of [kind][crate::model::ManagedZoneForwardingConfigOutboundEndpoint::kind].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::ManagedZoneForwardingConfigOutboundEndpoint;
+    /// let x = ManagedZoneForwardingConfigOutboundEndpoint::new().set_kind("example");
+    /// ```
+    pub fn set_kind<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.kind = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [kind][crate::model::ManagedZoneForwardingConfigOutboundEndpoint::kind].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::ManagedZoneForwardingConfigOutboundEndpoint;
+    /// let x = ManagedZoneForwardingConfigOutboundEndpoint::new().set_or_clear_kind(Some("example"));
+    /// let x = ManagedZoneForwardingConfigOutboundEndpoint::new().set_or_clear_kind(None::<String>);
+    /// ```
+    pub fn set_or_clear_kind<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.kind = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [name][crate::model::ManagedZoneForwardingConfigOutboundEndpoint::name].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::ManagedZoneForwardingConfigOutboundEndpoint;
+    /// let x = ManagedZoneForwardingConfigOutboundEndpoint::new().set_name("example");
+    /// ```
+    pub fn set_name<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.name = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [name][crate::model::ManagedZoneForwardingConfigOutboundEndpoint::name].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::ManagedZoneForwardingConfigOutboundEndpoint;
+    /// let x = ManagedZoneForwardingConfigOutboundEndpoint::new().set_or_clear_name(Some("example"));
+    /// let x = ManagedZoneForwardingConfigOutboundEndpoint::new().set_or_clear_name(None::<String>);
+    /// ```
+    pub fn set_or_clear_name<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.name = v.map(|x| x.into());
+        self
+    }
+}
+
+impl wkt::message::Message for ManagedZoneForwardingConfigOutboundEndpoint {
+    fn typename() -> &'static str {
+        "type.googleapis.com/.ManagedZoneForwardingConfigOutboundEndpoint"
     }
 }
 
@@ -6161,8 +6396,7 @@ pub mod operation {
         Done,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [Status::value] or
-        /// [Status::name].
+        /// Applications can examine the value using [Status::name].
         UnknownValue(status::UnknownValue),
     }
 
@@ -6175,22 +6409,7 @@ pub mod operation {
     }
 
     impl Status {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::Pending => std::option::Option::Some(0),
-                Self::Done => std::option::Option::Some(1),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::Pending => std::option::Option::Some("pending"),
@@ -6200,28 +6419,9 @@ pub mod operation {
         }
     }
 
-    impl std::default::Default for Status {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for Status {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for Status {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::Pending,
-                1 => Self::Done,
-                _ => Self::UnknownValue(status::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -6256,7 +6456,7 @@ pub mod operation {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<Status>::new(
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<Status>::new(
                 "..Operation.status",
             ))
         }
@@ -6444,6 +6644,602 @@ impl OperationManagedZoneContext {
 impl wkt::message::Message for OperationManagedZoneContext {
     fn typename() -> &'static str {
         "type.googleapis.com/.OperationManagedZoneContext"
+    }
+}
+
+/// Represents the metadata of the long-running operation.
+#[derive(Clone, Default, PartialEq)]
+#[non_exhaustive]
+pub struct OperationMetadata {
+    /// Output only. API version used to start the operation.
+    pub api_version: std::option::Option<std::string::String>,
+
+    /// Output only. The time the operation was created.
+    pub create_time: std::option::Option<wkt::Timestamp>,
+
+    /// Output only. The time the operation finished running.
+    pub end_time: std::option::Option<wkt::Timestamp>,
+
+    /// Output only. Identifies whether the user has requested cancellation of the operation. Operations that have successfully been cancelled have Operation.error value with a google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.
+    pub requested_cancellation: std::option::Option<bool>,
+
+    /// Output only. Human-readable status of the operation, if any.
+    pub status_message: std::option::Option<std::string::String>,
+
+    /// Output only. Server-defined resource path for the target of the operation.
+    pub target: std::option::Option<std::string::String>,
+
+    /// Output only. Name of the verb executed by the operation.
+    pub verb: std::option::Option<std::string::String>,
+
+    pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+}
+
+impl OperationMetadata {
+    /// Creates a new default instance.
+    pub fn new() -> Self {
+        std::default::Default::default()
+    }
+
+    /// Sets the value of [api_version][crate::model::OperationMetadata::api_version].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OperationMetadata;
+    /// let x = OperationMetadata::new().set_api_version("example");
+    /// ```
+    pub fn set_api_version<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.api_version = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [api_version][crate::model::OperationMetadata::api_version].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OperationMetadata;
+    /// let x = OperationMetadata::new().set_or_clear_api_version(Some("example"));
+    /// let x = OperationMetadata::new().set_or_clear_api_version(None::<String>);
+    /// ```
+    pub fn set_or_clear_api_version<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.api_version = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [create_time][crate::model::OperationMetadata::create_time].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OperationMetadata;
+    /// use wkt::Timestamp;
+    /// let x = OperationMetadata::new().set_create_time(Timestamp::default()/* use setters */);
+    /// ```
+    pub fn set_create_time<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<wkt::Timestamp>,
+    {
+        self.create_time = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [create_time][crate::model::OperationMetadata::create_time].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OperationMetadata;
+    /// use wkt::Timestamp;
+    /// let x = OperationMetadata::new().set_or_clear_create_time(Some(Timestamp::default()/* use setters */));
+    /// let x = OperationMetadata::new().set_or_clear_create_time(None::<Timestamp>);
+    /// ```
+    pub fn set_or_clear_create_time<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<wkt::Timestamp>,
+    {
+        self.create_time = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [end_time][crate::model::OperationMetadata::end_time].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OperationMetadata;
+    /// use wkt::Timestamp;
+    /// let x = OperationMetadata::new().set_end_time(Timestamp::default()/* use setters */);
+    /// ```
+    pub fn set_end_time<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<wkt::Timestamp>,
+    {
+        self.end_time = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [end_time][crate::model::OperationMetadata::end_time].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OperationMetadata;
+    /// use wkt::Timestamp;
+    /// let x = OperationMetadata::new().set_or_clear_end_time(Some(Timestamp::default()/* use setters */));
+    /// let x = OperationMetadata::new().set_or_clear_end_time(None::<Timestamp>);
+    /// ```
+    pub fn set_or_clear_end_time<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<wkt::Timestamp>,
+    {
+        self.end_time = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [requested_cancellation][crate::model::OperationMetadata::requested_cancellation].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OperationMetadata;
+    /// let x = OperationMetadata::new().set_requested_cancellation(true);
+    /// ```
+    pub fn set_requested_cancellation<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<bool>,
+    {
+        self.requested_cancellation = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [requested_cancellation][crate::model::OperationMetadata::requested_cancellation].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OperationMetadata;
+    /// let x = OperationMetadata::new().set_or_clear_requested_cancellation(Some(false));
+    /// let x = OperationMetadata::new().set_or_clear_requested_cancellation(None::<bool>);
+    /// ```
+    pub fn set_or_clear_requested_cancellation<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<bool>,
+    {
+        self.requested_cancellation = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [status_message][crate::model::OperationMetadata::status_message].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OperationMetadata;
+    /// let x = OperationMetadata::new().set_status_message("example");
+    /// ```
+    pub fn set_status_message<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.status_message = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [status_message][crate::model::OperationMetadata::status_message].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OperationMetadata;
+    /// let x = OperationMetadata::new().set_or_clear_status_message(Some("example"));
+    /// let x = OperationMetadata::new().set_or_clear_status_message(None::<String>);
+    /// ```
+    pub fn set_or_clear_status_message<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.status_message = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [target][crate::model::OperationMetadata::target].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OperationMetadata;
+    /// let x = OperationMetadata::new().set_target("example");
+    /// ```
+    pub fn set_target<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.target = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [target][crate::model::OperationMetadata::target].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OperationMetadata;
+    /// let x = OperationMetadata::new().set_or_clear_target(Some("example"));
+    /// let x = OperationMetadata::new().set_or_clear_target(None::<String>);
+    /// ```
+    pub fn set_or_clear_target<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.target = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [verb][crate::model::OperationMetadata::verb].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OperationMetadata;
+    /// let x = OperationMetadata::new().set_verb("example");
+    /// ```
+    pub fn set_verb<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.verb = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [verb][crate::model::OperationMetadata::verb].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OperationMetadata;
+    /// let x = OperationMetadata::new().set_or_clear_verb(Some("example"));
+    /// let x = OperationMetadata::new().set_or_clear_verb(None::<String>);
+    /// ```
+    pub fn set_or_clear_verb<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.verb = v.map(|x| x.into());
+        self
+    }
+}
+
+impl wkt::message::Message for OperationMetadata {
+    fn typename() -> &'static str {
+        "type.googleapis.com/.OperationMetadata"
+    }
+}
+
+/// An OutboundEndpoint is a regional resource to enable outbound forwarding from a private IP range in VPCs to on-premise or other networks.
+#[derive(Clone, Default, PartialEq)]
+#[non_exhaustive]
+pub struct OutboundEndpoint {
+    /// Optional. Annotations as key value pairs
+    pub annotations: std::collections::HashMap<std::string::String, std::string::String>,
+
+    /// Output only. [Output only] Create time stamp
+    pub create_time: std::option::Option<wkt::Timestamp>,
+
+    /// Optional. User provided description.
+    pub description: std::option::Option<std::string::String>,
+
+    /// Required. Immutable. User provided IP address to use for outbound DNS forwarding. This address must be a free address on the subnetwork.
+    pub endpoint_ip: std::option::Option<std::string::String>,
+
+    /// Optional. Labels as key value pairs
+    pub labels: std::collections::HashMap<std::string::String, std::string::String>,
+
+    /// Identifier. The resource name of the OutboundEndpoint. Format: `projects/{project}/locations/{location}/outboundEndpoints/{outboundEndpoint}`
+    pub name: std::option::Option<std::string::String>,
+
+    /// Required. Immutable. The VPC network containing the outbound endpoint, specified as full path.
+    pub network: std::option::Option<std::string::String>,
+
+    /// Required. Immutable. The subnetwork holding the endpoint_ip, specified as full path.
+    pub subnetwork: std::option::Option<std::string::String>,
+
+    /// Optional. Tag bindings as key value pairs
+    pub tags: std::collections::HashMap<std::string::String, std::string::String>,
+
+    /// Output only. [Output only] Update time stamp
+    pub update_time: std::option::Option<wkt::Timestamp>,
+
+    pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+}
+
+impl OutboundEndpoint {
+    /// Creates a new default instance.
+    pub fn new() -> Self {
+        std::default::Default::default()
+    }
+
+    /// Sets the value of [annotations][crate::model::OutboundEndpoint::annotations].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// let x = OutboundEndpoint::new().set_annotations([
+    ///     ("key0", "abc"),
+    ///     ("key1", "xyz"),
+    /// ]);
+    /// ```
+    pub fn set_annotations<T, K, V>(mut self, v: T) -> Self
+    where
+        T: std::iter::IntoIterator<Item = (K, V)>,
+        K: std::convert::Into<std::string::String>,
+        V: std::convert::Into<std::string::String>,
+    {
+        use std::iter::Iterator;
+        self.annotations = v.into_iter().map(|(k, v)| (k.into(), v.into())).collect();
+        self
+    }
+
+    /// Sets the value of [create_time][crate::model::OutboundEndpoint::create_time].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// use wkt::Timestamp;
+    /// let x = OutboundEndpoint::new().set_create_time(Timestamp::default()/* use setters */);
+    /// ```
+    pub fn set_create_time<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<wkt::Timestamp>,
+    {
+        self.create_time = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [create_time][crate::model::OutboundEndpoint::create_time].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// use wkt::Timestamp;
+    /// let x = OutboundEndpoint::new().set_or_clear_create_time(Some(Timestamp::default()/* use setters */));
+    /// let x = OutboundEndpoint::new().set_or_clear_create_time(None::<Timestamp>);
+    /// ```
+    pub fn set_or_clear_create_time<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<wkt::Timestamp>,
+    {
+        self.create_time = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [description][crate::model::OutboundEndpoint::description].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// let x = OutboundEndpoint::new().set_description("example");
+    /// ```
+    pub fn set_description<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.description = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [description][crate::model::OutboundEndpoint::description].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// let x = OutboundEndpoint::new().set_or_clear_description(Some("example"));
+    /// let x = OutboundEndpoint::new().set_or_clear_description(None::<String>);
+    /// ```
+    pub fn set_or_clear_description<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.description = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [endpoint_ip][crate::model::OutboundEndpoint::endpoint_ip].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// let x = OutboundEndpoint::new().set_endpoint_ip("example");
+    /// ```
+    pub fn set_endpoint_ip<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.endpoint_ip = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [endpoint_ip][crate::model::OutboundEndpoint::endpoint_ip].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// let x = OutboundEndpoint::new().set_or_clear_endpoint_ip(Some("example"));
+    /// let x = OutboundEndpoint::new().set_or_clear_endpoint_ip(None::<String>);
+    /// ```
+    pub fn set_or_clear_endpoint_ip<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.endpoint_ip = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [labels][crate::model::OutboundEndpoint::labels].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// let x = OutboundEndpoint::new().set_labels([
+    ///     ("key0", "abc"),
+    ///     ("key1", "xyz"),
+    /// ]);
+    /// ```
+    pub fn set_labels<T, K, V>(mut self, v: T) -> Self
+    where
+        T: std::iter::IntoIterator<Item = (K, V)>,
+        K: std::convert::Into<std::string::String>,
+        V: std::convert::Into<std::string::String>,
+    {
+        use std::iter::Iterator;
+        self.labels = v.into_iter().map(|(k, v)| (k.into(), v.into())).collect();
+        self
+    }
+
+    /// Sets the value of [name][crate::model::OutboundEndpoint::name].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// let x = OutboundEndpoint::new().set_name("example");
+    /// ```
+    pub fn set_name<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.name = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [name][crate::model::OutboundEndpoint::name].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// let x = OutboundEndpoint::new().set_or_clear_name(Some("example"));
+    /// let x = OutboundEndpoint::new().set_or_clear_name(None::<String>);
+    /// ```
+    pub fn set_or_clear_name<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.name = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [network][crate::model::OutboundEndpoint::network].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// let x = OutboundEndpoint::new().set_network("example");
+    /// ```
+    pub fn set_network<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.network = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [network][crate::model::OutboundEndpoint::network].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// let x = OutboundEndpoint::new().set_or_clear_network(Some("example"));
+    /// let x = OutboundEndpoint::new().set_or_clear_network(None::<String>);
+    /// ```
+    pub fn set_or_clear_network<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.network = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [subnetwork][crate::model::OutboundEndpoint::subnetwork].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// let x = OutboundEndpoint::new().set_subnetwork("example");
+    /// ```
+    pub fn set_subnetwork<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.subnetwork = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [subnetwork][crate::model::OutboundEndpoint::subnetwork].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// let x = OutboundEndpoint::new().set_or_clear_subnetwork(Some("example"));
+    /// let x = OutboundEndpoint::new().set_or_clear_subnetwork(None::<String>);
+    /// ```
+    pub fn set_or_clear_subnetwork<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.subnetwork = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [tags][crate::model::OutboundEndpoint::tags].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// let x = OutboundEndpoint::new().set_tags([
+    ///     ("key0", "abc"),
+    ///     ("key1", "xyz"),
+    /// ]);
+    /// ```
+    pub fn set_tags<T, K, V>(mut self, v: T) -> Self
+    where
+        T: std::iter::IntoIterator<Item = (K, V)>,
+        K: std::convert::Into<std::string::String>,
+        V: std::convert::Into<std::string::String>,
+    {
+        use std::iter::Iterator;
+        self.tags = v.into_iter().map(|(k, v)| (k.into(), v.into())).collect();
+        self
+    }
+
+    /// Sets the value of [update_time][crate::model::OutboundEndpoint::update_time].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// use wkt::Timestamp;
+    /// let x = OutboundEndpoint::new().set_update_time(Timestamp::default()/* use setters */);
+    /// ```
+    pub fn set_update_time<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<wkt::Timestamp>,
+    {
+        self.update_time = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [update_time][crate::model::OutboundEndpoint::update_time].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::OutboundEndpoint;
+    /// use wkt::Timestamp;
+    /// let x = OutboundEndpoint::new().set_or_clear_update_time(Some(Timestamp::default()/* use setters */));
+    /// let x = OutboundEndpoint::new().set_or_clear_update_time(None::<Timestamp>);
+    /// ```
+    pub fn set_or_clear_update_time<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<wkt::Timestamp>,
+    {
+        self.update_time = v.map(|x| x.into());
+        self
+    }
+}
+
+impl wkt::message::Message for OutboundEndpoint {
+    fn typename() -> &'static str {
+        "type.googleapis.com/.OutboundEndpoint"
     }
 }
 
@@ -7018,6 +7814,10 @@ pub struct PolicyAlternativeNameServerConfig {
     #[allow(missing_docs)]
     pub kind: std::option::Option<std::string::String>,
 
+    /// The list of outbound endpoints to use for queries.
+    pub outbound_endpoints:
+        std::vec::Vec<crate::model::PolicyAlternativeNameServerConfigOutboundEndpoint>,
+
     /// Sets an alternative name server for the associated networks. When specified, all DNS queries are forwarded to a name server that you choose. Names such as .internal are not available when an alternative name server is specified.
     pub target_name_servers:
         std::vec::Vec<crate::model::PolicyAlternativeNameServerConfigTargetNameServer>,
@@ -7062,6 +7862,28 @@ impl PolicyAlternativeNameServerConfig {
         self
     }
 
+    /// Sets the value of [outbound_endpoints][crate::model::PolicyAlternativeNameServerConfig::outbound_endpoints].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::PolicyAlternativeNameServerConfig;
+    /// use google_cloud_dns_v1::model::PolicyAlternativeNameServerConfigOutboundEndpoint;
+    /// let x = PolicyAlternativeNameServerConfig::new()
+    ///     .set_outbound_endpoints([
+    ///         PolicyAlternativeNameServerConfigOutboundEndpoint::default()/* use setters */,
+    ///         PolicyAlternativeNameServerConfigOutboundEndpoint::default()/* use (different) setters */,
+    ///     ]);
+    /// ```
+    pub fn set_outbound_endpoints<T, V>(mut self, v: T) -> Self
+    where
+        T: std::iter::IntoIterator<Item = V>,
+        V: std::convert::Into<crate::model::PolicyAlternativeNameServerConfigOutboundEndpoint>,
+    {
+        use std::iter::Iterator;
+        self.outbound_endpoints = v.into_iter().map(|i| i.into()).collect();
+        self
+    }
+
     /// Sets the value of [target_name_servers][crate::model::PolicyAlternativeNameServerConfig::target_name_servers].
     ///
     /// # Example
@@ -7088,6 +7910,94 @@ impl PolicyAlternativeNameServerConfig {
 impl wkt::message::Message for PolicyAlternativeNameServerConfig {
     fn typename() -> &'static str {
         "type.googleapis.com/.PolicyAlternativeNameServerConfig"
+    }
+}
+
+#[allow(missing_docs)]
+#[derive(Clone, Default, PartialEq)]
+#[non_exhaustive]
+pub struct PolicyAlternativeNameServerConfigOutboundEndpoint {
+    #[allow(missing_docs)]
+    pub kind: std::option::Option<std::string::String>,
+
+    /// Specified as a resource path including project and region. This should be formatted like projects/{project}/locations/{location}/outboundEndpoints/{endpoint}
+    pub name: std::option::Option<std::string::String>,
+
+    pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+}
+
+impl PolicyAlternativeNameServerConfigOutboundEndpoint {
+    /// Creates a new default instance.
+    pub fn new() -> Self {
+        std::default::Default::default()
+    }
+
+    /// Sets the value of [kind][crate::model::PolicyAlternativeNameServerConfigOutboundEndpoint::kind].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::PolicyAlternativeNameServerConfigOutboundEndpoint;
+    /// let x = PolicyAlternativeNameServerConfigOutboundEndpoint::new().set_kind("example");
+    /// ```
+    pub fn set_kind<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.kind = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [kind][crate::model::PolicyAlternativeNameServerConfigOutboundEndpoint::kind].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::PolicyAlternativeNameServerConfigOutboundEndpoint;
+    /// let x = PolicyAlternativeNameServerConfigOutboundEndpoint::new().set_or_clear_kind(Some("example"));
+    /// let x = PolicyAlternativeNameServerConfigOutboundEndpoint::new().set_or_clear_kind(None::<String>);
+    /// ```
+    pub fn set_or_clear_kind<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.kind = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [name][crate::model::PolicyAlternativeNameServerConfigOutboundEndpoint::name].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::PolicyAlternativeNameServerConfigOutboundEndpoint;
+    /// let x = PolicyAlternativeNameServerConfigOutboundEndpoint::new().set_name("example");
+    /// ```
+    pub fn set_name<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.name = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [name][crate::model::PolicyAlternativeNameServerConfigOutboundEndpoint::name].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::PolicyAlternativeNameServerConfigOutboundEndpoint;
+    /// let x = PolicyAlternativeNameServerConfigOutboundEndpoint::new().set_or_clear_name(Some("example"));
+    /// let x = PolicyAlternativeNameServerConfigOutboundEndpoint::new().set_or_clear_name(None::<String>);
+    /// ```
+    pub fn set_or_clear_name<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<std::string::String>,
+    {
+        self.name = v.map(|x| x.into());
+        self
+    }
+}
+
+impl wkt::message::Message for PolicyAlternativeNameServerConfigOutboundEndpoint {
+    fn typename() -> &'static str {
+        "type.googleapis.com/.PolicyAlternativeNameServerConfigOutboundEndpoint"
     }
 }
 
@@ -7128,7 +8038,7 @@ impl PolicyAlternativeNameServerConfigTargetNameServer {
     /// ```
     pub fn set_forwarding_path<T>(mut self, v: T) -> Self
     where T: std::convert::Into<crate::model::policy_alternative_name_server_config_target_name_server::ForwardingPath>
-    {
+{
         self.forwarding_path = std::option::Option::Some(v.into());
         self
     }
@@ -7144,7 +8054,7 @@ impl PolicyAlternativeNameServerConfigTargetNameServer {
     /// ```
     pub fn set_or_clear_forwarding_path<T>(mut self, v: std::option::Option<T>) -> Self
     where T: std::convert::Into<crate::model::policy_alternative_name_server_config_target_name_server::ForwardingPath>
-    {
+{
         self.forwarding_path = v.map(|x| x.into());
         self
     }
@@ -7278,8 +8188,7 @@ pub mod policy_alternative_name_server_config_target_name_server {
         Private,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [ForwardingPath::value] or
-        /// [ForwardingPath::name].
+        /// Applications can examine the value using [ForwardingPath::name].
         UnknownValue(forwarding_path::UnknownValue),
     }
 
@@ -7292,22 +8201,7 @@ pub mod policy_alternative_name_server_config_target_name_server {
     }
 
     impl ForwardingPath {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::Default => std::option::Option::Some(0),
-                Self::Private => std::option::Option::Some(1),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::Default => std::option::Option::Some("default"),
@@ -7317,28 +8211,9 @@ pub mod policy_alternative_name_server_config_target_name_server {
         }
     }
 
-    impl std::default::Default for ForwardingPath {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for ForwardingPath {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for ForwardingPath {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::Default,
-                1 => Self::Private,
-                _ => Self::UnknownValue(forwarding_path::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -7373,7 +8248,7 @@ pub mod policy_alternative_name_server_config_target_name_server {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<ForwardingPath>::new(
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<ForwardingPath>::new(
                 "..PolicyAlternativeNameServerConfigTargetNameServer.forwardingPath",
             ))
         }
@@ -7849,6 +8724,12 @@ pub struct Quota {
 
     /// Maximum allowed number of networks per response policy.
     pub networks_per_response_policy: std::option::Option<i32>,
+
+    /// Maximum allowed number of outbound endpoints per managed zone.
+    pub outbound_endpoints_per_managed_zone: std::option::Option<i32>,
+
+    /// Maximum allowed number of outbound endpoints per policy.
+    pub outbound_endpoints_per_policy: std::option::Option<i32>,
 
     /// Maximum allowed number of consumer peering zones per target network owned by this producer project
     pub peering_zones_per_target_network: std::option::Option<i32>,
@@ -8338,6 +9219,74 @@ impl Quota {
         T: std::convert::Into<i32>,
     {
         self.networks_per_response_policy = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [outbound_endpoints_per_managed_zone][crate::model::Quota::outbound_endpoints_per_managed_zone].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::Quota;
+    /// let x = Quota::new().set_outbound_endpoints_per_managed_zone(42);
+    /// ```
+    pub fn set_outbound_endpoints_per_managed_zone<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<i32>,
+    {
+        self.outbound_endpoints_per_managed_zone = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [outbound_endpoints_per_managed_zone][crate::model::Quota::outbound_endpoints_per_managed_zone].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::Quota;
+    /// let x = Quota::new().set_or_clear_outbound_endpoints_per_managed_zone(Some(42));
+    /// let x = Quota::new().set_or_clear_outbound_endpoints_per_managed_zone(None::<i32>);
+    /// ```
+    pub fn set_or_clear_outbound_endpoints_per_managed_zone<T>(
+        mut self,
+        v: std::option::Option<T>,
+    ) -> Self
+    where
+        T: std::convert::Into<i32>,
+    {
+        self.outbound_endpoints_per_managed_zone = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [outbound_endpoints_per_policy][crate::model::Quota::outbound_endpoints_per_policy].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::Quota;
+    /// let x = Quota::new().set_outbound_endpoints_per_policy(42);
+    /// ```
+    pub fn set_outbound_endpoints_per_policy<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<i32>,
+    {
+        self.outbound_endpoints_per_policy = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [outbound_endpoints_per_policy][crate::model::Quota::outbound_endpoints_per_policy].
+    ///
+    /// # Example
+    /// ```ignore,no_run
+    /// # use google_cloud_dns_v1::model::Quota;
+    /// let x = Quota::new().set_or_clear_outbound_endpoints_per_policy(Some(42));
+    /// let x = Quota::new().set_or_clear_outbound_endpoints_per_policy(None::<i32>);
+    /// ```
+    pub fn set_or_clear_outbound_endpoints_per_policy<T>(
+        mut self,
+        v: std::option::Option<T>,
+    ) -> Self
+    where
+        T: std::convert::Into<i32>,
+    {
+        self.outbound_endpoints_per_policy = v.map(|x| x.into());
         self
     }
 
@@ -9602,8 +10551,7 @@ pub mod rr_set_routing_policy_load_balancer_target {
         Udp,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [IpProtocol::value] or
-        /// [IpProtocol::name].
+        /// Applications can examine the value using [IpProtocol::name].
         UnknownValue(ip_protocol::UnknownValue),
     }
 
@@ -9616,23 +10564,7 @@ pub mod rr_set_routing_policy_load_balancer_target {
     }
 
     impl IpProtocol {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::Undefined => std::option::Option::Some(0),
-                Self::Tcp => std::option::Option::Some(1),
-                Self::Udp => std::option::Option::Some(2),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::Undefined => std::option::Option::Some("undefined"),
@@ -9643,29 +10575,9 @@ pub mod rr_set_routing_policy_load_balancer_target {
         }
     }
 
-    impl std::default::Default for IpProtocol {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for IpProtocol {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for IpProtocol {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::Undefined,
-                1 => Self::Tcp,
-                2 => Self::Udp,
-                _ => Self::UnknownValue(ip_protocol::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -9702,7 +10614,7 @@ pub mod rr_set_routing_policy_load_balancer_target {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<IpProtocol>::new(
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<IpProtocol>::new(
                 "..RRSetRoutingPolicyLoadBalancerTarget.ipProtocol",
             ))
         }
@@ -9736,8 +10648,7 @@ pub mod rr_set_routing_policy_load_balancer_target {
         RegionalL7Ilb,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [LoadBalancerType::value] or
-        /// [LoadBalancerType::name].
+        /// Applications can examine the value using [LoadBalancerType::name].
         UnknownValue(load_balancer_type::UnknownValue),
     }
 
@@ -9750,24 +10661,7 @@ pub mod rr_set_routing_policy_load_balancer_target {
     }
 
     impl LoadBalancerType {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::None => std::option::Option::Some(0),
-                Self::GlobalL7Ilb => std::option::Option::Some(1),
-                Self::RegionalL4Ilb => std::option::Option::Some(2),
-                Self::RegionalL7Ilb => std::option::Option::Some(3),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::None => std::option::Option::Some("none"),
@@ -9779,30 +10673,9 @@ pub mod rr_set_routing_policy_load_balancer_target {
         }
     }
 
-    impl std::default::Default for LoadBalancerType {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for LoadBalancerType {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for LoadBalancerType {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::None,
-                1 => Self::GlobalL7Ilb,
-                2 => Self::RegionalL4Ilb,
-                3 => Self::RegionalL7Ilb,
-                _ => Self::UnknownValue(load_balancer_type::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -9841,7 +10714,7 @@ pub mod rr_set_routing_policy_load_balancer_target {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<LoadBalancerType>::new(
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<LoadBalancerType>::new(
                 "..RRSetRoutingPolicyLoadBalancerTarget.loadBalancerType",
             ))
         }
@@ -11465,8 +12338,7 @@ pub mod response_policy_rule {
         BypassResponsePolicy,
         /// If set, the enum was initialized with an unknown value.
         ///
-        /// Applications can examine the value using [Behavior::value] or
-        /// [Behavior::name].
+        /// Applications can examine the value using [Behavior::name].
         UnknownValue(behavior::UnknownValue),
     }
 
@@ -11479,22 +12351,7 @@ pub mod response_policy_rule {
     }
 
     impl Behavior {
-        /// Gets the enum value.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the string representation of enums.
-        pub fn value(&self) -> std::option::Option<i32> {
-            match self {
-                Self::BehaviorUnspecified => std::option::Option::Some(0),
-                Self::BypassResponsePolicy => std::option::Option::Some(1),
-                Self::UnknownValue(u) => u.0.value(),
-            }
-        }
-
         /// Gets the enum value as a string.
-        ///
-        /// Returns `None` if the enum contains an unknown value deserialized from
-        /// the integer representation of enums.
         pub fn name(&self) -> std::option::Option<&str> {
             match self {
                 Self::BehaviorUnspecified => std::option::Option::Some("behaviorUnspecified"),
@@ -11504,28 +12361,9 @@ pub mod response_policy_rule {
         }
     }
 
-    impl std::default::Default for Behavior {
-        fn default() -> Self {
-            use std::convert::From;
-            Self::from(0)
-        }
-    }
-
     impl std::fmt::Display for Behavior {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-            wkt::internal::display_enum(f, self.name(), self.value())
-        }
-    }
-
-    impl std::convert::From<i32> for Behavior {
-        fn from(value: i32) -> Self {
-            match value {
-                0 => Self::BehaviorUnspecified,
-                1 => Self::BypassResponsePolicy,
-                _ => Self::UnknownValue(behavior::UnknownValue(
-                    wkt::internal::UnknownEnumValue::Integer(value),
-                )),
-            }
+            wkt::internal::display_enum(f, self.name(), std::option::Option::None)
         }
     }
 
@@ -11560,7 +12398,7 @@ pub mod response_policy_rule {
         where
             D: serde::Deserializer<'de>,
         {
-            deserializer.deserialize_any(wkt::internal::EnumVisitor::<Behavior>::new(
+            deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<Behavior>::new(
                 "..ResponsePolicyRule.behavior",
             ))
         }
@@ -12360,8 +13198,7 @@ pub mod changes {
             ChangeSequence,
             /// If set, the enum was initialized with an unknown value.
             ///
-            /// Applications can examine the value using [SortBy::value] or
-            /// [SortBy::name].
+            /// Applications can examine the value using [SortBy::name].
             UnknownValue(sort_by::UnknownValue),
         }
 
@@ -12374,21 +13211,7 @@ pub mod changes {
         }
 
         impl SortBy {
-            /// Gets the enum value.
-            ///
-            /// Returns `None` if the enum contains an unknown value deserialized from
-            /// the string representation of enums.
-            pub fn value(&self) -> std::option::Option<i32> {
-                match self {
-                    Self::ChangeSequence => std::option::Option::Some(0),
-                    Self::UnknownValue(u) => u.0.value(),
-                }
-            }
-
             /// Gets the enum value as a string.
-            ///
-            /// Returns `None` if the enum contains an unknown value deserialized from
-            /// the integer representation of enums.
             pub fn name(&self) -> std::option::Option<&str> {
                 match self {
                     Self::ChangeSequence => std::option::Option::Some("changeSequence"),
@@ -12397,30 +13220,12 @@ pub mod changes {
             }
         }
 
-        impl std::default::Default for SortBy {
-            fn default() -> Self {
-                use std::convert::From;
-                Self::from(0)
-            }
-        }
-
         impl std::fmt::Display for SortBy {
             fn fmt(
                 &self,
                 f: &mut std::fmt::Formatter<'_>,
             ) -> std::result::Result<(), std::fmt::Error> {
-                wkt::internal::display_enum(f, self.name(), self.value())
-            }
-        }
-
-        impl std::convert::From<i32> for SortBy {
-            fn from(value: i32) -> Self {
-                match value {
-                    0 => Self::ChangeSequence,
-                    _ => Self::UnknownValue(sort_by::UnknownValue(
-                        wkt::internal::UnknownEnumValue::Integer(value),
-                    )),
-                }
+                wkt::internal::display_enum(f, self.name(), std::option::Option::None)
             }
         }
 
@@ -12453,7 +13258,7 @@ pub mod changes {
             where
                 D: serde::Deserializer<'de>,
             {
-                deserializer.deserialize_any(wkt::internal::EnumVisitor::<SortBy>::new(
+                deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<SortBy>::new(
                     "..changes.listRequest.sortBy",
                 ))
             }
@@ -12746,6 +13551,206 @@ pub mod dns_keys {
     }
 }
 
+/// Synthetic messages for the [locations][.locations] service
+pub mod locations {
+    #[allow(unused_imports)]
+    use super::*;
+
+    /// Synthetic request message for the [get()][.locations.get] method.
+    #[derive(Clone, Default, PartialEq)]
+    #[non_exhaustive]
+    pub struct GetRequest {
+        /// Resource name for the location.
+        pub name: std::string::String,
+
+        pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+    }
+
+    impl GetRequest {
+        /// Creates a new default instance.
+        pub fn new() -> Self {
+            std::default::Default::default()
+        }
+
+        /// Sets the value of [name][crate::model::locations::GetRequest::name].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::locations::GetRequest;
+        /// let x = GetRequest::new().set_name("example");
+        /// ```
+        pub fn set_name<T: std::convert::Into<std::string::String>>(mut self, v: T) -> Self {
+            self.name = v.into();
+            self
+        }
+    }
+
+    /// Synthetic request message for the [list()][.locations.list] method.
+    #[derive(Clone, Default, PartialEq)]
+    #[non_exhaustive]
+    pub struct ListRequest {
+        /// Optional. Do not use this field unless explicitly documented otherwise. This is primarily for internal usage.
+        pub extra_location_types: std::option::Option<std::string::String>,
+
+        /// A filter to narrow down results to a preferred subset. The filtering language accepts strings like `"displayName=tokyo"`, and is documented in more detail in [AIP-160](https://google.aip.dev/160).
+        pub filter: std::option::Option<std::string::String>,
+
+        /// The resource that owns the locations collection, if applicable.
+        pub name: std::string::String,
+
+        /// The maximum number of results to return. If not set, the service selects a default.
+        pub page_size: std::option::Option<i32>,
+
+        /// A page token received from the `next_page_token` field in the response. Send that page token to receive the subsequent page.
+        pub page_token: std::option::Option<std::string::String>,
+
+        pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+    }
+
+    impl ListRequest {
+        /// Creates a new default instance.
+        pub fn new() -> Self {
+            std::default::Default::default()
+        }
+
+        /// Sets the value of [extra_location_types][crate::model::locations::ListRequest::extra_location_types].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::locations::ListRequest;
+        /// let x = ListRequest::new().set_extra_location_types("example");
+        /// ```
+        pub fn set_extra_location_types<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.extra_location_types = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [extra_location_types][crate::model::locations::ListRequest::extra_location_types].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::locations::ListRequest;
+        /// let x = ListRequest::new().set_or_clear_extra_location_types(Some("example"));
+        /// let x = ListRequest::new().set_or_clear_extra_location_types(None::<String>);
+        /// ```
+        pub fn set_or_clear_extra_location_types<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.extra_location_types = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [filter][crate::model::locations::ListRequest::filter].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::locations::ListRequest;
+        /// let x = ListRequest::new().set_filter("example");
+        /// ```
+        pub fn set_filter<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.filter = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [filter][crate::model::locations::ListRequest::filter].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::locations::ListRequest;
+        /// let x = ListRequest::new().set_or_clear_filter(Some("example"));
+        /// let x = ListRequest::new().set_or_clear_filter(None::<String>);
+        /// ```
+        pub fn set_or_clear_filter<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.filter = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [name][crate::model::locations::ListRequest::name].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::locations::ListRequest;
+        /// let x = ListRequest::new().set_name("example");
+        /// ```
+        pub fn set_name<T: std::convert::Into<std::string::String>>(mut self, v: T) -> Self {
+            self.name = v.into();
+            self
+        }
+
+        /// Sets the value of [page_size][crate::model::locations::ListRequest::page_size].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::locations::ListRequest;
+        /// let x = ListRequest::new().set_page_size(42);
+        /// ```
+        pub fn set_page_size<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<i32>,
+        {
+            self.page_size = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [page_size][crate::model::locations::ListRequest::page_size].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::locations::ListRequest;
+        /// let x = ListRequest::new().set_or_clear_page_size(Some(42));
+        /// let x = ListRequest::new().set_or_clear_page_size(None::<i32>);
+        /// ```
+        pub fn set_or_clear_page_size<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<i32>,
+        {
+            self.page_size = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [page_token][crate::model::locations::ListRequest::page_token].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::locations::ListRequest;
+        /// let x = ListRequest::new().set_page_token("example");
+        /// ```
+        pub fn set_page_token<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.page_token = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [page_token][crate::model::locations::ListRequest::page_token].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::locations::ListRequest;
+        /// let x = ListRequest::new().set_or_clear_page_token(Some("example"));
+        /// let x = ListRequest::new().set_or_clear_page_token(None::<String>);
+        /// ```
+        pub fn set_or_clear_page_token<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.page_token = v.map(|x| x.into());
+            self
+        }
+    }
+}
+
 /// Synthetic messages for the [managedZoneOperations][.managedZoneOperations] service
 pub mod managed_zone_operations {
     #[allow(unused_imports)]
@@ -13028,8 +14033,7 @@ pub mod managed_zone_operations {
             Id,
             /// If set, the enum was initialized with an unknown value.
             ///
-            /// Applications can examine the value using [SortBy::value] or
-            /// [SortBy::name].
+            /// Applications can examine the value using [SortBy::name].
             UnknownValue(sort_by::UnknownValue),
         }
 
@@ -13042,22 +14046,7 @@ pub mod managed_zone_operations {
         }
 
         impl SortBy {
-            /// Gets the enum value.
-            ///
-            /// Returns `None` if the enum contains an unknown value deserialized from
-            /// the string representation of enums.
-            pub fn value(&self) -> std::option::Option<i32> {
-                match self {
-                    Self::StartTime => std::option::Option::Some(0),
-                    Self::Id => std::option::Option::Some(1),
-                    Self::UnknownValue(u) => u.0.value(),
-                }
-            }
-
             /// Gets the enum value as a string.
-            ///
-            /// Returns `None` if the enum contains an unknown value deserialized from
-            /// the integer representation of enums.
             pub fn name(&self) -> std::option::Option<&str> {
                 match self {
                     Self::StartTime => std::option::Option::Some("startTime"),
@@ -13067,31 +14056,12 @@ pub mod managed_zone_operations {
             }
         }
 
-        impl std::default::Default for SortBy {
-            fn default() -> Self {
-                use std::convert::From;
-                Self::from(0)
-            }
-        }
-
         impl std::fmt::Display for SortBy {
             fn fmt(
                 &self,
                 f: &mut std::fmt::Formatter<'_>,
             ) -> std::result::Result<(), std::fmt::Error> {
-                wkt::internal::display_enum(f, self.name(), self.value())
-            }
-        }
-
-        impl std::convert::From<i32> for SortBy {
-            fn from(value: i32) -> Self {
-                match value {
-                    0 => Self::StartTime,
-                    1 => Self::Id,
-                    _ => Self::UnknownValue(sort_by::UnknownValue(
-                        wkt::internal::UnknownEnumValue::Integer(value),
-                    )),
-                }
+                wkt::internal::display_enum(f, self.name(), std::option::Option::None)
             }
         }
 
@@ -13126,7 +14096,7 @@ pub mod managed_zone_operations {
             where
                 D: serde::Deserializer<'de>,
             {
-                deserializer.deserialize_any(wkt::internal::EnumVisitor::<SortBy>::new(
+                deserializer.deserialize_str(wkt::internal::StringEnumVisitor::<SortBy>::new(
                     "..managedZoneOperations.listRequest.sortBy",
                 ))
             }
@@ -13954,6 +14924,897 @@ pub mod managed_zones {
         pub fn set_or_clear_body<T>(mut self, v: std::option::Option<T>) -> Self
         where
             T: std::convert::Into<crate::model::ManagedZone>,
+        {
+            self.body = v.map(|x| x.into());
+            self
+        }
+    }
+}
+
+/// Synthetic messages for the [operations][.operations] service
+pub mod operations {
+    #[allow(unused_imports)]
+    use super::*;
+
+    /// Synthetic request message for the [cancel()][.operations.cancel] method.
+    #[derive(Clone, Default, PartialEq)]
+    #[non_exhaustive]
+    pub struct CancelRequest {
+        /// The name of the operation resource to be cancelled.
+        pub name: std::string::String,
+
+        pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+    }
+
+    impl CancelRequest {
+        /// Creates a new default instance.
+        pub fn new() -> Self {
+            std::default::Default::default()
+        }
+
+        /// Sets the value of [name][crate::model::operations::CancelRequest::name].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::operations::CancelRequest;
+        /// let x = CancelRequest::new().set_name("example");
+        /// ```
+        pub fn set_name<T: std::convert::Into<std::string::String>>(mut self, v: T) -> Self {
+            self.name = v.into();
+            self
+        }
+    }
+
+    /// Synthetic request message for the [delete()][.operations.delete] method.
+    #[derive(Clone, Default, PartialEq)]
+    #[non_exhaustive]
+    pub struct DeleteRequest {
+        /// The name of the operation resource to be deleted.
+        pub name: std::string::String,
+
+        pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+    }
+
+    impl DeleteRequest {
+        /// Creates a new default instance.
+        pub fn new() -> Self {
+            std::default::Default::default()
+        }
+
+        /// Sets the value of [name][crate::model::operations::DeleteRequest::name].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::operations::DeleteRequest;
+        /// let x = DeleteRequest::new().set_name("example");
+        /// ```
+        pub fn set_name<T: std::convert::Into<std::string::String>>(mut self, v: T) -> Self {
+            self.name = v.into();
+            self
+        }
+    }
+
+    /// Synthetic request message for the [get()][.operations.get] method.
+    #[derive(Clone, Default, PartialEq)]
+    #[non_exhaustive]
+    pub struct GetRequest {
+        /// The name of the operation resource.
+        pub name: std::string::String,
+
+        pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+    }
+
+    impl GetRequest {
+        /// Creates a new default instance.
+        pub fn new() -> Self {
+            std::default::Default::default()
+        }
+
+        /// Sets the value of [name][crate::model::operations::GetRequest::name].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::operations::GetRequest;
+        /// let x = GetRequest::new().set_name("example");
+        /// ```
+        pub fn set_name<T: std::convert::Into<std::string::String>>(mut self, v: T) -> Self {
+            self.name = v.into();
+            self
+        }
+    }
+
+    /// Synthetic request message for the [list()][.operations.list] method.
+    #[derive(Clone, Default, PartialEq)]
+    #[non_exhaustive]
+    pub struct ListRequest {
+        /// The standard list filter.
+        pub filter: std::option::Option<std::string::String>,
+
+        /// The name of the operation's parent resource.
+        pub name: std::string::String,
+
+        /// The standard list page size.
+        pub page_size: std::option::Option<i32>,
+
+        /// The standard list page token.
+        pub page_token: std::option::Option<std::string::String>,
+
+        /// When set to `true`, operations that are reachable are returned as normal, and those that are unreachable are returned in the ListOperationsResponse.unreachable field. This can only be `true` when reading across collections. For example, when `parent` is set to `"projects/example/locations/-"`. This field is not supported by default and will result in an `UNIMPLEMENTED` error if set unless explicitly documented otherwise in service or product specific documentation.
+        pub return_partial_success: std::option::Option<bool>,
+
+        pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+    }
+
+    impl ListRequest {
+        /// Creates a new default instance.
+        pub fn new() -> Self {
+            std::default::Default::default()
+        }
+
+        /// Sets the value of [filter][crate::model::operations::ListRequest::filter].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::operations::ListRequest;
+        /// let x = ListRequest::new().set_filter("example");
+        /// ```
+        pub fn set_filter<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.filter = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [filter][crate::model::operations::ListRequest::filter].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::operations::ListRequest;
+        /// let x = ListRequest::new().set_or_clear_filter(Some("example"));
+        /// let x = ListRequest::new().set_or_clear_filter(None::<String>);
+        /// ```
+        pub fn set_or_clear_filter<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.filter = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [name][crate::model::operations::ListRequest::name].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::operations::ListRequest;
+        /// let x = ListRequest::new().set_name("example");
+        /// ```
+        pub fn set_name<T: std::convert::Into<std::string::String>>(mut self, v: T) -> Self {
+            self.name = v.into();
+            self
+        }
+
+        /// Sets the value of [page_size][crate::model::operations::ListRequest::page_size].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::operations::ListRequest;
+        /// let x = ListRequest::new().set_page_size(42);
+        /// ```
+        pub fn set_page_size<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<i32>,
+        {
+            self.page_size = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [page_size][crate::model::operations::ListRequest::page_size].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::operations::ListRequest;
+        /// let x = ListRequest::new().set_or_clear_page_size(Some(42));
+        /// let x = ListRequest::new().set_or_clear_page_size(None::<i32>);
+        /// ```
+        pub fn set_or_clear_page_size<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<i32>,
+        {
+            self.page_size = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [page_token][crate::model::operations::ListRequest::page_token].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::operations::ListRequest;
+        /// let x = ListRequest::new().set_page_token("example");
+        /// ```
+        pub fn set_page_token<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.page_token = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [page_token][crate::model::operations::ListRequest::page_token].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::operations::ListRequest;
+        /// let x = ListRequest::new().set_or_clear_page_token(Some("example"));
+        /// let x = ListRequest::new().set_or_clear_page_token(None::<String>);
+        /// ```
+        pub fn set_or_clear_page_token<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.page_token = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [return_partial_success][crate::model::operations::ListRequest::return_partial_success].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::operations::ListRequest;
+        /// let x = ListRequest::new().set_return_partial_success(true);
+        /// ```
+        pub fn set_return_partial_success<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.return_partial_success = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [return_partial_success][crate::model::operations::ListRequest::return_partial_success].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::operations::ListRequest;
+        /// let x = ListRequest::new().set_or_clear_return_partial_success(Some(false));
+        /// let x = ListRequest::new().set_or_clear_return_partial_success(None::<bool>);
+        /// ```
+        pub fn set_or_clear_return_partial_success<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<bool>,
+        {
+            self.return_partial_success = v.map(|x| x.into());
+            self
+        }
+    }
+}
+
+/// Synthetic messages for the [outboundEndpoints][.outboundEndpoints] service
+pub mod outbound_endpoints {
+    #[allow(unused_imports)]
+    use super::*;
+
+    /// Synthetic request message for the [create()][.outboundEndpoints.create] method.
+    #[derive(Clone, Default, PartialEq)]
+    #[non_exhaustive]
+    pub struct CreateRequest {
+        /// For mutating operation requests only. An optional identifier specified by the client. Must be unique for operation resources in the Operations collection.
+        pub client_operation_id: std::option::Option<std::string::String>,
+
+        /// Required. The ID to use for the OutboundEndpoint, which will become the final component of the OutboundEndpoint's resource name.
+        pub outbound_endpoint_id: std::option::Option<std::string::String>,
+
+        /// Required. The parent project and location where this OutboundEndpoint will be created. Format: projects/{project}/locations/{location}
+        pub parent: std::string::String,
+
+        /// Optional. An optional request ID to identify requests.
+        pub request_id: std::option::Option<std::string::String>,
+
+        /// Synthetic request body field for the [create()][.outboundEndpoints.create] method.
+        pub body: std::option::Option<crate::model::OutboundEndpoint>,
+
+        pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+    }
+
+    impl CreateRequest {
+        /// Creates a new default instance.
+        pub fn new() -> Self {
+            std::default::Default::default()
+        }
+
+        /// Sets the value of [client_operation_id][crate::model::outbound_endpoints::CreateRequest::client_operation_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::CreateRequest;
+        /// let x = CreateRequest::new().set_client_operation_id("example");
+        /// ```
+        pub fn set_client_operation_id<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.client_operation_id = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [client_operation_id][crate::model::outbound_endpoints::CreateRequest::client_operation_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::CreateRequest;
+        /// let x = CreateRequest::new().set_or_clear_client_operation_id(Some("example"));
+        /// let x = CreateRequest::new().set_or_clear_client_operation_id(None::<String>);
+        /// ```
+        pub fn set_or_clear_client_operation_id<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.client_operation_id = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [outbound_endpoint_id][crate::model::outbound_endpoints::CreateRequest::outbound_endpoint_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::CreateRequest;
+        /// let x = CreateRequest::new().set_outbound_endpoint_id("example");
+        /// ```
+        pub fn set_outbound_endpoint_id<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.outbound_endpoint_id = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [outbound_endpoint_id][crate::model::outbound_endpoints::CreateRequest::outbound_endpoint_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::CreateRequest;
+        /// let x = CreateRequest::new().set_or_clear_outbound_endpoint_id(Some("example"));
+        /// let x = CreateRequest::new().set_or_clear_outbound_endpoint_id(None::<String>);
+        /// ```
+        pub fn set_or_clear_outbound_endpoint_id<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.outbound_endpoint_id = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [parent][crate::model::outbound_endpoints::CreateRequest::parent].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::CreateRequest;
+        /// let x = CreateRequest::new().set_parent("example");
+        /// ```
+        pub fn set_parent<T: std::convert::Into<std::string::String>>(mut self, v: T) -> Self {
+            self.parent = v.into();
+            self
+        }
+
+        /// Sets the value of [request_id][crate::model::outbound_endpoints::CreateRequest::request_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::CreateRequest;
+        /// let x = CreateRequest::new().set_request_id("example");
+        /// ```
+        pub fn set_request_id<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.request_id = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [request_id][crate::model::outbound_endpoints::CreateRequest::request_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::CreateRequest;
+        /// let x = CreateRequest::new().set_or_clear_request_id(Some("example"));
+        /// let x = CreateRequest::new().set_or_clear_request_id(None::<String>);
+        /// ```
+        pub fn set_or_clear_request_id<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.request_id = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [body][crate::model::outbound_endpoints::CreateRequest::body].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::CreateRequest;
+        /// use google_cloud_dns_v1::model::OutboundEndpoint;
+        /// let x = CreateRequest::new().set_body(OutboundEndpoint::default()/* use setters */);
+        /// ```
+        pub fn set_body<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<crate::model::OutboundEndpoint>,
+        {
+            self.body = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [body][crate::model::outbound_endpoints::CreateRequest::body].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::CreateRequest;
+        /// use google_cloud_dns_v1::model::OutboundEndpoint;
+        /// let x = CreateRequest::new().set_or_clear_body(Some(OutboundEndpoint::default()/* use setters */));
+        /// let x = CreateRequest::new().set_or_clear_body(None::<OutboundEndpoint>);
+        /// ```
+        pub fn set_or_clear_body<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<crate::model::OutboundEndpoint>,
+        {
+            self.body = v.map(|x| x.into());
+            self
+        }
+    }
+
+    /// Synthetic request message for the [delete()][.outboundEndpoints.delete] method.
+    #[derive(Clone, Default, PartialEq)]
+    #[non_exhaustive]
+    pub struct DeleteRequest {
+        /// For mutating operation requests only. An optional identifier specified by the client. Must be unique for operation resources in the Operations collection.
+        pub client_operation_id: std::option::Option<std::string::String>,
+
+        /// Required. The name of the OutboundEndpoint to delete. Format: projects/{project}/locations/{location}/outboundEndpoints/{outboundEndpoint}
+        pub name: std::string::String,
+
+        /// Optional. An optional request ID to identify requests.
+        pub request_id: std::option::Option<std::string::String>,
+
+        pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+    }
+
+    impl DeleteRequest {
+        /// Creates a new default instance.
+        pub fn new() -> Self {
+            std::default::Default::default()
+        }
+
+        /// Sets the value of [client_operation_id][crate::model::outbound_endpoints::DeleteRequest::client_operation_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::DeleteRequest;
+        /// let x = DeleteRequest::new().set_client_operation_id("example");
+        /// ```
+        pub fn set_client_operation_id<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.client_operation_id = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [client_operation_id][crate::model::outbound_endpoints::DeleteRequest::client_operation_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::DeleteRequest;
+        /// let x = DeleteRequest::new().set_or_clear_client_operation_id(Some("example"));
+        /// let x = DeleteRequest::new().set_or_clear_client_operation_id(None::<String>);
+        /// ```
+        pub fn set_or_clear_client_operation_id<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.client_operation_id = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [name][crate::model::outbound_endpoints::DeleteRequest::name].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::DeleteRequest;
+        /// let x = DeleteRequest::new().set_name("example");
+        /// ```
+        pub fn set_name<T: std::convert::Into<std::string::String>>(mut self, v: T) -> Self {
+            self.name = v.into();
+            self
+        }
+
+        /// Sets the value of [request_id][crate::model::outbound_endpoints::DeleteRequest::request_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::DeleteRequest;
+        /// let x = DeleteRequest::new().set_request_id("example");
+        /// ```
+        pub fn set_request_id<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.request_id = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [request_id][crate::model::outbound_endpoints::DeleteRequest::request_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::DeleteRequest;
+        /// let x = DeleteRequest::new().set_or_clear_request_id(Some("example"));
+        /// let x = DeleteRequest::new().set_or_clear_request_id(None::<String>);
+        /// ```
+        pub fn set_or_clear_request_id<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.request_id = v.map(|x| x.into());
+            self
+        }
+    }
+
+    /// Synthetic request message for the [get()][.outboundEndpoints.get] method.
+    #[derive(Clone, Default, PartialEq)]
+    #[non_exhaustive]
+    pub struct GetRequest {
+        /// For mutating operation requests only. An optional identifier specified by the client. Must be unique for operation resources in the Operations collection.
+        pub client_operation_id: std::option::Option<std::string::String>,
+
+        /// Required. The name of the OutboundEndpoint to retrieve. Format: projects/{project}/locations/{location}/outboundEndpoints/{outboundEndpoint}
+        pub name: std::string::String,
+
+        pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+    }
+
+    impl GetRequest {
+        /// Creates a new default instance.
+        pub fn new() -> Self {
+            std::default::Default::default()
+        }
+
+        /// Sets the value of [client_operation_id][crate::model::outbound_endpoints::GetRequest::client_operation_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::GetRequest;
+        /// let x = GetRequest::new().set_client_operation_id("example");
+        /// ```
+        pub fn set_client_operation_id<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.client_operation_id = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [client_operation_id][crate::model::outbound_endpoints::GetRequest::client_operation_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::GetRequest;
+        /// let x = GetRequest::new().set_or_clear_client_operation_id(Some("example"));
+        /// let x = GetRequest::new().set_or_clear_client_operation_id(None::<String>);
+        /// ```
+        pub fn set_or_clear_client_operation_id<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.client_operation_id = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [name][crate::model::outbound_endpoints::GetRequest::name].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::GetRequest;
+        /// let x = GetRequest::new().set_name("example");
+        /// ```
+        pub fn set_name<T: std::convert::Into<std::string::String>>(mut self, v: T) -> Self {
+            self.name = v.into();
+            self
+        }
+    }
+
+    /// Synthetic request message for the [list()][.outboundEndpoints.list] method.
+    #[derive(Clone, Default, PartialEq)]
+    #[non_exhaustive]
+    pub struct ListRequest {
+        #[allow(missing_docs)]
+        pub client_operation_id: std::option::Option<std::string::String>,
+
+        /// Optional. The maximum number of results to return.
+        pub page_size: std::option::Option<i32>,
+
+        /// Optional. A page token received from a previous List call.
+        pub page_token: std::option::Option<std::string::String>,
+
+        /// Required. The parent project and location from which to list resources. Format: projects/{project}/locations/{location}
+        pub parent: std::string::String,
+
+        pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+    }
+
+    impl ListRequest {
+        /// Creates a new default instance.
+        pub fn new() -> Self {
+            std::default::Default::default()
+        }
+
+        /// Sets the value of [client_operation_id][crate::model::outbound_endpoints::ListRequest::client_operation_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::ListRequest;
+        /// let x = ListRequest::new().set_client_operation_id("example");
+        /// ```
+        pub fn set_client_operation_id<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.client_operation_id = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [client_operation_id][crate::model::outbound_endpoints::ListRequest::client_operation_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::ListRequest;
+        /// let x = ListRequest::new().set_or_clear_client_operation_id(Some("example"));
+        /// let x = ListRequest::new().set_or_clear_client_operation_id(None::<String>);
+        /// ```
+        pub fn set_or_clear_client_operation_id<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.client_operation_id = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [page_size][crate::model::outbound_endpoints::ListRequest::page_size].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::ListRequest;
+        /// let x = ListRequest::new().set_page_size(42);
+        /// ```
+        pub fn set_page_size<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<i32>,
+        {
+            self.page_size = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [page_size][crate::model::outbound_endpoints::ListRequest::page_size].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::ListRequest;
+        /// let x = ListRequest::new().set_or_clear_page_size(Some(42));
+        /// let x = ListRequest::new().set_or_clear_page_size(None::<i32>);
+        /// ```
+        pub fn set_or_clear_page_size<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<i32>,
+        {
+            self.page_size = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [page_token][crate::model::outbound_endpoints::ListRequest::page_token].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::ListRequest;
+        /// let x = ListRequest::new().set_page_token("example");
+        /// ```
+        pub fn set_page_token<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.page_token = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [page_token][crate::model::outbound_endpoints::ListRequest::page_token].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::ListRequest;
+        /// let x = ListRequest::new().set_or_clear_page_token(Some("example"));
+        /// let x = ListRequest::new().set_or_clear_page_token(None::<String>);
+        /// ```
+        pub fn set_or_clear_page_token<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.page_token = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [parent][crate::model::outbound_endpoints::ListRequest::parent].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::ListRequest;
+        /// let x = ListRequest::new().set_parent("example");
+        /// ```
+        pub fn set_parent<T: std::convert::Into<std::string::String>>(mut self, v: T) -> Self {
+            self.parent = v.into();
+            self
+        }
+    }
+
+    /// Synthetic request message for the [patch()][.outboundEndpoints.patch] method.
+    #[derive(Clone, Default, PartialEq)]
+    #[non_exhaustive]
+    pub struct PatchRequest {
+        /// For mutating operation requests only. An optional identifier specified by the client. Must be unique for operation resources in the Operations collection.
+        pub client_operation_id: std::option::Option<std::string::String>,
+
+        /// Identifier. The resource name of the OutboundEndpoint. Format: `projects/{project}/locations/{location}/outboundEndpoints/{outboundEndpoint}`
+        pub name: std::string::String,
+
+        /// Optional. An optional request ID to identify requests.
+        pub request_id: std::option::Option<std::string::String>,
+
+        /// Required. The list of fields to be updated.
+        pub update_mask: std::option::Option<wkt::FieldMask>,
+
+        /// Synthetic request body field for the [patch()][.outboundEndpoints.patch] method.
+        pub body: std::option::Option<crate::model::OutboundEndpoint>,
+
+        pub(crate) _unknown_fields: serde_json::Map<std::string::String, serde_json::Value>,
+    }
+
+    impl PatchRequest {
+        /// Creates a new default instance.
+        pub fn new() -> Self {
+            std::default::Default::default()
+        }
+
+        /// Sets the value of [client_operation_id][crate::model::outbound_endpoints::PatchRequest::client_operation_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::PatchRequest;
+        /// let x = PatchRequest::new().set_client_operation_id("example");
+        /// ```
+        pub fn set_client_operation_id<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.client_operation_id = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [client_operation_id][crate::model::outbound_endpoints::PatchRequest::client_operation_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::PatchRequest;
+        /// let x = PatchRequest::new().set_or_clear_client_operation_id(Some("example"));
+        /// let x = PatchRequest::new().set_or_clear_client_operation_id(None::<String>);
+        /// ```
+        pub fn set_or_clear_client_operation_id<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.client_operation_id = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [name][crate::model::outbound_endpoints::PatchRequest::name].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::PatchRequest;
+        /// let x = PatchRequest::new().set_name("example");
+        /// ```
+        pub fn set_name<T: std::convert::Into<std::string::String>>(mut self, v: T) -> Self {
+            self.name = v.into();
+            self
+        }
+
+        /// Sets the value of [request_id][crate::model::outbound_endpoints::PatchRequest::request_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::PatchRequest;
+        /// let x = PatchRequest::new().set_request_id("example");
+        /// ```
+        pub fn set_request_id<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.request_id = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [request_id][crate::model::outbound_endpoints::PatchRequest::request_id].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::PatchRequest;
+        /// let x = PatchRequest::new().set_or_clear_request_id(Some("example"));
+        /// let x = PatchRequest::new().set_or_clear_request_id(None::<String>);
+        /// ```
+        pub fn set_or_clear_request_id<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<std::string::String>,
+        {
+            self.request_id = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [update_mask][crate::model::outbound_endpoints::PatchRequest::update_mask].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::PatchRequest;
+        /// use wkt::FieldMask;
+        /// let x = PatchRequest::new().set_update_mask(FieldMask::default()/* use setters */);
+        /// ```
+        pub fn set_update_mask<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<wkt::FieldMask>,
+        {
+            self.update_mask = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [update_mask][crate::model::outbound_endpoints::PatchRequest::update_mask].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::PatchRequest;
+        /// use wkt::FieldMask;
+        /// let x = PatchRequest::new().set_or_clear_update_mask(Some(FieldMask::default()/* use setters */));
+        /// let x = PatchRequest::new().set_or_clear_update_mask(None::<FieldMask>);
+        /// ```
+        pub fn set_or_clear_update_mask<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<wkt::FieldMask>,
+        {
+            self.update_mask = v.map(|x| x.into());
+            self
+        }
+
+        /// Sets the value of [body][crate::model::outbound_endpoints::PatchRequest::body].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::PatchRequest;
+        /// use google_cloud_dns_v1::model::OutboundEndpoint;
+        /// let x = PatchRequest::new().set_body(OutboundEndpoint::default()/* use setters */);
+        /// ```
+        pub fn set_body<T>(mut self, v: T) -> Self
+        where
+            T: std::convert::Into<crate::model::OutboundEndpoint>,
+        {
+            self.body = std::option::Option::Some(v.into());
+            self
+        }
+
+        /// Sets or clears the value of [body][crate::model::outbound_endpoints::PatchRequest::body].
+        ///
+        /// # Example
+        /// ```ignore,no_run
+        /// # use google_cloud_dns_v1::model::outbound_endpoints::PatchRequest;
+        /// use google_cloud_dns_v1::model::OutboundEndpoint;
+        /// let x = PatchRequest::new().set_or_clear_body(Some(OutboundEndpoint::default()/* use setters */));
+        /// let x = PatchRequest::new().set_or_clear_body(None::<OutboundEndpoint>);
+        /// ```
+        pub fn set_or_clear_body<T>(mut self, v: std::option::Option<T>) -> Self
+        where
+            T: std::convert::Into<crate::model::OutboundEndpoint>,
         {
             self.body = v.map(|x| x.into());
             self

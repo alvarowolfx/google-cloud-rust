@@ -18,11 +18,15 @@ use crate::client::{
 use crate::test_proxy::{InterceptionResult, PassThroughProxy};
 use futures::future::BoxFuture;
 use google_cloud_spanner::client::{DatabaseClient, Spanner};
+use google_cloud_spanner::key;
 use google_cloud_spanner::model::execute_sql_request::{QueryMode, QueryOptions};
 use google_cloud_spanner::model::result_set_stats::RowCount;
+use google_cloud_spanner::mutation::Mutation;
+use google_cloud_spanner::read::ReadRequest;
 use google_cloud_spanner::result::Row;
 use google_cloud_spanner::statement::Statement;
 use google_cloud_spanner::transaction::BeginTransactionOption;
+use google_cloud_spanner::types;
 use google_cloud_spanner::value::{Kind, TypeCode};
 use google_cloud_test_utils::resource_names::LowercaseAlphanumeric;
 use std::sync::Arc;
@@ -153,7 +157,7 @@ pub async fn query_with_parameters(db_client: &DatabaseClient) -> anyhow::Result
     }
 
     assert_eq!(rows.len(), 1);
-    assert_eq!(rows[0].raw_values()[0].as_string(), "Bob");
+    assert_eq!(rows[0].raw_values()[0].as_str(), Some("Bob"));
 
     Ok(())
 }
@@ -166,7 +170,7 @@ pub async fn result_set_metadata(db_client: &DatabaseClient) -> anyhow::Result<(
     let mut rs = rot.execute_query(Statement::builder(sql).build()).await?;
 
     assert!(rs.next().await.transpose()?.is_some());
-    let metadata = rs.metadata().expect("metadata available");
+    let metadata = rs.metadata();
     assert_eq!(
         metadata.column_names(),
         &["num".to_string(), "name".to_string()]
@@ -184,7 +188,7 @@ pub async fn result_set_metadata(db_client: &DatabaseClient) -> anyhow::Result<(
         .await?;
 
     assert!(rs_zero_rows.next().await.transpose()?.is_none());
-    let metadata_zero_rows = rs_zero_rows.metadata().expect("metadata available");
+    let metadata_zero_rows = rs_zero_rows.metadata();
     assert_eq!(
         metadata_zero_rows.column_names(),
         &["num".to_string(), "name".to_string()]
@@ -196,8 +200,12 @@ pub async fn result_set_metadata(db_client: &DatabaseClient) -> anyhow::Result<(
         .execute_query(Statement::builder(sql_dup).build())
         .await?;
 
-    let row_dup = rs_dup.next().await.transpose()?.unwrap();
-    let metadata_dup = rs_dup.metadata().expect("metadata available");
+    let row_dup = rs_dup
+        .next()
+        .await
+        .transpose()?
+        .expect("row should be present");
+    let metadata_dup = rs_dup.metadata();
     assert_eq!(
         metadata_dup.column_names(),
         &["dup".to_string(), "dup".to_string()]
@@ -226,7 +234,7 @@ async fn test_multi_use_read_only_transaction(
     // Start a multi-use read-only transaction.
     let tx = db_client
         .read_only_transaction()
-        .with_begin_transaction_option(begin_transaction_option)
+        .set_begin_transaction_option(begin_transaction_option)
         .build()
         .await?;
 
@@ -247,8 +255,8 @@ async fn test_multi_use_read_only_transaction(
     // The read timestamp is now always available.
     assert!(tx.read_timestamp().is_some());
 
-    let val1 = row1.raw_values()[0].as_string();
-    assert_eq!(val1, "1");
+    let val1 = row1.raw_values()[0].as_str();
+    assert_eq!(val1, Some("1"));
     let next1 = rs1.next().await.transpose()?;
     assert!(next1.is_none(), "{next1:?}");
 
@@ -257,8 +265,8 @@ async fn test_multi_use_read_only_transaction(
         .execute_query(Statement::builder("SELECT 2 AS col_int").build())
         .await?;
     let row2 = rs2.next().await.transpose()?.expect("should yield a row");
-    let val2 = row2.raw_values()[0].as_string();
-    assert_eq!(val2, "2");
+    let val2 = row2.raw_values()[0].as_str();
+    assert_eq!(val2, Some("2"));
     let next2 = rs2.next().await.transpose()?;
     assert!(next2.is_none(), "{next2:?}");
 
@@ -270,7 +278,7 @@ pub async fn multi_use_read_only_transaction_interleaved(
 ) -> anyhow::Result<()> {
     let tx = db_client
         .read_only_transaction()
-        .with_begin_transaction_option(BeginTransactionOption::InlineBegin)
+        .set_begin_transaction_option(BeginTransactionOption::InlineBegin)
         .build()
         .await?;
 
@@ -286,10 +294,10 @@ pub async fn multi_use_read_only_transaction_interleaved(
         .await?;
 
     let row2 = rs2.next().await.transpose()?.expect("should yield a row");
-    assert_eq!(row2.raw_values()[0].as_string(), "2");
+    assert_eq!(row2.raw_values()[0].as_str(), Some("2"));
 
     let row1 = rs1.next().await.transpose()?.expect("should yield a row");
-    assert_eq!(row1.raw_values()[0].as_string(), "1");
+    assert_eq!(row1.raw_values()[0].as_str(), Some("1"));
 
     Ok(())
 }
@@ -300,7 +308,7 @@ pub async fn multi_use_read_only_transaction_invalid_query_fallback(
     // Start a multi-use read-only transaction with implicit begin.
     let tx = db_client
         .read_only_transaction()
-        .with_begin_transaction_option(BeginTransactionOption::InlineBegin)
+        .set_begin_transaction_option(BeginTransactionOption::InlineBegin)
         .build()
         .await?;
 
@@ -338,8 +346,8 @@ pub async fn multi_use_read_only_transaction_invalid_query_fallback(
         .await?;
 
     let row2 = rs2.next().await.transpose()?.expect("should yield a row");
-    let val2 = row2.raw_values()[0].as_string();
-    assert_eq!(val2, "2");
+    let val2 = row2.raw_values()[0].as_str();
+    assert_eq!(val2, Some("2"));
 
     Ok(())
 }
@@ -356,115 +364,154 @@ fn verify_null_row(row: &Row) {
 fn verify_row_1(row: &Row) {
     let raw_values = row.raw_values();
     assert_eq!(raw_values.len(), 20, "Row should have exactly 20 columns");
-    assert_eq!(raw_values[0].as_string(), "1"); // INT64 is encoded as string
-    assert_eq!(raw_values[1].as_f64(), 1.0);
-    assert_eq!(raw_values[2].as_f64(), 1.0); // FLOAT32 is encoded as f64
-    assert!(raw_values[3].as_bool());
-    assert_eq!(raw_values[4].as_string(), "One");
-    assert_eq!(raw_values[5].as_string(), "T25l"); // Base64 'One'
-    assert_eq!(raw_values[6].as_string(), "{\"value\":1}"); // JSON
-    assert_eq!(raw_values[7].as_string(), "1"); // NUMERIC is encoded as string
-    assert_eq!(raw_values[8].as_string(), "2026-03-09");
-    assert_eq!(raw_values[9].as_string(), "2026-03-09T16:20:00Z");
+    assert_eq!(raw_values[0].as_str(), Some("1")); // INT64 is encoded as string
+    assert_eq!(raw_values[1].as_f64(), Some(1.0));
+    assert_eq!(raw_values[2].as_f64(), Some(1.0)); // FLOAT32 is encoded as f64
+    assert_eq!(raw_values[3].as_bool(), Some(true));
+    assert_eq!(raw_values[4].as_str(), Some("One"));
+    assert_eq!(raw_values[5].as_str(), Some("T25l")); // Base64 'One'
+    assert_eq!(raw_values[6].as_str(), Some("{\"value\":1}")); // JSON
+    assert_eq!(raw_values[7].as_str(), Some("1")); // NUMERIC is encoded as string
+    assert_eq!(raw_values[8].as_str(), Some("2026-03-09"));
+    assert_eq!(raw_values[9].as_str(), Some("2026-03-09T16:20:00Z"));
 
-    assert_eq!(raw_values[10].as_list().len(), 1);
-    assert_eq!(raw_values[10].as_list().get(0).unwrap().as_string(), "1");
-    assert_eq!(raw_values[11].as_list().len(), 1);
-    assert_eq!(raw_values[11].as_list().get(0).unwrap().as_f64(), 1.0);
-    assert_eq!(raw_values[12].as_list().len(), 1);
-    assert_eq!(raw_values[12].as_list().get(0).unwrap().as_f64(), 1.0);
-    assert_eq!(raw_values[13].as_list().len(), 1);
-    assert!(raw_values[13].as_list().get(0).unwrap().as_bool());
-    assert_eq!(raw_values[14].as_list().len(), 1);
-    assert_eq!(raw_values[14].as_list().get(0).unwrap().as_string(), "One");
-    assert_eq!(raw_values[15].as_list().len(), 1);
-    assert_eq!(raw_values[15].as_list().get(0).unwrap().as_string(), "T25l");
-    assert_eq!(raw_values[16].as_list().len(), 1);
+    let list_int64 = raw_values[10].as_list().expect("list int64 should exist");
+    assert_eq!(list_int64.len(), 1);
+    assert_eq!(list_int64.get(0).expect("elem 0").as_str(), Some("1"));
+
+    let list_float64 = raw_values[11].as_list().expect("list float64 should exist");
+    assert_eq!(list_float64.len(), 1);
+    assert_eq!(list_float64.get(0).expect("elem 0").as_f64(), Some(1.0));
+
+    let list_float32 = raw_values[12].as_list().expect("list float32 should exist");
+    assert_eq!(list_float32.len(), 1);
+    assert_eq!(list_float32.get(0).expect("elem 0").as_f64(), Some(1.0));
+
+    let list_bool = raw_values[13].as_list().expect("list bool should exist");
+    assert_eq!(list_bool.len(), 1);
+    assert_eq!(list_bool.get(0).expect("elem 0").as_bool(), Some(true));
+
+    let list_string = raw_values[14].as_list().expect("list string should exist");
+    assert_eq!(list_string.len(), 1);
+    assert_eq!(list_string.get(0).expect("elem 0").as_str(), Some("One"));
+
+    let list_bytes = raw_values[15].as_list().expect("list bytes should exist");
+    assert_eq!(list_bytes.len(), 1);
+    assert_eq!(list_bytes.get(0).expect("elem 0").as_str(), Some("T25l"));
+
+    let list_json = raw_values[16].as_list().expect("list json should exist");
+    assert_eq!(list_json.len(), 1);
     assert_eq!(
-        raw_values[16].as_list().get(0).unwrap().as_string(),
-        "{\"value\":1}"
+        list_json.get(0).expect("elem 0").as_str(),
+        Some("{\"value\":1}")
     );
-    assert_eq!(raw_values[17].as_list().len(), 1);
-    assert_eq!(raw_values[17].as_list().get(0).unwrap().as_string(), "1");
-    assert_eq!(raw_values[18].as_list().len(), 1);
+
+    let list_numeric = raw_values[17].as_list().expect("list numeric should exist");
+    assert_eq!(list_numeric.len(), 1);
+    assert_eq!(list_numeric.get(0).expect("elem 0").as_str(), Some("1"));
+
+    let list_date = raw_values[18].as_list().expect("list date should exist");
+    assert_eq!(list_date.len(), 1);
     assert_eq!(
-        raw_values[18].as_list().get(0).unwrap().as_string(),
-        "2026-03-09"
+        list_date.get(0).expect("elem 0").as_str(),
+        Some("2026-03-09")
     );
-    assert_eq!(raw_values[19].as_list().len(), 1);
+
+    let list_timestamp = raw_values[19]
+        .as_list()
+        .expect("list timestamp should exist");
+    assert_eq!(list_timestamp.len(), 1);
     assert_eq!(
-        raw_values[19].as_list().get(0).unwrap().as_string(),
-        "2026-03-09T16:20:00Z"
+        list_timestamp.get(0).expect("elem 0").as_str(),
+        Some("2026-03-09T16:20:00Z")
     );
 }
 
 fn verify_row_2(row: &Row) {
     let raw_values = row.raw_values();
     assert_eq!(raw_values.len(), 20, "Row should have exactly 20 columns");
-    assert_eq!(raw_values[0].as_string(), "2");
-    assert_eq!(raw_values[1].as_f64(), 2.0);
-    assert_eq!(raw_values[2].as_f64(), 2.0);
-    assert!(!raw_values[3].as_bool());
-    assert_eq!(raw_values[4].as_string(), "Two");
-    assert_eq!(raw_values[5].as_string(), "VHdv"); // Base64 'Two'
-    assert_eq!(raw_values[6].as_string(), "{\"value\":2}");
-    assert_eq!(raw_values[7].as_string(), "2");
-    assert_eq!(raw_values[8].as_string(), "2026-03-10");
-    assert_eq!(raw_values[9].as_string(), "2026-03-10T16:20:00Z");
+    assert_eq!(raw_values[0].as_str(), Some("2"));
+    assert_eq!(raw_values[1].as_f64(), Some(2.0));
+    assert_eq!(raw_values[2].as_f64(), Some(2.0));
+    assert_eq!(raw_values[3].as_bool(), Some(false));
+    assert_eq!(raw_values[4].as_str(), Some("Two"));
+    assert_eq!(raw_values[5].as_str(), Some("VHdv")); // Base64 'Two'
+    assert_eq!(raw_values[6].as_str(), Some("{\"value\":2}"));
+    assert_eq!(raw_values[7].as_str(), Some("2"));
+    assert_eq!(raw_values[8].as_str(), Some("2026-03-10"));
+    assert_eq!(raw_values[9].as_str(), Some("2026-03-10T16:20:00Z"));
 
-    assert_eq!(raw_values[10].as_list().len(), 2);
-    assert_eq!(raw_values[10].as_list().get(0).unwrap().as_string(), "2");
-    assert_eq!(raw_values[10].as_list().get(1).unwrap().as_string(), "3");
-    assert_eq!(raw_values[11].as_list().len(), 2);
-    assert_eq!(raw_values[11].as_list().get(0).unwrap().as_f64(), 2.0);
-    assert_eq!(raw_values[11].as_list().get(1).unwrap().as_f64(), 3.0);
-    assert_eq!(raw_values[12].as_list().len(), 2);
-    assert_eq!(raw_values[12].as_list().get(0).unwrap().as_f64(), 2.0);
-    assert_eq!(raw_values[12].as_list().get(1).unwrap().as_f64(), 3.0);
-    assert_eq!(raw_values[13].as_list().len(), 2);
-    assert!(!raw_values[13].as_list().get(0).unwrap().as_bool());
-    assert!(raw_values[13].as_list().get(1).unwrap().as_bool());
-    assert_eq!(raw_values[14].as_list().len(), 2);
-    assert_eq!(raw_values[14].as_list().get(0).unwrap().as_string(), "Two");
+    let list_int64 = raw_values[10].as_list().expect("list int64 should exist");
+    assert_eq!(list_int64.len(), 2);
+    assert_eq!(list_int64.get(0).expect("elem 0").as_str(), Some("2"));
+    assert_eq!(list_int64.get(1).expect("elem 1").as_str(), Some("3"));
+
+    let list_float64 = raw_values[11].as_list().expect("list float64 should exist");
+    assert_eq!(list_float64.len(), 2);
+    assert_eq!(list_float64.get(0).expect("elem 0").as_f64(), Some(2.0));
+    assert_eq!(list_float64.get(1).expect("elem 1").as_f64(), Some(3.0));
+
+    let list_float32 = raw_values[12].as_list().expect("list float32 should exist");
+    assert_eq!(list_float32.len(), 2);
+    assert_eq!(list_float32.get(0).expect("elem 0").as_f64(), Some(2.0));
+    assert_eq!(list_float32.get(1).expect("elem 1").as_f64(), Some(3.0));
+
+    let list_bool = raw_values[13].as_list().expect("list bool should exist");
+    assert_eq!(list_bool.len(), 2);
+    assert_eq!(list_bool.get(0).expect("elem 0").as_bool(), Some(false));
+    assert_eq!(list_bool.get(1).expect("elem 1").as_bool(), Some(true));
+
+    let list_string = raw_values[14].as_list().expect("list string should exist");
+    assert_eq!(list_string.len(), 2);
+    assert_eq!(list_string.get(0).expect("elem 0").as_str(), Some("Two"));
+    assert_eq!(list_string.get(1).expect("elem 1").as_str(), Some("Three"));
+
+    let list_bytes = raw_values[15].as_list().expect("list bytes should exist");
+    assert_eq!(list_bytes.len(), 2);
+    assert_eq!(list_bytes.get(0).expect("elem 0").as_str(), Some("VHdv"));
     assert_eq!(
-        raw_values[14].as_list().get(1).unwrap().as_string(),
-        "Three"
+        list_bytes.get(1).expect("elem 1").as_str(),
+        Some("VGhyZWU=")
     );
-    assert_eq!(raw_values[15].as_list().len(), 2);
-    assert_eq!(raw_values[15].as_list().get(0).unwrap().as_string(), "VHdv");
+
+    let list_json = raw_values[16].as_list().expect("list json should exist");
+    assert_eq!(list_json.len(), 2);
     assert_eq!(
-        raw_values[15].as_list().get(1).unwrap().as_string(),
-        "VGhyZWU="
-    );
-    assert_eq!(raw_values[16].as_list().len(), 2);
-    assert_eq!(
-        raw_values[16].as_list().get(0).unwrap().as_string(),
-        "{\"value\":2}"
-    );
-    assert_eq!(
-        raw_values[16].as_list().get(1).unwrap().as_string(),
-        "{\"value\":3}"
-    );
-    assert_eq!(raw_values[17].as_list().len(), 2);
-    assert_eq!(raw_values[17].as_list().get(0).unwrap().as_string(), "2");
-    assert_eq!(raw_values[17].as_list().get(1).unwrap().as_string(), "3");
-    assert_eq!(raw_values[18].as_list().len(), 2);
-    assert_eq!(
-        raw_values[18].as_list().get(0).unwrap().as_string(),
-        "2026-03-10"
+        list_json.get(0).expect("elem 0").as_str(),
+        Some("{\"value\":2}")
     );
     assert_eq!(
-        raw_values[18].as_list().get(1).unwrap().as_string(),
-        "2026-03-11"
+        list_json.get(1).expect("elem 1").as_str(),
+        Some("{\"value\":3}")
     );
-    assert_eq!(raw_values[19].as_list().len(), 2);
+
+    let list_numeric = raw_values[17].as_list().expect("list numeric should exist");
+    assert_eq!(list_numeric.len(), 2);
+    assert_eq!(list_numeric.get(0).expect("elem 0").as_str(), Some("2"));
+    assert_eq!(list_numeric.get(1).expect("elem 1").as_str(), Some("3"));
+
+    let list_date = raw_values[18].as_list().expect("list date should exist");
+    assert_eq!(list_date.len(), 2);
     assert_eq!(
-        raw_values[19].as_list().get(0).unwrap().as_string(),
-        "2026-03-10T16:20:00Z"
+        list_date.get(0).expect("elem 0").as_str(),
+        Some("2026-03-10")
     );
     assert_eq!(
-        raw_values[19].as_list().get(1).unwrap().as_string(),
-        "2026-03-11T16:20:00Z"
+        list_date.get(1).expect("elem 1").as_str(),
+        Some("2026-03-11")
+    );
+
+    let list_timestamp = raw_values[19]
+        .as_list()
+        .expect("list timestamp should exist");
+    assert_eq!(list_timestamp.len(), 2);
+    assert_eq!(
+        list_timestamp.get(0).expect("elem 0").as_str(),
+        Some("2026-03-10T16:20:00Z")
+    );
+    assert_eq!(
+        list_timestamp.get(1).expect("elem 1").as_str(),
+        Some("2026-03-11T16:20:00Z")
     );
 }
 
@@ -556,7 +603,7 @@ pub async fn inline_begin_fallback(_db_client: &DatabaseClient) -> anyhow::Resul
 
     let tx = proxy_db_client
         .read_only_transaction()
-        .with_begin_transaction_option(BeginTransactionOption::InlineBegin)
+        .set_begin_transaction_option(BeginTransactionOption::InlineBegin)
         .build()
         .await?;
 
@@ -634,7 +681,7 @@ pub async fn query_plan(db_client: &DatabaseClient) -> anyhow::Result<()> {
     let next = rs.next().await.transpose()?;
     assert!(next.is_none());
 
-    let metadata = rs.metadata().expect("metadata available");
+    let metadata = rs.metadata();
     assert_eq!(metadata.column_names(), &["num".to_string()]);
 
     let stats = rs.stats();
@@ -678,7 +725,7 @@ pub async fn query_profile(db_client: &DatabaseClient) -> anyhow::Result<()> {
 }
 
 pub async fn dml_plan(db_client: &DatabaseClient) -> anyhow::Result<()> {
-    let runner = db_client.read_write_transaction().build().await?;
+    let runner = db_client.read_write_transaction().build();
 
     runner
         .run(async |tx| {
@@ -691,7 +738,7 @@ pub async fn dml_plan(db_client: &DatabaseClient) -> anyhow::Result<()> {
             let next = rs.next().await.transpose()?;
             assert!(next.is_none());
 
-            let metadata = rs.metadata().expect("metadata should be available");
+            let metadata = rs.metadata();
             assert!(metadata.column_names().is_empty());
 
             // Verify undeclared parameters
@@ -813,6 +860,295 @@ pub async fn query_json_value(db_client: &DatabaseClient) -> anyhow::Result<()> 
     // Deserialize col_null (NULL) as serde_json::Value (should be null)
     let col_null: serde_json::Value = row.try_get("col_null")?;
     assert_eq!(col_null, serde_json::Value::Null);
+
+    Ok(())
+}
+
+pub async fn query_non_finite_float_parameters(db_client: &DatabaseClient) -> anyhow::Result<()> {
+    let transaction = db_client.single_use().build();
+
+    let sql = r#"
+    SELECT
+      @f64_nan AS col_f64_nan,
+      @f64_inf AS col_f64_inf,
+      @f64_neginf AS col_f64_neginf,
+      @f32_nan AS col_f32_nan,
+      @f32_inf AS col_f32_inf,
+      @f32_neginf AS col_f32_neginf,
+      @f64_arr AS col_f64_arr,
+      @f32_arr AS col_f32_arr
+    "#;
+
+    let statement = Statement::builder(sql)
+        .add_typed_param("f64_nan", f64::NAN, types::float64())
+        .add_typed_param("f64_inf", f64::INFINITY, types::float64())
+        .add_typed_param("f64_neginf", f64::NEG_INFINITY, types::float64())
+        .add_typed_param("f32_nan", f32::NAN, types::float32())
+        .add_typed_param("f32_inf", f32::INFINITY, types::float32())
+        .add_typed_param("f32_neginf", f32::NEG_INFINITY, types::float32())
+        .add_typed_param(
+            "f64_arr",
+            vec![f64::NAN, f64::INFINITY, f64::NEG_INFINITY],
+            types::array(types::float64()),
+        )
+        .add_typed_param(
+            "f32_arr",
+            vec![f32::NAN, f32::INFINITY, f32::NEG_INFINITY],
+            types::array(types::float32()),
+        )
+        .build();
+
+    let mut result_set = transaction.execute_query(statement).await?;
+
+    let row = result_set
+        .next()
+        .await
+        .transpose()?
+        .ok_or_else(|| anyhow::anyhow!("query should yield a row"))?;
+
+    let f64_nan: f64 = row.try_get("col_f64_nan")?;
+    assert!(f64_nan.is_nan(), "expected NaN for col_f64_nan");
+
+    let f64_inf: f64 = row.try_get("col_f64_inf")?;
+    assert_eq!(f64_inf, f64::INFINITY, "expected Infinity for col_f64_inf");
+
+    let f64_neginf: f64 = row.try_get("col_f64_neginf")?;
+    assert_eq!(
+        f64_neginf,
+        f64::NEG_INFINITY,
+        "expected -Infinity for col_f64_neginf"
+    );
+
+    let f32_nan: f32 = row.try_get("col_f32_nan")?;
+    assert!(f32_nan.is_nan(), "expected NaN for col_f32_nan");
+
+    let f32_inf: f32 = row.try_get("col_f32_inf")?;
+    assert_eq!(f32_inf, f32::INFINITY, "expected Infinity for col_f32_inf");
+
+    let f32_neginf: f32 = row.try_get("col_f32_neginf")?;
+    assert_eq!(
+        f32_neginf,
+        f32::NEG_INFINITY,
+        "expected -Infinity for col_f32_neginf"
+    );
+
+    let f64_array: Vec<f64> = row.try_get("col_f64_arr")?;
+    assert_eq!(f64_array.len(), 3, "expected 3 elements in col_f64_arr");
+    assert!(f64_array[0].is_nan(), "expected NaN for col_f64_arr[0]");
+    assert_eq!(
+        f64_array[1],
+        f64::INFINITY,
+        "expected Infinity for col_f64_arr[1]"
+    );
+    assert_eq!(
+        f64_array[2],
+        f64::NEG_INFINITY,
+        "expected -Infinity for col_f64_arr[2]"
+    );
+
+    let f32_array: Vec<f32> = row.try_get("col_f32_arr")?;
+    assert_eq!(f32_array.len(), 3, "expected 3 elements in col_f32_arr");
+    assert!(f32_array[0].is_nan(), "expected NaN for col_f32_arr[0]");
+    assert_eq!(
+        f32_array[1],
+        f32::INFINITY,
+        "expected Infinity for col_f32_arr[1]"
+    );
+    assert_eq!(
+        f32_array[2],
+        f32::NEG_INFINITY,
+        "expected -Infinity for col_f32_arr[2]"
+    );
+
+    let next_row = result_set.next().await.transpose()?;
+    assert!(next_row.is_none(), "expected only 1 row");
+
+    Ok(())
+}
+
+pub async fn mutation_and_untyped_query_non_finite_floats(
+    db_client: &DatabaseClient,
+) -> anyhow::Result<()> {
+    let row_id = format!("mutation-float-{}", LowercaseAlphanumeric.random_string(10));
+
+    // 1. Insert a row using a Mutation with non-finite floats in both scalar and array columns.
+    let mutation = Mutation::new_insert_builder("AllTypes")
+        .set("Id")
+        .to(&row_id)
+        .set("ColFloat64")
+        .to(f64::NAN)
+        .set("ColFloat32")
+        .to(f32::NAN)
+        .set("ColArrayFloat64")
+        .to(vec![f64::NAN, f64::INFINITY, f64::NEG_INFINITY])
+        .set("ColArrayFloat32")
+        .to(vec![f32::NAN, f32::INFINITY, f32::NEG_INFINITY])
+        .build();
+
+    let write_transaction = db_client.write_only_transaction().build();
+    write_transaction.write(vec![mutation]).await?;
+
+    // 2. Read back using execute_read and verify the non-finite values.
+    let read_request = ReadRequest::builder(
+        "AllTypes",
+        vec![
+            "Id",
+            "ColFloat64",
+            "ColFloat32",
+            "ColArrayFloat64",
+            "ColArrayFloat32",
+        ],
+    )
+    .with_keys(key![row_id.clone()])
+    .build();
+
+    let mut result_set = db_client
+        .single_use()
+        .build()
+        .execute_read(read_request)
+        .await?;
+
+    let row = result_set
+        .next()
+        .await
+        .transpose()?
+        .expect("row should exist after mutation insert");
+
+    let f64_val: f64 = row.try_get("ColFloat64")?;
+    assert!(f64_val.is_nan(), "expected NaN for ColFloat64");
+
+    let f32_val: f32 = row.try_get("ColFloat32")?;
+    assert!(f32_val.is_nan(), "expected NaN for ColFloat32");
+
+    let f64_array: Vec<f64> = row.try_get("ColArrayFloat64")?;
+    assert_eq!(f64_array.len(), 3, "expected 3 elements in ColArrayFloat64");
+    assert!(f64_array[0].is_nan(), "expected NaN for ColArrayFloat64[0]");
+    assert_eq!(
+        f64_array[1],
+        f64::INFINITY,
+        "expected Infinity for ColArrayFloat64[1]"
+    );
+    assert_eq!(
+        f64_array[2],
+        f64::NEG_INFINITY,
+        "expected -Infinity for ColArrayFloat64[2]"
+    );
+
+    let f32_array: Vec<f32> = row.try_get("ColArrayFloat32")?;
+    assert_eq!(f32_array.len(), 3, "expected 3 elements in ColArrayFloat32");
+    assert!(f32_array[0].is_nan(), "expected NaN for ColArrayFloat32[0]");
+    assert_eq!(
+        f32_array[1],
+        f32::INFINITY,
+        "expected Infinity for ColArrayFloat32[1]"
+    );
+    assert_eq!(
+        f32_array[2],
+        f32::NEG_INFINITY,
+        "expected -Infinity for ColArrayFloat32[2]"
+    );
+
+    // 3. Update the row using untyped DML parameters (add_param).
+    let row_id_clone = row_id.clone();
+    let runner = db_client.read_write_transaction().build();
+    runner
+        .run(async |transaction| {
+            let update_statement = Statement::builder(
+                "UPDATE AllTypes SET ColFloat64 = @inf, ColFloat32 = @neginf WHERE Id = @id",
+            )
+            .add_param("inf", f64::INFINITY)
+            .add_param("neginf", f32::NEG_INFINITY)
+            .add_param("id", &row_id_clone)
+            .build();
+            let row_count = transaction.execute_update(update_statement).await?;
+            assert_eq!(row_count, 1, "expected 1 row updated");
+            Ok(())
+        })
+        .await?;
+
+    // 4. Query back using untyped float parameters in the WHERE clause.
+    let query_statement = Statement::builder(
+        "SELECT Id, ColFloat64, ColFloat32 FROM AllTypes WHERE Id = @id AND ColFloat64 = @inf AND ColFloat32 = @neginf",
+    )
+    .add_param("id", &row_id)
+    .add_param("inf", f64::INFINITY)
+    .add_param("neginf", f32::NEG_INFINITY)
+    .build();
+
+    let mut query_result_set = db_client
+        .single_use()
+        .build()
+        .execute_query(query_statement)
+        .await?;
+
+    let query_row = query_result_set
+        .next()
+        .await
+        .transpose()?
+        .expect("row should match untyped float query parameter");
+
+    let updated_f64: f64 = query_row.try_get("ColFloat64")?;
+    assert_eq!(
+        updated_f64,
+        f64::INFINITY,
+        "expected Infinity for ColFloat64 after update"
+    );
+
+    let updated_f32: f32 = query_row.try_get("ColFloat32")?;
+    assert_eq!(
+        updated_f32,
+        f32::NEG_INFINITY,
+        "expected -Infinity for ColFloat32 after update"
+    );
+
+    // 5. Update to NaN using untyped DML parameter.
+    let row_id_clone = row_id.clone();
+    let runner = db_client.read_write_transaction().build();
+    runner
+        .run(async |transaction| {
+            let update_statement = Statement::builder(
+                "UPDATE AllTypes SET ColFloat64 = @nan64, ColFloat32 = @nan32 WHERE Id = @id",
+            )
+            .add_param("nan64", f64::NAN)
+            .add_param("nan32", f32::NAN)
+            .add_param("id", &row_id_clone)
+            .build();
+            let row_count = transaction.execute_update(update_statement).await?;
+            assert_eq!(row_count, 1, "expected 1 row updated with NaN");
+            Ok(())
+        })
+        .await?;
+
+    // 6. Query back using IS_NAN(ColFloat64) and IS_NAN(ColFloat32).
+    let is_nan_statement = Statement::builder(
+        "SELECT Id, ColFloat64, ColFloat32 FROM AllTypes WHERE Id = @id AND IS_NAN(ColFloat64) AND IS_NAN(ColFloat32)",
+    )
+    .add_param("id", &row_id)
+    .build();
+
+    let mut is_nan_result = db_client
+        .single_use()
+        .build()
+        .execute_query(is_nan_statement)
+        .await?;
+
+    let is_nan_row = is_nan_result
+        .next()
+        .await
+        .transpose()?
+        .expect("row should match IS_NAN(ColFloat64) AND IS_NAN(ColFloat32)");
+
+    let is_nan_id: String = is_nan_row.get("Id");
+    assert_eq!(is_nan_id, row_id, "expected matching row ID for IS_NAN");
+    let is_nan_float64: f64 = is_nan_row.try_get("ColFloat64")?;
+    assert!(is_nan_float64.is_nan(), "expected NaN for ColFloat64");
+    let is_nan_float32: f32 = is_nan_row.try_get("ColFloat32")?;
+    assert!(is_nan_float32.is_nan(), "expected NaN for ColFloat32");
+
+    // 7. Cleanup the test row.
+    let delete_mutation = Mutation::delete("AllTypes", key![row_id].into());
+    let cleanup_transaction = db_client.write_only_transaction().build();
+    cleanup_transaction.write(vec![delete_mutation]).await?;
 
     Ok(())
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub use super::arrow::ArrowCell;
+pub(crate) use super::arrow::ArrowCell;
 use crate::error::ConvertError;
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
@@ -1120,5 +1120,23 @@ mod tests {
         let parsed_json = GenericTupleSql::<i64, String>::from_value(json_val)
             .expect("should deserialize generic tuple struct from JSON array");
         assert_eq!(parsed_json, GenericTupleSql(100, None, "world".to_string()));
+    }
+
+    use arrow::array::{ArrayRef, BooleanArray, Float64Array, Int64Array, StringArray};
+    use std::sync::Arc;
+
+    #[test_case(Arc::new(BooleanArray::from(vec![true])) => "Boolean" ; "arrow boolean")]
+    #[test_case(Arc::new(Int64Array::from(vec![42])) => "Int64" ; "arrow int64")]
+    #[test_case(Arc::new(Float64Array::from(vec![3.25])) => "Float64" ; "arrow float64")]
+    #[test_case(Arc::new(StringArray::from(vec!["hello"])) => "Utf8" ; "arrow utf8")]
+    fn test_sql_value_inner_arrow_type_name(arr: ArrayRef) -> String {
+        let val = SqlValueInner::Arrow(ArrowCell::new(arr, 0));
+        let err = ConvertError::type_mismatch("expected_type", &val);
+        assert!(matches!(
+            err,
+            ConvertError::TypeMismatch { ref expected, ref got }
+                if expected == "expected_type" && got == &val.type_name()
+        ));
+        val.type_name()
     }
 }

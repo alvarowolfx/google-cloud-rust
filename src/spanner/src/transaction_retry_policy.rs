@@ -18,14 +18,42 @@ use google_cloud_gax::error::rpc::Code;
 use google_cloud_gax::exponential_backoff::{ExponentialBackoff, ExponentialBackoffBuilder};
 use google_cloud_gax::retry_result::RetryResult;
 use google_cloud_gax::retry_state::RetryState;
+use std::fmt::Debug;
+use std::sync::Arc;
 use std::time::Duration;
+use tokio::time::Instant;
 
 /// Defines a policy for retrying a transaction when it is aborted by Spanner.
+///
+/// # Example
+/// ```
+/// # use google_cloud_spanner::Error;
+/// # use google_cloud_spanner::transaction::{RetryResult, TransactionRetryPolicy};
+/// # use std::time::Duration;
+/// #[derive(Debug)]
+/// struct LimitedRetryPolicy {
+///     max_attempts: u32,
+/// }
+///
+/// impl TransactionRetryPolicy for LimitedRetryPolicy {
+///     fn on_abort(&self, error: Error, attempts: u32, _elapsed: Duration) -> RetryResult {
+///         if attempts < self.max_attempts {
+///             RetryResult::Continue(error)
+///         } else {
+///             RetryResult::Exhausted(error)
+///         }
+///     }
+/// }
+/// ```
 ///
 /// Spanner can abort any read/write transaction due to lock conflicts or other
 /// transient issues. In such cases, the client should retry the complete
 /// transaction.
-pub trait TransactionRetryPolicy: Send + Sync {
+///
+/// By default, transaction runners use [`BasicTransactionRetryPolicy`] with no
+/// attempt count or timeout limits, retrying aborted transactions until completion
+/// or runner timeout.
+pub trait TransactionRetryPolicy: Debug + Send + Sync {
     /// Evaluates whether an aborted transaction should be retried.
     ///
     /// * `error` the `Aborted` error that was raised. Note that this policy
@@ -33,6 +61,18 @@ pub trait TransactionRetryPolicy: Send + Sync {
     /// * `attempts` is the number of attempts already made (1 for the first failure).
     /// * `elapsed` is the total time spent executing the transaction so far.
     fn on_abort(&self, error: Error, attempts: u32, elapsed: Duration) -> RetryResult;
+}
+
+impl<T: ?Sized + TransactionRetryPolicy> TransactionRetryPolicy for Box<T> {
+    fn on_abort(&self, error: Error, attempts: u32, elapsed: Duration) -> RetryResult {
+        (**self).on_abort(error, attempts, elapsed)
+    }
+}
+
+impl<T: ?Sized + TransactionRetryPolicy> TransactionRetryPolicy for Arc<T> {
+    fn on_abort(&self, error: Error, attempts: u32, elapsed: Duration) -> RetryResult {
+        (**self).on_abort(error, attempts, elapsed)
+    }
 }
 
 /// Policy for automatically retrying a transaction when it is aborted based on
@@ -128,6 +168,7 @@ where
                     policy,
                     &backoff,
                     is_emulator,
+                    /* deadline = */ None,
                 )
                 .await?;
             }
@@ -171,6 +212,7 @@ pub(crate) async fn backoff_if_aborted(
     policy: &dyn TransactionRetryPolicy,
     backoff: &ExponentialBackoff,
     is_emulator: bool,
+    deadline: Option<Instant>,
 ) -> crate::Result<()> {
     let should_retry = if is_aborted(&err) {
         true
@@ -189,8 +231,19 @@ pub(crate) async fn backoff_if_aborted(
         RetryResult::Exhausted(err) | RetryResult::Permanent(err) => return Err(err),
     };
 
+    if deadline.is_some_and(|deadline| Instant::now() >= deadline) {
+        return Err(e);
+    }
+
     let sleep_duration = extract_retry_delay(&e)
         .unwrap_or_else(|| backoff.on_failure(&RetryState::new(true).set_attempt_count(attempts)));
+
+    if let Some(deadline) = deadline {
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        if remaining < sleep_duration {
+            return Err(e);
+        }
+    }
 
     tokio::time::sleep(sleep_duration).await;
     Ok(())
@@ -264,14 +317,48 @@ pub(crate) mod tests {
 
     #[test]
     fn auto_traits() {
+        use std::fmt::Debug;
         static_assertions::assert_impl_all!(
             BasicTransactionRetryPolicy: Send,
             Sync,
             Unpin,
             Clone,
-            std::fmt::Debug,
+            Debug,
             Default,
             TransactionRetryPolicy,
+        );
+        static_assertions::assert_impl_all!(
+            Box<dyn TransactionRetryPolicy>: TransactionRetryPolicy,
+            Debug,
+            Send,
+            Sync,
+        );
+        static_assertions::assert_impl_all!(
+            Arc<dyn TransactionRetryPolicy>: TransactionRetryPolicy,
+            Debug,
+            Send,
+            Sync,
+        );
+    }
+
+    #[test]
+    fn box_and_arc_dispatch_on_abort() {
+        let boxed: Box<dyn TransactionRetryPolicy> =
+            Box::new(BasicTransactionRetryPolicy::new().with_max_attempts(2));
+        let error = create_aborted_error(None);
+        let result = boxed.on_abort(error, 1, Duration::from_millis(10));
+        assert!(
+            matches!(result, RetryResult::Continue(_)),
+            "Box<dyn TransactionRetryPolicy> should forward on_abort to inner policy"
+        );
+
+        let arc: Arc<dyn TransactionRetryPolicy> =
+            Arc::new(BasicTransactionRetryPolicy::new().with_max_attempts(2));
+        let error = create_aborted_error(None);
+        let result = arc.on_abort(error, 1, Duration::from_millis(10));
+        assert!(
+            matches!(result, RetryResult::Continue(_)),
+            "Arc<dyn TransactionRetryPolicy> should forward on_abort to inner policy"
         );
     }
 
@@ -478,6 +565,7 @@ pub(crate) mod tests {
 
     #[tokio::test(start_paused = true)]
     async fn retry_aborted_with_custom_policy() {
+        #[derive(Debug)]
         struct CustomPolicy;
         impl TransactionRetryPolicy for CustomPolicy {
             fn on_abort(&self, error: Error, attempts: u32, _elapsed: Duration) -> RetryResult {
@@ -559,5 +647,98 @@ pub(crate) mod tests {
         .await;
         assert_eq!(res.expect("should succeed after retry"), 200);
         assert_eq!(attempts.load(Ordering::SeqCst), 2);
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn backoff_if_aborted_skips_sleep_when_deadline_passed() {
+        let policy = BasicTransactionRetryPolicy::default();
+        let backoff = default_retry_backoff();
+        let deadline = Instant::now() - Duration::from_millis(100);
+        let error = create_aborted_error(Some(Duration::from_millis(500)));
+
+        let start = Instant::now();
+        let result = backoff_if_aborted(
+            error,
+            1,
+            Duration::from_millis(10),
+            &policy,
+            &backoff,
+            /* is_emulator = */ false,
+            Some(deadline),
+        )
+        .await;
+
+        assert!(
+            result.is_err(),
+            "backoff_if_aborted should return Err when deadline has passed"
+        );
+        let elapsed = start.elapsed();
+        assert_eq!(
+            elapsed,
+            Duration::ZERO,
+            "no sleep should occur when deadline has passed"
+        );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn backoff_if_aborted_skips_sleep_when_delay_exceeds_remaining_deadline() {
+        let policy = BasicTransactionRetryPolicy::default();
+        let backoff = default_retry_backoff();
+        let deadline = Instant::now() + Duration::from_millis(100);
+        let error = create_aborted_error(Some(Duration::from_millis(500)));
+
+        let start = Instant::now();
+        let result = backoff_if_aborted(
+            error,
+            1,
+            Duration::from_millis(10),
+            &policy,
+            &backoff,
+            /* is_emulator = */ false,
+            Some(deadline),
+        )
+        .await;
+
+        assert!(
+            result.is_err(),
+            "backoff_if_aborted should return Err when backoff delay exceeds remaining deadline"
+        );
+        let elapsed = start.elapsed();
+        assert_eq!(
+            elapsed,
+            Duration::ZERO,
+            "no sleep should occur when backoff delay exceeds remaining deadline"
+        );
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn backoff_if_aborted_sleeps_when_delay_within_deadline() {
+        let policy = BasicTransactionRetryPolicy::default();
+        let backoff = default_retry_backoff();
+        let deadline = Instant::now() + Duration::from_millis(500);
+        let error = create_aborted_error(Some(Duration::from_millis(100)));
+
+        let start = Instant::now();
+        let result = backoff_if_aborted(
+            error,
+            1,
+            Duration::from_millis(10),
+            &policy,
+            &backoff,
+            /* is_emulator = */ false,
+            Some(deadline),
+        )
+        .await;
+
+        assert!(
+            result.is_ok(),
+            "backoff_if_aborted should succeed when backoff delay is within deadline"
+        );
+        let elapsed = start.elapsed();
+        assert_eq!(
+            elapsed,
+            Duration::from_millis(100),
+            "expected sleep duration to match retry delay"
+        );
     }
 }

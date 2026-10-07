@@ -244,6 +244,7 @@ impl Delete {
 }
 
 /// A builder for constructing `Write` mutations fluently.
+#[derive(Clone, Debug, PartialEq)]
 pub struct WriteBuilder {
     table: String,
     mutation_type: MutationType,
@@ -251,6 +252,7 @@ pub struct WriteBuilder {
     values: Vec<Value>,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum MutationType {
     Insert,
     Update,
@@ -302,6 +304,7 @@ impl WriteBuilder {
 }
 
 /// A binder that associates a column name with a value within a `WriteBuilder`.
+#[derive(Clone, Debug, PartialEq)]
 pub struct ValueBinder {
     builder: WriteBuilder,
     column: String,
@@ -448,15 +451,93 @@ mod tests {
         Ack as ProtoAck, Delete as ProtoDelete, Send as ProtoSend, Write as ProtoWrite,
     };
     use crate::to_value::ToValue;
+    use serde_json::Value as JsonValue;
     use std::slice;
+
+    #[test]
+    fn mutation_non_finite_floats() {
+        let mutation = Mutation::new_insert_builder("TestTable")
+            .set("nan_col")
+            .to(f64::NAN)
+            .set("inf_col")
+            .to(f64::INFINITY)
+            .set("neg_inf_col")
+            .to(f64::NEG_INFINITY)
+            .set("f32_nan_col")
+            .to(f32::NAN)
+            .set("f32_inf_col")
+            .to(f32::INFINITY)
+            .set("f32_neginf_col")
+            .to(f32::NEG_INFINITY)
+            .set("f64_array_col")
+            .to(vec![f64::NAN, f64::INFINITY, f64::NEG_INFINITY])
+            .set("f32_array_col")
+            .to(vec![f32::NAN, f32::INFINITY, f32::NEG_INFINITY])
+            .build();
+
+        let proto_mutation = mutation.build_proto();
+        let proto_write = proto_mutation.insert().expect("expected insert write");
+
+        assert_eq!(proto_write.values.len(), 1, "expected 1 row of values");
+        let row = proto_write.values.first().expect("row should exist");
+        assert_eq!(row.len(), 8, "expected 8 columns");
+        assert_eq!(
+            row.first(),
+            Some(&JsonValue::String("NaN".to_string())),
+            "nan_col must serialize as 'NaN'"
+        );
+        assert_eq!(
+            row.get(1),
+            Some(&JsonValue::String("Infinity".to_string())),
+            "inf_col must serialize as 'Infinity'"
+        );
+        assert_eq!(
+            row.get(2),
+            Some(&JsonValue::String("-Infinity".to_string())),
+            "neg_inf_col must serialize as '-Infinity'"
+        );
+        assert_eq!(
+            row.get(3),
+            Some(&JsonValue::String("NaN".to_string())),
+            "f32_nan_col must serialize as 'NaN'"
+        );
+        assert_eq!(
+            row.get(4),
+            Some(&JsonValue::String("Infinity".to_string())),
+            "f32_inf_col must serialize as 'Infinity'"
+        );
+        assert_eq!(
+            row.get(5),
+            Some(&JsonValue::String("-Infinity".to_string())),
+            "f32_neginf_col must serialize as '-Infinity'"
+        );
+        assert_eq!(
+            row.get(6),
+            Some(&JsonValue::Array(vec![
+                JsonValue::String("NaN".to_string()),
+                JsonValue::String("Infinity".to_string()),
+                JsonValue::String("-Infinity".to_string()),
+            ])),
+            "f64_array_col must serialize elements as strings"
+        );
+        assert_eq!(
+            row.get(7),
+            Some(&JsonValue::Array(vec![
+                JsonValue::String("NaN".to_string()),
+                JsonValue::String("Infinity".to_string()),
+                JsonValue::String("-Infinity".to_string()),
+            ])),
+            "f32_array_col must serialize elements as strings"
+        );
+    }
 
     #[test]
     fn auto_traits() {
         static_assertions::assert_impl_all!(Mutation: Send, Sync, Clone, std::fmt::Debug);
         static_assertions::assert_impl_all!(Write: Send, Sync, Clone, std::fmt::Debug);
         static_assertions::assert_impl_all!(Delete: Send, Sync, Clone, std::fmt::Debug);
-        static_assertions::assert_impl_all!(WriteBuilder: Send, Sync);
-        static_assertions::assert_impl_all!(ValueBinder: Send, Sync);
+        static_assertions::assert_impl_all!(WriteBuilder: Send, Sync, Clone, std::fmt::Debug);
+        static_assertions::assert_impl_all!(ValueBinder: Send, Sync, Clone, std::fmt::Debug);
         static_assertions::assert_impl_all!(MutationGroup: Send, Sync, Clone, std::fmt::Debug);
     }
 
@@ -541,10 +622,10 @@ mod tests {
 
         match mutation.inner {
             InternalMutation::Insert(write) => {
-                assert_eq!(write.values[0].as_string(), "user-123");
-                assert_eq!(write.values[1].as_string(), "42");
-                assert!(write.values[2].as_bool());
-                assert_eq!(write.values[3].as_string(), "admin");
+                assert_eq!(write.values[0].as_str(), Some("user-123"));
+                assert_eq!(write.values[1].as_str(), Some("42"));
+                assert_eq!(write.values[2].as_bool(), Some(true));
+                assert_eq!(write.values[3].as_str(), Some("admin"));
             }
             _ => panic!("Expected Insert mutation"),
         }
@@ -595,8 +676,8 @@ mod tests {
                 assert_eq!(write.table, "Users");
                 assert_eq!(write.columns, vec!["UserId", "UserName"]);
                 assert_eq!(write.values.len(), 2);
-                assert_eq!(write.values[0].as_string(), "1");
-                assert_eq!(write.values[1].as_string(), "Alice");
+                assert_eq!(write.values[0].as_str(), Some("1"));
+                assert_eq!(write.values[1].as_str(), Some("Alice"));
             }
             _ => panic!("Expected Insert mutation"),
         }
@@ -614,7 +695,7 @@ mod tests {
                 assert_eq!(write.table, "Users");
                 assert_eq!(write.columns, vec!["UserId"]);
                 assert_eq!(write.values.len(), 1);
-                assert_eq!(write.values[0].as_string(), "1");
+                assert_eq!(write.values[0].as_str(), Some("1"));
             }
             _ => panic!("Expected Update mutation"),
         }
@@ -632,7 +713,7 @@ mod tests {
                 assert_eq!(write.table, "Users");
                 assert_eq!(write.columns, vec!["UserId"]);
                 assert_eq!(write.values.len(), 1);
-                assert_eq!(write.values[0].as_string(), "1");
+                assert_eq!(write.values[0].as_str(), Some("1"));
             }
             _ => panic!("Expected InsertOrUpdate mutation"),
         }
@@ -650,7 +731,7 @@ mod tests {
                 assert_eq!(write.table, "Users");
                 assert_eq!(write.columns, vec!["UserId"]);
                 assert_eq!(write.values.len(), 1);
-                assert_eq!(write.values[0].as_string(), "1");
+                assert_eq!(write.values[0].as_str(), Some("1"));
             }
             _ => panic!("Expected Replace mutation"),
         }

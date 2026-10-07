@@ -18,8 +18,6 @@
 //! Provides interval lookups for point keys and key ranges under `CoveringSplit`
 //! and `PickRandom` routing modes.
 
-#![allow(dead_code)]
-
 use crate::model::{CacheUpdate, Group, Range, Tablet};
 use bytes::Bytes;
 #[cfg(test)]
@@ -32,7 +30,7 @@ use std::ops::Bound;
 #[cfg(test)]
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 /// Determines how to handle ranges that span multiple splits.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -40,6 +38,7 @@ pub(crate) enum RangeMode {
     /// Consider it a cache miss if the whole range is not in a single split.
     CoveringSplit,
     /// If the range spans multiple splits, pick a random split when possible.
+    #[allow(dead_code)] // Part of multi-split range query routing protocol
     PickRandom,
 }
 
@@ -58,6 +57,7 @@ pub(crate) const MAX_LOCAL_REPLICA_DISTANCE: u32 = 5;
 /// while concurrent in-flight requests safely read their immutable snapshot without locks or data races.
 #[derive(Debug, Clone)]
 pub(crate) struct CachedGroup {
+    #[allow(dead_code)] // Stored from Group proto for group identification
     pub group_uid: u64,
     pub generation: Bytes,
     pub tablets: Vec<Tablet>,
@@ -65,6 +65,7 @@ pub(crate) struct CachedGroup {
     ///
     /// In Spanner metadata protos, a negative `leader_index` (typically `-1`) denotes that no leader is designated
     /// or that leader routing is unknown/unspecified.
+    #[allow(dead_code)] // Paxos leader index from Group proto
     pub leader_index: Option<usize>,
     /// Precomputed index into `tablets` of the local leader (if designated, routable, and distance <= 5).
     pub local_leader_index: Option<usize>,
@@ -86,44 +87,6 @@ impl CachedGroup {
             local_leader_index,
             eligible_replica_indices,
         }
-    }
-
-    /// Returns `true` if this group has a designated leader index within valid bounds.
-    pub(crate) fn has_leader(&self) -> bool {
-        self.leader_index.is_some()
-    }
-
-    /// Returns a reference to the leader tablet if designated, non-skipped, and with a non-empty server address.
-    pub(crate) fn leader(&self) -> Option<&Tablet> {
-        let candidate = &self.tablets[self.leader_index?];
-        if !Self::is_routable(candidate) {
-            return None;
-        }
-        Some(candidate)
-    }
-
-    /// Returns a reference to the leader tablet if designated, routable, and local
-    /// (`distance <= MAX_LOCAL_REPLICA_DISTANCE`).
-    pub(crate) fn local_leader(&self) -> Option<&Tablet> {
-        let index = self.local_leader_index?;
-        Some(&self.tablets[index])
-    }
-
-    /// Returns candidate replica references in the lowest locality tier matching the minimum distance.
-    ///
-    /// If `prefer_leader` is `true` and a valid local leader is present, returns a single-element
-    /// vector containing a reference to that leader.
-    ///
-    /// Otherwise, returns references to the precomputed candidate replicas in the lowest available distance tier.
-    pub(crate) fn eligible_tablets(&self, prefer_leader: bool) -> Vec<&Tablet> {
-        if prefer_leader && let Some(leader) = self.local_leader() {
-            return vec![leader];
-        }
-
-        self.eligible_replica_indices
-            .iter()
-            .map(|&index| &self.tablets[index])
-            .collect()
     }
 
     /// Parses the raw protobuf leader index, returning `None` if negative or out of bounds.
@@ -277,23 +240,32 @@ impl KeyRangeCache {
         }
     }
 
-    /// Enables deterministic pseudorandom selection for golden conformance testing.
-    #[cfg(test)]
-    pub(crate) fn use_deterministic_random(&self) {
-        self.deterministic_random.store(true, Ordering::Relaxed);
+    /// Acquires a read lock on the cache state, recovering from lock poisoning via `into_inner()`.
+    ///
+    /// # Poison Recovery Rationale
+    /// `CacheState` is an in-memory routing optimization table (`ranges` and `groups`). The underlying
+    /// standard library collections (`BTreeMap` and `HashMap`) remain memory-safe and structurally valid
+    /// in Rust even if a previous thread panicked. Individual entries are wrapped in immutable `Arc`s and
+    /// updated atomically at the map level; any partially applied or interrupted update is safely corrected
+    /// by subsequent server `CacheUpdate` messages. Recovering the lock guard via `into_inner()` prevents an
+    /// isolated panic in a single query or worker thread from permanently poisoning the cache and cascading
+    /// into a complete failure of the client.
+    fn read_state(&self) -> RwLockReadGuard<'_, CacheState> {
+        match self.state.read() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        }
     }
 
-    #[cfg(test)]
-    fn deterministic_uniform_random(
-        &self,
-        range_bound: usize,
-        key_seed: &[u8],
-        limit_seed: &[u8],
-        start_key_seed: &[u8],
-    ) -> usize {
-        let combined = [key_seed, limit_seed, start_key_seed].concat();
-        let hash = crc32c(&combined);
-        (hash as usize) % range_bound
+    /// Acquires a write lock on the cache state, recovering from lock poisoning via `into_inner()`.
+    ///
+    /// # Poison Recovery Rationale
+    /// See [`read_state`](Self::read_state).
+    fn write_state(&self) -> RwLockWriteGuard<'_, CacheState> {
+        match self.state.write() {
+            Ok(guard) => guard,
+            Err(poisoned) => poisoned.into_inner(),
+        }
     }
 
     fn uniform_random(
@@ -324,28 +296,10 @@ impl KeyRangeCache {
         self.access_counter.fetch_add(1, Ordering::Relaxed) + 1
     }
 
-    /// Returns `true` if the cache has no stored ranges.
-    pub(crate) fn is_empty(&self) -> bool {
-        self.state
-            .read()
-            .expect("lock cache state for is_empty")
-            .ranges
-            .is_empty()
-    }
-
-    /// Returns the number of cached split ranges.
-    pub(crate) fn len(&self) -> usize {
-        self.state
-            .read()
-            .expect("lock cache state for len")
-            .ranges
-            .len()
-    }
-
     /// Clears all cached ranges and groups.
     pub(crate) fn clear(&self) {
         let old_state = {
-            let mut state = self.state.write().expect("lock cache state for clear");
+            let mut state = self.write_state();
             take(&mut *state)
         };
         drop(old_state);
@@ -353,20 +307,12 @@ impl KeyRangeCache {
 
     /// Returns the cached group for the given group UID, if present.
     pub(crate) fn get_group(&self, group_uid: u64) -> Option<Arc<CachedGroup>> {
-        self.state
-            .read()
-            .expect("lock cache state for get_group")
-            .groups
-            .get(&group_uid)
-            .map(Arc::clone)
+        self.read_state().groups.get(&group_uid).map(Arc::clone)
     }
 
     /// Returns the set of all active tablet server addresses currently tracked across all groups.
     pub(crate) fn active_addresses(&self) -> HashSet<String> {
-        let state = self
-            .state
-            .read()
-            .expect("lock cache state for active_addresses");
+        let state = self.read_state();
         state
             .groups
             .values()
@@ -382,7 +328,7 @@ impl KeyRangeCache {
         if cache_update.group.is_empty() && cache_update.range.is_empty() {
             return;
         }
-        let mut state = self.state.write().expect("lock cache state for add_ranges");
+        let mut state = self.write_state();
 
         for group_in in &cache_update.group {
             match state.groups.entry(group_in.group_uid) {
@@ -402,6 +348,13 @@ impl KeyRangeCache {
     }
 
     fn replace_range_if_newer_locked(&self, state: &mut CacheState, range_in: &Range) {
+        // Ignore inverted or empty key ranges from malformed or corrupted server updates
+        // to prevent BTreeMap::range panics and RwLock poisoning.
+        if !range_in.limit_key.is_empty()
+            && range_in.start_key.as_ref() >= range_in.limit_key.as_ref()
+        {
+            return;
+        }
         let start_key_query = if let Some((_, first_existing)) = state
             .ranges
             .range::<[u8], _>((
@@ -522,11 +475,6 @@ impl KeyRangeCache {
         state.ranges.insert(start_key, new_range);
     }
 
-    /// Finds a cached range covering the specified single routing key using [`RangeMode::CoveringSplit`].
-    pub(crate) fn find_key(&self, key: &[u8]) -> Option<Arc<CachedRange>> {
-        self.find_range(key, &[], RangeMode::CoveringSplit)
-    }
-
     /// Finds a cached range covering the specified key or range.
     ///
     /// Uses zero-allocation slice borrowing (`Bound::Excluded(key)`) to query the B-tree map.
@@ -536,7 +484,7 @@ impl KeyRangeCache {
         limit: &[u8],
         mode: RangeMode,
     ) -> Option<Arc<CachedRange>> {
-        let state = self.state.read().expect("lock cache state for find_range");
+        let state = self.read_state();
         let first_range_opt = state
             .ranges
             .range::<[u8], _>((Bound::Unbounded, Bound::Included(key)))
@@ -639,6 +587,82 @@ impl KeyRangeCache {
         }
 
         None
+    }
+}
+
+#[cfg(test)]
+impl CachedGroup {
+    /// Returns `true` if this group has a designated leader index within valid bounds.
+    pub(crate) fn has_leader(&self) -> bool {
+        self.leader_index.is_some()
+    }
+
+    /// Returns a reference to the leader tablet if designated, non-skipped, and with a non-empty server address.
+    pub(crate) fn leader(&self) -> Option<&Tablet> {
+        let candidate = &self.tablets[self.leader_index?];
+        if !Self::is_routable(candidate) {
+            return None;
+        }
+        Some(candidate)
+    }
+
+    /// Returns a reference to the leader tablet if designated, routable, and local
+    /// (`distance <= MAX_LOCAL_REPLICA_DISTANCE`).
+    pub(crate) fn local_leader(&self) -> Option<&Tablet> {
+        let index = self.local_leader_index?;
+        Some(&self.tablets[index])
+    }
+
+    /// Returns candidate replica references in the lowest locality tier matching the minimum distance.
+    ///
+    /// If `prefer_leader` is `true` and a valid local leader is present, returns a single-element
+    /// vector containing a reference to that leader.
+    ///
+    /// Otherwise, returns references to the precomputed candidate replicas in the lowest available distance tier.
+    pub(crate) fn eligible_tablets(&self, prefer_leader: bool) -> Vec<&Tablet> {
+        if prefer_leader && let Some(leader) = self.local_leader() {
+            return vec![leader];
+        }
+
+        self.eligible_replica_indices
+            .iter()
+            .map(|&index| &self.tablets[index])
+            .collect()
+    }
+}
+
+#[cfg(test)]
+impl KeyRangeCache {
+    /// Enables deterministic pseudorandom selection for golden conformance testing.
+    pub(crate) fn use_deterministic_random(&self) {
+        self.deterministic_random.store(true, Ordering::Relaxed);
+    }
+
+    fn deterministic_uniform_random(
+        &self,
+        range_bound: usize,
+        key_seed: &[u8],
+        limit_seed: &[u8],
+        start_key_seed: &[u8],
+    ) -> usize {
+        let combined = [key_seed, limit_seed, start_key_seed].concat();
+        let hash = crc32c(&combined);
+        (hash as usize) % range_bound
+    }
+
+    /// Returns `true` if the cache has no stored ranges.
+    pub(crate) fn is_empty(&self) -> bool {
+        self.read_state().ranges.is_empty()
+    }
+
+    /// Returns the number of cached split ranges.
+    pub(crate) fn len(&self) -> usize {
+        self.read_state().ranges.len()
+    }
+
+    /// Finds a cached range covering the specified single routing key using [`RangeMode::CoveringSplit`].
+    pub(crate) fn find_key(&self, key: &[u8]) -> Option<Arc<CachedRange>> {
+        self.find_range(key, &[], RangeMode::CoveringSplit)
     }
 
     /// Returns all eligible candidate tablets in the lowest distance tier for the split range.
@@ -750,6 +774,7 @@ mod tests {
         let cache = KeyRangeCache::new();
         assert!(cache.is_empty());
         assert_eq!(cache.len(), 0);
+        assert!(cache.find_key(b"a").is_none());
         assert!(
             cache
                 .find_range(b"a", b"", RangeMode::CoveringSplit)
@@ -850,6 +875,8 @@ mod tests {
             .find_range(b"a", b"", RangeMode::CoveringSplit)
             .expect("start key is inclusive");
         assert_eq!(hit.split_id, 1);
+        let key_hit = cache.find_key(b"a").expect("start key is inclusive");
+        assert_eq!(key_hit.split_id, 1);
     }
 
     #[test]
@@ -2219,6 +2246,159 @@ mod tests {
         assert!(
             cache.active_addresses().is_empty(),
             "cleared cache must have empty active addresses"
+        );
+    }
+
+    #[test]
+    fn inverted_key_range_is_ignored_without_panic_or_poisoning() {
+        let cache = KeyRangeCache::new();
+
+        // Populate the cache with an initial valid range ["a", "m").
+        let initial_update = CacheUpdate {
+            database_id: 1,
+            range: vec![make_range("a", "m", 1, "1")],
+            group: vec![make_group(1, "1", 0)],
+            key_recipes: None,
+            _unknown_fields: Default::default(),
+        };
+        cache.add_ranges(&initial_update);
+        assert_eq!(
+            cache.len(),
+            1,
+            "cache should contain exactly 1 initial range"
+        );
+
+        // Attempt to insert an inverted range ["z", "a") with start_key > limit_key.
+        let inverted_update = CacheUpdate {
+            database_id: 1,
+            range: vec![make_range("z", "a", 2, "2")],
+            group: vec![make_group(2, "2", 0)],
+            key_recipes: None,
+            _unknown_fields: Default::default(),
+        };
+        cache.add_ranges(&inverted_update);
+
+        // Cache state must remain intact and not poisoned.
+        assert_eq!(
+            cache.len(),
+            1,
+            "cache length should remain 1 after ignoring inverted range"
+        );
+        assert!(
+            cache.find_key(b"c").is_some(),
+            "existing valid range should still be accessible after inverted range update"
+        );
+
+        // Attempt to insert an empty range ["k", "k") with start_key == limit_key.
+        let empty_range_update = CacheUpdate {
+            database_id: 1,
+            range: vec![make_range("k", "k", 3, "2")],
+            group: vec![make_group(3, "2", 0)],
+            key_recipes: None,
+            _unknown_fields: Default::default(),
+        };
+        cache.add_ranges(&empty_range_update);
+
+        assert_eq!(
+            cache.len(),
+            1,
+            "cache length should remain 1 after ignoring empty range"
+        );
+        assert!(
+            cache.find_key(b"c").is_some(),
+            "existing valid range should still be accessible after empty range update"
+        );
+    }
+
+    #[test]
+    fn inverted_key_range_on_empty_cache_is_safely_ignored() {
+        let cache = KeyRangeCache::new();
+
+        // An update with an inverted range on an empty cache.
+        let inverted_update = CacheUpdate {
+            database_id: 1,
+            range: vec![make_range("y", "b", 1, "1")],
+            group: vec![make_group(1, "1", 0)],
+            key_recipes: None,
+            _unknown_fields: Default::default(),
+        };
+        cache.add_ranges(&inverted_update);
+
+        assert!(
+            cache.is_empty(),
+            "cache should remain empty after attempting to insert inverted range"
+        );
+        assert_eq!(
+            cache.len(),
+            0,
+            "cache length should be 0 after attempting to insert inverted range"
+        );
+    }
+
+    #[test]
+    fn lock_poisoning_recovery() {
+        use std::panic::{AssertUnwindSafe, catch_unwind};
+
+        let cache = KeyRangeCache::new();
+
+        // Artificially poison the RwLock by panicking while holding the write lock.
+        let catch_result = catch_unwind(AssertUnwindSafe(|| {
+            let _state_guard = cache.state.write().expect("acquire write lock to poison");
+            panic!("artificially poison cache state lock");
+        }));
+        assert!(
+            catch_result.is_err(),
+            "catch_unwind must capture the deliberate panic"
+        );
+
+        // Verify that all reading operations recover via poisoned.into_inner()
+        assert!(
+            cache.is_empty(),
+            "is_empty must succeed and recover even after lock poisoning"
+        );
+        assert_eq!(
+            cache.len(),
+            0,
+            "len must succeed and recover even after lock poisoning"
+        );
+        assert!(
+            cache.find_key(b"test").is_none(),
+            "find_key must succeed and recover even after lock poisoning"
+        );
+        assert!(
+            cache.active_addresses().is_empty(),
+            "active_addresses must succeed and recover even after lock poisoning"
+        );
+        assert!(
+            cache.get_group(1).is_none(),
+            "get_group must succeed and recover even after lock poisoning"
+        );
+
+        // Mutating the cache via add_ranges must also recover from lock poisoning
+        let valid_update = CacheUpdate {
+            database_id: 1,
+            range: vec![make_range("a", "z", 1, "1")],
+            group: vec![make_group(1, "1", 0)],
+            key_recipes: None,
+            _unknown_fields: Default::default(),
+        };
+        cache.add_ranges(&valid_update);
+
+        assert_eq!(
+            cache.len(),
+            1,
+            "add_ranges must succeed and add range after lock poisoning"
+        );
+        assert!(
+            cache.find_key(b"hello").is_some(),
+            "find_key must find inserted range after lock poisoning recovery"
+        );
+
+        // clear() must also recover from lock poisoning
+        cache.clear();
+        assert!(
+            cache.is_empty(),
+            "clear must succeed and empty cache after lock poisoning"
         );
     }
 }

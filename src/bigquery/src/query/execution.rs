@@ -206,7 +206,6 @@ impl RetryContext {
             job,
             Some(self),
             page_size,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             self.template.read_client.clone(),
         ))
     }
@@ -267,7 +266,6 @@ impl RetryContext {
                     check_job_status(existing_job)?,
                     Some(self),
                     page_size,
-                    #[cfg(google_cloud_unstable_gapic_streaming)]
                     self.template.read_client.clone(),
                 ));
             }
@@ -279,7 +277,6 @@ impl RetryContext {
             res,
             Some(self),
             page_size,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             self.template.read_client.clone(),
         ))
     }
@@ -410,7 +407,6 @@ mod tests {
             res,
             None,
             None,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             None,
         );
 
@@ -572,7 +568,6 @@ mod tests {
             job,
             None,
             None,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             None,
         );
 

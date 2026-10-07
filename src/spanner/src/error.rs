@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use google_cloud_gax::error::rpc::Status;
+use google_cloud_gax::error::rpc::{Code, Status, StatusDetails};
 use std::error::Error;
 
-pub use crate::from_value::ConvertError;
+pub use crate::from_value::{ConvertError, SharedError};
+pub use crate::omni::TlsError;
+pub use crate::row::RowError;
 pub use wkt::{DurationError, TimestampError};
 
 /// An unexpected error that occurs when the client receives data from Spanner
@@ -87,11 +89,12 @@ impl BatchUpdateError {
     }
 }
 
-pub(crate) fn aborted_due_to_failed_initial_statement() -> crate::Error {
+pub(crate) fn aborted_due_to_failed_initial_statement(details: Vec<StatusDetails>) -> crate::Error {
     crate::Error::service(
-        google_cloud_gax::error::rpc::Status::default()
-            .set_code(google_cloud_gax::error::rpc::Code::Aborted)
-            .set_message("Aborted due to failed initial statement"),
+        Status::default()
+            .set_code(Code::Aborted)
+            .set_message("Aborted due to failed initial statement")
+            .set_details(details),
     )
 }
 
@@ -100,10 +103,12 @@ mod tests {
     use super::*;
     use google_cloud_gax::error::rpc::Code;
     use static_assertions::assert_impl_all;
+    use std::fmt::Debug;
 
     #[test]
     fn auto_traits() {
-        assert_impl_all!(BatchUpdateError: Send, Sync, std::fmt::Debug);
+        assert_impl_all!(BatchUpdateError: Send, Sync, Debug);
+        assert_impl_all!(SpannerInternalError: Send, Sync, Debug, Clone, PartialEq, Eq);
     }
 
     #[test]

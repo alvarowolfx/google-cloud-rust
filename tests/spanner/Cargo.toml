@@ -32,7 +32,7 @@ google-cloud-auth                      = { workspace = true, features = ["defaul
 google-cloud-gax                       = { workspace = true }
 google-cloud-longrunning               = { workspace = true }
 google-cloud-lro                       = { workspace = true }
-google-cloud-spanner                   = { workspace = true, features = ["default", "unstable-stream"] }
+google-cloud-spanner                   = { workspace = true, features = ["default", "unstable-stream", "unstable-time"] }
 google-cloud-spanner-admin-database-v1 = { path = "../../src/generated/spanner/admin/database/v1" }
 google-cloud-spanner-admin-instance-v1 = { path = "../../src/generated/spanner/admin/instance/v1" }
 google-cloud-test-utils                = { workspace = true }
@@ -45,6 +45,7 @@ prost-types.workspace                  = true
 rand                                   = { workspace = true }
 reqwest                                = { workspace = true, features = ["default-tls", "json"] }
 serde_json                             = { workspace = true }
+serial_test                            = { workspace = true }
 spanner-grpc-mock                      = { path = "../../src/spanner/grpc-mock" }
 time                                   = { workspace = true }
 tokio                                  = { workspace = true, features = ["sync"] }

@@ -17,17 +17,13 @@
 //! Provides time-decayed latency tracking per endpoint address and split group scope
 //! to enable latency-aware replica selection for location-aware routing.
 
-// TODO(location-aware-routing): Remove allow(dead_code) once integrated into LocationRouter and KeyRangeCache.
-#![allow(dead_code)]
-
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::hash::Hash;
 use std::hash::Hasher;
-use std::sync::Mutex;
-use std::sync::RwLock;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::{Mutex, MutexGuard, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use std::time::Duration;
 use std::time::Instant;
 
@@ -124,24 +120,6 @@ impl LatencyRegistry {
         )
     }
 
-    /// Creates a new `LatencyRegistry` with custom EWMA decay duration, error penalty, and default RTT,
-    /// using default bounds for capacity and expiration.
-    pub(crate) fn with_options(
-        decay_duration: Duration,
-        error_penalty: Duration,
-        default_rtt: Duration,
-    ) -> Self {
-        Self::with_all_options(
-            decay_duration,
-            error_penalty,
-            default_rtt,
-            DEFAULT_MAX_TRACKERS.min(DEFAULT_INITIAL_CAPACITY_BOUND),
-            DEFAULT_MAX_TRACKERS,
-            DEFAULT_EXPIRE_AFTER_ACCESS,
-            DEFAULT_CLEANUP_INTERVAL,
-        )
-    }
-
     /// Creates a new `LatencyRegistry` with full configuration over all parameters.
     pub(crate) fn with_all_options(
         decay_duration: Duration,
@@ -166,74 +144,31 @@ impl LatencyRegistry {
         }
     }
 
-    /// Returns the maximum capacity of the latency registry.
-    pub(crate) fn max_trackers(&self) -> usize {
-        self.max_trackers
+    /// Acquires a shared read lock on the latency trackers, recovering from lock poisoning via `into_inner()`.
+    ///
+    /// # Poison Recovery Rationale
+    /// `trackers` stores an in-memory `HashMap<LatencyKey, RegistryEntry>`. In Rust, standard collections
+    /// remain memory-safe and structurally sound even if an earlier thread panicked while reading or writing.
+    /// Each tracker entry is updated independently, and stale or incomplete entries are naturally refreshed
+    /// or pruned during periodic cleanups. Recovering the guard via `into_inner()` prevents an isolated panic
+    /// during latency updates or replica selection from permanently locking out routing cost evaluations.
+    fn read_trackers(&self) -> RwLockReadGuard<'_, HashMap<LatencyKey, RegistryEntry>> {
+        self.trackers.read().unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// Returns the configured idle expiration duration.
-    pub(crate) fn expire_after_access(&self) -> Duration {
-        self.expire_after_access
-    }
-
-    /// Returns the configured periodic cleanup sweep interval.
-    pub(crate) fn cleanup_interval(&self) -> Duration {
-        self.cleanup_interval
+    /// Acquires an exclusive write lock on the latency trackers, recovering from lock poisoning via `into_inner()`.
+    ///
+    /// # Poison Recovery Rationale
+    /// See [`read_trackers`](Self::read_trackers).
+    fn write_trackers(&self) -> RwLockWriteGuard<'_, HashMap<LatencyKey, RegistryEntry>> {
+        self.trackers
+            .write()
+            .unwrap_or_else(PoisonError::into_inner)
     }
 
     /// Returns whether latency tracking is disabled (`max_trackers == 0`).
     pub(crate) fn is_tracking_disabled(&self) -> bool {
         self.max_trackers == 0
-    }
-
-    /// Returns whether a latency score has been recorded for the specified latency key at the current timestamp.
-    pub(crate) fn has_score(
-        &self,
-        database_scope: Option<&str>,
-        group_uid: u64,
-        endpoint_address: &str,
-    ) -> bool {
-        self.has_score_at(database_scope, group_uid, endpoint_address, Instant::now())
-    }
-
-    /// Returns whether a latency score has been recorded for the specified latency key at the given timestamp.
-    /// Performs a zero-allocation borrowed lookup under a shared read lock.
-    pub(crate) fn has_score_at(
-        &self,
-        database_scope: Option<&str>,
-        group_uid: u64,
-        endpoint_address: &str,
-        now: Instant,
-    ) -> bool {
-        if self.is_tracking_disabled() || group_uid == 0 || endpoint_address.is_empty() {
-            return false;
-        }
-
-        let database_scope = database_scope.filter(|scope| !scope.is_empty());
-        let lookup = LatencyKeyRef {
-            database_scope,
-            group_uid,
-            endpoint_address,
-        };
-
-        let now_millis = self.instant_to_millis(now);
-        let expire_after_millis = self.expire_after_access.as_millis() as u64;
-
-        let trackers = self
-            .trackers
-            .read()
-            .expect("LatencyRegistry trackers read lock poisoned");
-
-        let Some(entry) = trackers.get(&lookup as &dyn LatencyLookup) else {
-            return false;
-        };
-
-        if entry.is_expired(now_millis, expire_after_millis) {
-            return false;
-        }
-
-        entry.touch(now_millis);
-        entry.tracker.is_initialized()
     }
 
     /// Computes the replica selection cost for an endpoint given its active in-flight request count.
@@ -302,10 +237,7 @@ impl LatencyRegistry {
         let active_multiplier = active_requests as f64 + 1.0;
 
         {
-            let trackers = self
-                .trackers
-                .read()
-                .expect("LatencyRegistry trackers read lock poisoned");
+            let trackers = self.read_trackers();
 
             if let Some(entry) = trackers.get(&lookup as &dyn LatencyLookup)
                 && !entry.is_expired(now_millis, expire_after_millis)
@@ -329,24 +261,6 @@ impl LatencyRegistry {
 
         // If the endpoint is unmeasured/expired and idle (active_requests == 0), return default RTT in microseconds.
         self.default_rtt.as_micros() as f64
-    }
-
-    /// Alias for [`selection_cost_at`](Self::selection_cost_at) matching Spanner router conventions.
-    pub(crate) fn get_selection_cost_at(
-        &self,
-        database_scope: Option<&str>,
-        group_uid: u64,
-        active_requests: usize,
-        endpoint_address: &str,
-        now: Instant,
-    ) -> f64 {
-        self.selection_cost_at(
-            database_scope,
-            group_uid,
-            active_requests,
-            endpoint_address,
-            now,
-        )
     }
 
     /// Records an observed round-trip latency sample at the current timestamp.
@@ -434,49 +348,6 @@ impl LatencyRegistry {
         );
     }
 
-    /// Clears all tracked endpoint latency scores and resets lifecycle state.
-    pub(crate) fn clear(&self) {
-        self.clear_at(Instant::now());
-    }
-
-    /// Clears all tracked endpoint latency scores and resets lifecycle state at the given timestamp.
-    pub(crate) fn clear_at(&self, now: Instant) {
-        let mut trackers = self
-            .trackers
-            .write()
-            .expect("LatencyRegistry trackers write lock poisoned");
-        trackers.clear();
-        self.last_cleanup_millis
-            .store(self.instant_to_millis(now), Ordering::Release);
-    }
-
-    /// Explicitly prunes all expired entries from the registry at the given timestamp.
-    pub(crate) fn prune_expired(&self, now: Instant) {
-        let now_millis = self.instant_to_millis(now);
-        let expire_after_millis = self.expire_after_access.as_millis() as u64;
-        let mut trackers = self
-            .trackers
-            .write()
-            .expect("LatencyRegistry trackers write lock poisoned");
-        trackers.retain(|_, entry| !entry.is_expired(now_millis, expire_after_millis));
-        self.last_cleanup_millis
-            .store(now_millis, Ordering::Release);
-    }
-
-    /// Returns the number of currently tracked latency keys.
-    pub(crate) fn len(&self) -> usize {
-        let trackers = self
-            .trackers
-            .read()
-            .expect("LatencyRegistry trackers read lock poisoned");
-        trackers.len()
-    }
-
-    /// Returns whether the registry contains zero tracked latency keys.
-    pub(crate) fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
     fn instant_to_millis(&self, instant: Instant) -> u64 {
         instant
             .checked_duration_since(self.epoch)
@@ -552,10 +423,7 @@ impl LatencyRegistry {
         expire_after_millis: u64,
         update: &impl Fn(&EwmaLatencyTracker),
     ) -> bool {
-        let trackers = self
-            .trackers
-            .read()
-            .expect("LatencyRegistry trackers read lock poisoned");
+        let trackers = self.read_trackers();
         let Some(entry) = trackers.get(lookup as &dyn LatencyLookup) else {
             return false;
         };
@@ -626,10 +494,7 @@ impl LatencyRegistry {
             return;
         }
 
-        let mut trackers = self
-            .trackers
-            .write()
-            .expect("LatencyRegistry trackers write lock poisoned");
+        let mut trackers = self.write_trackers();
 
         if should_cleanup {
             trackers.retain(|_, entry| !entry.is_expired(now_millis, expire_after_millis));
@@ -821,25 +686,6 @@ impl EwmaLatencyTracker {
         }
     }
 
-    /// Creates a new fixed-alpha `EwmaLatencyTracker` where smoothing $\alpha \in (0.0, 1.0]$
-    /// remains constant regardless of elapsed time.
-    pub(crate) fn with_fixed_alpha(alpha: f64) -> Self {
-        let clamped_alpha = alpha.clamp(f64::MIN_POSITIVE, 1.0);
-        Self {
-            fixed_alpha: Some(clamped_alpha),
-            tau_nanoseconds: 0.0,
-            score_bits: AtomicU64::new(UNINITIALIZED_SCORE_BITS),
-            state: Mutex::new(None),
-        }
-    }
-
-    /// Returns the current latency score in microseconds.
-    ///
-    /// If no samples have been recorded yet, returns `f64::MAX`.
-    pub(crate) fn get_score(&self) -> f64 {
-        self.score().unwrap_or(f64::MAX)
-    }
-
     /// Returns the current latency score in microseconds, or `None` if uninitialized.
     pub(crate) fn score(&self) -> Option<f64> {
         let bits = self.score_bits.load(Ordering::Acquire);
@@ -849,23 +695,21 @@ impl EwmaLatencyTracker {
         Some(f64::from_bits(bits))
     }
 
-    /// Returns whether at least one latency sample or error penalty has been recorded.
-    pub(crate) fn is_initialized(&self) -> bool {
-        self.score_bits.load(Ordering::Acquire) != UNINITIALIZED_SCORE_BITS
-    }
-
-    /// Records an observed round-trip latency sample at the current timestamp.
-    pub(crate) fn update(&self, latency: Duration) {
-        self.update_at(latency, Instant::now());
+    /// Acquires an exclusive mutex lock on the EWMA state, recovering from lock poisoning via `into_inner()`.
+    ///
+    /// # Poison Recovery Rationale
+    /// `state` protects an `Option<EwmaState>` containing an EWMA score and timestamp. State updates
+    /// are atomic struct replacements protected by the mutex; the underlying data is always memory-safe
+    /// and structurally intact. Recovering via `into_inner()` ensures that subsequent latency sample updates
+    /// (`update_at`) and score calculations continue operating even if an earlier caller thread panicked.
+    fn lock_state(&self) -> MutexGuard<'_, Option<EwmaState>> {
+        self.state.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
     /// Records an observed round-trip latency sample at a specific timestamp.
     pub(crate) fn update_at(&self, latency: Duration, now: Instant) {
         let latency_micros = latency.as_micros() as f64;
-        let mut guard = self
-            .state
-            .lock()
-            .expect("EwmaLatencyTracker state mutex poisoned");
+        let mut guard = self.lock_state();
 
         let new_score = match *guard {
             None => {
@@ -892,11 +736,6 @@ impl EwmaLatencyTracker {
             .store(new_score.to_bits(), Ordering::Release);
     }
 
-    /// Records an error penalty using the default 10-second penalty duration.
-    pub(crate) fn record_error(&self) {
-        self.record_error_at(DEFAULT_ERROR_PENALTY, Instant::now());
-    }
-
     /// Records an error penalty with a specific penalty duration at the given timestamp.
     pub(crate) fn record_error_at(&self, penalty: Duration, now: Instant) {
         self.update_at(penalty, now);
@@ -919,9 +758,164 @@ impl EwmaLatencyTracker {
 }
 
 #[cfg(test)]
+impl LatencyRegistry {
+    /// Creates a new `LatencyRegistry` with custom EWMA decay duration, error penalty, and default RTT,
+    /// using default bounds for capacity and expiration.
+    pub(crate) fn with_options(
+        decay_duration: Duration,
+        error_penalty: Duration,
+        default_rtt: Duration,
+    ) -> Self {
+        Self::with_all_options(
+            decay_duration,
+            error_penalty,
+            default_rtt,
+            DEFAULT_MAX_TRACKERS.min(DEFAULT_INITIAL_CAPACITY_BOUND),
+            DEFAULT_MAX_TRACKERS,
+            DEFAULT_EXPIRE_AFTER_ACCESS,
+            DEFAULT_CLEANUP_INTERVAL,
+        )
+    }
+
+    /// Returns the maximum capacity of the latency registry.
+    pub(crate) fn max_trackers(&self) -> usize {
+        self.max_trackers
+    }
+
+    /// Returns the configured idle expiration duration.
+    pub(crate) fn expire_after_access(&self) -> Duration {
+        self.expire_after_access
+    }
+
+    /// Returns the configured periodic cleanup sweep interval.
+    pub(crate) fn cleanup_interval(&self) -> Duration {
+        self.cleanup_interval
+    }
+
+    /// Returns whether a latency score has been recorded for the specified latency key at the current timestamp.
+    pub(crate) fn has_score(
+        &self,
+        database_scope: Option<&str>,
+        group_uid: u64,
+        endpoint_address: &str,
+    ) -> bool {
+        self.has_score_at(database_scope, group_uid, endpoint_address, Instant::now())
+    }
+
+    /// Returns whether a latency score has been recorded for the specified latency key at the given timestamp.
+    /// Performs a zero-allocation borrowed lookup under a shared read lock.
+    pub(crate) fn has_score_at(
+        &self,
+        database_scope: Option<&str>,
+        group_uid: u64,
+        endpoint_address: &str,
+        now: Instant,
+    ) -> bool {
+        if self.is_tracking_disabled() || group_uid == 0 || endpoint_address.is_empty() {
+            return false;
+        }
+
+        let database_scope = database_scope.filter(|scope| !scope.is_empty());
+        let lookup = LatencyKeyRef {
+            database_scope,
+            group_uid,
+            endpoint_address,
+        };
+
+        let now_millis = self.instant_to_millis(now);
+        let expire_after_millis = self.expire_after_access.as_millis() as u64;
+
+        let trackers = self.read_trackers();
+
+        let Some(entry) = trackers.get(&lookup as &dyn LatencyLookup) else {
+            return false;
+        };
+
+        if entry.is_expired(now_millis, expire_after_millis) {
+            return false;
+        }
+
+        entry.touch(now_millis);
+        entry.tracker.is_initialized()
+    }
+
+    /// Clears all tracked endpoint latency scores and resets lifecycle state.
+    pub(crate) fn clear(&self) {
+        self.clear_at(Instant::now());
+    }
+
+    /// Clears all tracked endpoint latency scores and resets lifecycle state at the given timestamp.
+    pub(crate) fn clear_at(&self, now: Instant) {
+        let mut trackers = self.write_trackers();
+        trackers.clear();
+        self.last_cleanup_millis
+            .store(self.instant_to_millis(now), Ordering::Release);
+    }
+
+    /// Explicitly prunes all expired entries from the registry at the given timestamp.
+    pub(crate) fn prune_expired(&self, now: Instant) {
+        let now_millis = self.instant_to_millis(now);
+        let expire_after_millis = self.expire_after_access.as_millis() as u64;
+        let mut trackers = self.write_trackers();
+        trackers.retain(|_, entry| !entry.is_expired(now_millis, expire_after_millis));
+        self.last_cleanup_millis
+            .store(now_millis, Ordering::Release);
+    }
+
+    /// Returns the number of currently tracked latency keys.
+    pub(crate) fn len(&self) -> usize {
+        let trackers = self.read_trackers();
+        trackers.len()
+    }
+
+    /// Returns whether the registry contains zero tracked latency keys.
+    pub(crate) fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+#[cfg(test)]
+impl EwmaLatencyTracker {
+    /// Creates a new fixed-alpha `EwmaLatencyTracker` where smoothing $\alpha \in (0.0, 1.0]$
+    /// remains constant regardless of elapsed time.
+    pub(crate) fn with_fixed_alpha(alpha: f64) -> Self {
+        let clamped_alpha = alpha.clamp(f64::MIN_POSITIVE, 1.0);
+        Self {
+            fixed_alpha: Some(clamped_alpha),
+            tau_nanoseconds: 0.0,
+            score_bits: AtomicU64::new(UNINITIALIZED_SCORE_BITS),
+            state: Mutex::new(None),
+        }
+    }
+
+    /// Returns the current latency score in microseconds.
+    ///
+    /// If no samples have been recorded yet, returns `f64::MAX`.
+    pub(crate) fn get_score(&self) -> f64 {
+        self.score().unwrap_or(f64::MAX)
+    }
+
+    /// Returns whether at least one latency sample or error penalty has been recorded.
+    pub(crate) fn is_initialized(&self) -> bool {
+        self.score_bits.load(Ordering::Acquire) != UNINITIALIZED_SCORE_BITS
+    }
+
+    /// Records an observed round-trip latency sample at the current timestamp.
+    pub(crate) fn update(&self, latency: Duration) {
+        self.update_at(latency, Instant::now());
+    }
+
+    /// Records an error penalty using the default 10-second penalty duration.
+    pub(crate) fn record_error(&self) {
+        self.record_error_at(DEFAULT_ERROR_PENALTY, Instant::now());
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use static_assertions::assert_impl_all;
+    use std::panic::{AssertUnwindSafe, catch_unwind};
     use std::sync::Arc;
     use std::sync::Barrier;
     use std::thread;
@@ -1358,7 +1352,7 @@ mod tests {
 
         // Selection cost for expired idle endpoint must fall back to default RTT
         let selection_cost_idle =
-            registry.get_selection_cost_at(database_scope, 101, 0, endpoint_address, expired_time);
+            registry.selection_cost_at(database_scope, 101, 0, endpoint_address, expired_time);
         assert_eq!(
             selection_cost_idle,
             DEFAULT_RTT.as_micros() as f64,
@@ -1367,7 +1361,7 @@ mod tests {
 
         // Selection cost for expired busy endpoint must include penalty
         let selection_cost_busy =
-            registry.get_selection_cost_at(database_scope, 101, 2, endpoint_address, expired_time);
+            registry.selection_cost_at(database_scope, 101, 2, endpoint_address, expired_time);
         assert_eq!(
             selection_cost_busy,
             DEFAULT_PENALTY_VALUE + 2.0,
@@ -1392,13 +1386,8 @@ mod tests {
 
         // Advance by half the expiration duration (5 minutes) and touch via cost lookup
         let intermediate_time = start_time + DEFAULT_EXPIRE_AFTER_ACCESS / 2;
-        let cost = registry.get_selection_cost_at(
-            database_scope,
-            202,
-            0,
-            endpoint_address,
-            intermediate_time,
-        );
+        let cost =
+            registry.selection_cost_at(database_scope, 202, 0, endpoint_address, intermediate_time);
         assert!(
             cost > 0.0,
             "intermediate selection cost must be positive and non-zero"
@@ -1956,10 +1945,7 @@ mod tests {
         let short_delay_time = initial_time + Duration::from_millis(500);
         let _ = registry.selection_cost_at(Some("db"), 1, 0, "10.0.0.1:15000", short_delay_time);
 
-        let trackers = registry
-            .trackers
-            .read()
-            .expect("LatencyRegistry trackers read lock must not be poisoned");
+        let trackers = registry.read_trackers();
         let lookup = LatencyKeyRef {
             database_scope: Some("db"),
             group_uid: 1,
@@ -1979,10 +1965,7 @@ mod tests {
         let long_delay_time = initial_time + Duration::from_millis(1500);
         let _ = registry.selection_cost_at(Some("db"), 1, 0, "10.0.0.1:15000", long_delay_time);
 
-        let trackers = registry
-            .trackers
-            .read()
-            .expect("LatencyRegistry trackers read lock must not be poisoned");
+        let trackers = registry.read_trackers();
         let entry = trackers
             .get(&lookup as &dyn LatencyLookup)
             .expect("entry must exist in trackers");
@@ -2046,9 +2029,7 @@ mod tests {
             endpoint_address: "server-uninit:1234".to_string(),
         };
         registry
-            .trackers
-            .write()
-            .expect("LatencyRegistry trackers write lock poisoned")
+            .write_trackers()
             .insert(key, RegistryEntry::new(EwmaLatencyTracker::new(), 0));
 
         let cost_idle =
@@ -2151,15 +2132,133 @@ mod tests {
             "entry must be reactivated with valid score"
         );
         assert_eq!(
-            registry.get_selection_cost_at(
-                database_scope,
-                100,
-                0,
-                endpoint_address,
-                reactivate_time
-            ),
+            registry.selection_cost_at(database_scope, 100, 0, endpoint_address, reactivate_time),
             20_000.0,
             "reactivated tracker must reflect the new measurement"
+        );
+    }
+
+    #[test]
+    fn latency_registry_recovers_from_poisoned_write_lock() {
+        let registry = LatencyRegistry::new();
+        let database_scope = Some("test-db");
+        let group_uid = 42;
+        let endpoint_address = "10.0.0.1:15000";
+        let base_now = Instant::now();
+
+        // Intentionally poison the RwLock by panicking while holding the write guard.
+        let poison_attempt = catch_unwind(AssertUnwindSafe(|| {
+            let mut guard = registry.write_trackers();
+            guard.clear();
+            panic!("deliberate panic to poison latency registry trackers write lock");
+        }));
+        assert!(
+            poison_attempt.is_err(),
+            "panic should be caught and confirm poisoning setup"
+        );
+
+        // Verify that write recovery works by recording a latency sample.
+        registry.record_latency_at(
+            database_scope,
+            group_uid,
+            endpoint_address,
+            Duration::from_millis(50),
+            base_now,
+        );
+        assert_eq!(
+            registry.len(),
+            1,
+            "registry must track recorded entry after recovering from poisoned lock"
+        );
+        assert!(
+            !registry.is_empty(),
+            "registry must not be empty after recording entry on poisoned lock"
+        );
+
+        // Verify that read recovery works.
+        assert!(
+            registry.has_score_at(database_scope, group_uid, endpoint_address, base_now),
+            "registry must report score present after recovery from poisoned lock"
+        );
+        let cost =
+            registry.selection_cost_at(database_scope, group_uid, 0, endpoint_address, base_now);
+        assert!(
+            cost > 0.0,
+            "selection cost must be positive after recovering from poisoned lock"
+        );
+
+        // Verify that operations continuing after read panics still operate cleanly.
+        let read_panic_attempt = catch_unwind(AssertUnwindSafe(|| {
+            let _read_guard = registry.read_trackers();
+            panic!("deliberate panic while holding recovered read lock");
+        }));
+        assert!(
+            read_panic_attempt.is_err(),
+            "read guard panic should be caught"
+        );
+
+        // Verify that recording error penalty operates cleanly on poisoned lock.
+        registry.record_error_with_penalty(
+            database_scope,
+            group_uid,
+            endpoint_address,
+            Duration::from_secs(10),
+            base_now,
+        );
+
+        // Verify pruning expired entries operates cleanly on poisoned lock.
+        registry.prune_expired(base_now + Duration::from_secs(3600));
+
+        // Verify clear operates cleanly on poisoned lock.
+        registry.clear();
+        assert_eq!(
+            registry.len(),
+            0,
+            "registry must be empty after clear on poisoned lock"
+        );
+        assert!(
+            registry.is_empty(),
+            "registry is_empty must be true after clear on poisoned lock"
+        );
+    }
+
+    #[test]
+    fn ewma_latency_tracker_recovers_from_poisoned_mutex() {
+        let tracker = EwmaLatencyTracker::new();
+        let base_now = Instant::now();
+
+        // Intentionally poison the Mutex by panicking while holding the lock guard.
+        let poison_attempt = catch_unwind(AssertUnwindSafe(|| {
+            let mut guard = tracker.lock_state();
+            *guard = None;
+            panic!("deliberate panic to poison EWMA tracker state mutex");
+        }));
+        assert!(
+            poison_attempt.is_err(),
+            "panic should be caught and confirm poisoning setup"
+        );
+
+        // Verify that recording a sample recovers from poisoned mutex.
+        tracker.update_at(Duration::from_millis(100), base_now);
+        let score = tracker.score();
+        assert!(
+            score.is_some(),
+            "score must be initialized after update on poisoned tracker"
+        );
+        assert_eq!(
+            score.expect("score must be present after sample recording"),
+            100_000.0,
+            "initial score must equal recorded 100ms sample in microseconds"
+        );
+
+        // Verify subsequent updates decay properly on poisoned tracker.
+        tracker.update_at(Duration::from_millis(50), base_now + Duration::from_secs(1));
+        let updated_score = tracker
+            .score()
+            .expect("score must be present after second sample");
+        assert!(
+            updated_score < 100_000.0,
+            "EWMA score must decay towards lower sample after recovering from poisoned lock"
         );
     }
 }

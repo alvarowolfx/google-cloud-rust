@@ -17,9 +17,6 @@
 //! Evaluates a [`KeyRecipe`] against SQL query parameter values or primary key tuples and encodes
 //! them into a lexicographical binary storage specification key (`Vec<u8>`) using [`ssformat`].
 
-// TODO(#6236): Remove dead_code allowance once KeyRecipe and KeyRecipeCache are integrated into DatabaseClient.
-#![allow(dead_code)]
-
 use crate::Result;
 use crate::error::internal_error;
 use crate::model::key_recipe::Part;
@@ -31,6 +28,7 @@ use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use serde_json::Map;
 use serde_json::Value as JsonValue;
+#[cfg(test)]
 use std::collections::BTreeMap;
 
 /// Encodes a Spanner routing key (`Vec<u8>`) from a [`KeyRecipe`] and a slice of column [`Value`]s.
@@ -47,6 +45,7 @@ use std::collections::BTreeMap;
 /// If encoding returns an error (for example, due to an unsupported key column type like `NUMERIC`
 /// or `FLOAT32`), callers (`LocationRouter` / `DatabaseClient`) MUST catch the error and silently
 /// fall back to default routing (without tablet affinity) rather than failing the user's RPC.
+#[cfg(test)]
 pub(crate) fn encode_key_from_recipe(recipe: &KeyRecipe, values: &[Value]) -> Result<Vec<u8>> {
     let mut buffer = Vec::with_capacity(recipe.part.len().saturating_mul(16));
     encode_key_from_recipe_into(recipe, values, &mut buffer)?;
@@ -216,6 +215,7 @@ pub(crate) fn encode_key_from_recipe_into(
 /// If encoding returns an error (for example, due to a missing parameter or unsupported type),
 /// callers (`LocationRouter` / `DatabaseClient`) MUST catch the error and silently fall back to
 /// default routing rather than failing the user's RPC.
+#[cfg(test)]
 pub(crate) fn encode_key_from_query_params(
     recipe: &KeyRecipe,
     params: &BTreeMap<String, Value>,
@@ -239,6 +239,7 @@ pub(crate) fn encode_key_from_query_params(
 /// If encoding returns an error (for example, due to a missing parameter or unsupported type),
 /// callers (`LocationRouter` / `DatabaseClient`) MUST catch the error and silently fall back to
 /// default routing rather than failing the user's RPC.
+#[cfg(test)]
 pub(crate) fn encode_key_from_query_params_into(
     recipe: &KeyRecipe,
     params: &BTreeMap<String, Value>,
@@ -598,7 +599,7 @@ fn resolve_struct_field<'a>(
                 "Invalid negative struct index {struct_index} in key recipe part"
             )));
         }
-        let list = current.try_as_list().ok_or_else(|| {
+        let list = current.as_list().ok_or_else(|| {
             internal_error("Expected Struct ListValue for struct parameter traversal")
         })?;
         current = list.get(struct_index as usize).ok_or_else(|| {
@@ -612,6 +613,7 @@ fn resolve_struct_field<'a>(
 }
 
 /// Looks up a query parameter by name in `params`, supporting case-insensitive lookup.
+#[cfg(test)]
 fn lookup_query_param<'a>(
     params: &'a BTreeMap<String, Value>,
     identifier: &str,
@@ -734,14 +736,14 @@ fn encode_not_null_marker(
 /// Evaluates a boolean column value (`BOOL`).
 fn encode_bool_part(buffer: &mut Vec<u8>, value: &Value, decreasing: bool) -> Result<()> {
     let boolean_value = value
-        .try_as_bool()
+        .as_bool()
         .ok_or_else(|| internal_error("Type mismatch: expected Bool value for BOOL column"))?;
     append_bool_ordered(buffer, boolean_value, decreasing)
 }
 
 /// Evaluates an integer or enum column value (`INT64` or `ENUM`).
 fn encode_int64_part(buffer: &mut Vec<u8>, value: &Value, decreasing: bool) -> Result<()> {
-    let string_value = value.try_as_string().ok_or_else(|| {
+    let string_value = value.as_str().ok_or_else(|| {
         internal_error("Type mismatch: expected String value for INT64 or ENUM column")
     })?;
     let integer_value = string_value.parse::<i64>().map_err(|error| {
@@ -754,7 +756,7 @@ fn encode_int64_part(buffer: &mut Vec<u8>, value: &Value, decreasing: bool) -> R
 
 /// Evaluates a floating-point column value (`FLOAT64`).
 fn encode_float64_part(buffer: &mut Vec<u8>, value: &Value, decreasing: bool) -> Result<()> {
-    if let Some(string_value) = value.try_as_string() {
+    if let Some(string_value) = value.as_str() {
         let number = match string_value {
             "NaN" => f64::NAN,
             "Infinity" => f64::INFINITY,
@@ -767,7 +769,7 @@ fn encode_float64_part(buffer: &mut Vec<u8>, value: &Value, decreasing: bool) ->
         };
         return append_double_ordered(buffer, number, decreasing);
     }
-    let number = value.try_as_f64().ok_or_else(|| {
+    let number = value.as_f64().ok_or_else(|| {
         internal_error("Type mismatch: expected Number or special String value for FLOAT64 column")
     })?;
     append_double_ordered(buffer, number, decreasing)
@@ -776,14 +778,14 @@ fn encode_float64_part(buffer: &mut Vec<u8>, value: &Value, decreasing: bool) ->
 /// Evaluates a string column value (`STRING`).
 fn encode_string_part(buffer: &mut Vec<u8>, value: &Value, decreasing: bool) -> Result<()> {
     let string_value = value
-        .try_as_string()
+        .as_str()
         .ok_or_else(|| internal_error("Type mismatch: expected String value for STRING column"))?;
     append_string_ordered(buffer, string_value, decreasing)
 }
 
 /// Evaluates a byte array column value (`BYTES`).
 fn encode_bytes_part(buffer: &mut Vec<u8>, value: &Value, decreasing: bool) -> Result<()> {
-    let string_value = value.try_as_string().ok_or_else(|| {
+    let string_value = value.as_str().ok_or_else(|| {
         internal_error("Type mismatch: expected base64 String value for BYTES column")
     })?;
     let mut stack_buffer = [0u8; 512];

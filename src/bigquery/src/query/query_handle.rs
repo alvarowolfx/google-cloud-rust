@@ -12,13 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#[cfg(google_cloud_unstable_gapic_streaming)]
 use crate::client::Read as ReadClient;
 use crate::error::QueryError;
-#[cfg(google_cloud_unstable_gapic_streaming)]
 use crate::error::RowError;
 use crate::generated::{CompleteQueryMetadata, QueryMetadata};
-#[cfg(google_cloud_unstable_gapic_streaming)]
 use crate::query::ArrowArrayStream;
 use crate::query::execution::RetryContext;
 use crate::query::retry_policy::JobRetryResult;
@@ -62,7 +59,6 @@ use std::sync::Arc;
 #[derive(Clone, Debug)]
 pub struct Query {
     pub(crate) job_service: Arc<JobService>,
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     pub(crate) read_client: Option<Arc<ReadClient>>,
     pub(crate) completed: bool,
     pub(crate) metadata: QueryMetadata,
@@ -86,7 +82,7 @@ impl Query {
         initial_job: Job,
         retry_context: Option<&RetryContext>,
         page_size: Option<u32>,
-        #[cfg(google_cloud_unstable_gapic_streaming)] read_client: Option<Arc<ReadClient>>,
+        read_client: Option<Arc<ReadClient>>,
     ) -> Self {
         let completed = initial_job
             .status
@@ -95,7 +91,6 @@ impl Query {
             .unwrap_or(false);
         Self {
             job_service,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             read_client,
             completed,
             cached_data: None,
@@ -110,7 +105,7 @@ impl Query {
         mut query_response: QueryResponse,
         retry_context: Option<&RetryContext>,
         page_size: Option<u32>,
-        #[cfg(google_cloud_unstable_gapic_streaming)] read_client: Option<Arc<ReadClient>>,
+        read_client: Option<Arc<ReadClient>>,
     ) -> Self {
         let completed = query_response.job_complete.unwrap_or(false);
         let cached_data = if let (
@@ -131,7 +126,6 @@ impl Query {
         let metadata = QueryMetadata::from(query_response);
         Self {
             job_service,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             read_client,
             completed,
             cached_data,
@@ -238,7 +232,6 @@ impl Query {
         loop {
             let Query {
                 job_service,
-                #[cfg(google_cloud_unstable_gapic_streaming)]
                 read_client,
                 completed,
                 metadata,
@@ -247,13 +240,12 @@ impl Query {
                 retry_context,
             } = self;
 
-            if let (true, Some(cached_data)) = (completed, cached_data) {
+            if completed && let Some(cached_data) = cached_data {
                 return Ok(CompleteQuery::from_query_metadata(
                     job_service,
                     metadata,
                     cached_data,
                     page_size,
-                    #[cfg(google_cloud_unstable_gapic_streaming)]
                     read_client,
                 ));
             }
@@ -278,7 +270,6 @@ impl Query {
                         res,
                         metadata,
                         page_size,
-                        #[cfg(google_cloud_unstable_gapic_streaming)]
                         read_client,
                     ));
                 }
@@ -325,8 +316,6 @@ impl Query {
 #[derive(Clone, Debug)]
 pub struct CompleteQuery {
     pub(crate) job_service: Arc<JobService>,
-    #[cfg(google_cloud_unstable_gapic_streaming)]
-    #[allow(dead_code)]
     pub(crate) read_client: Option<Arc<ReadClient>>,
     pub(crate) job_ref: Option<JobReference>,
     pub(crate) cached_data: CachedData,
@@ -342,7 +331,7 @@ impl CompleteQuery {
         mut res: GetQueryResultsResponse,
         initial_metadata: QueryMetadata,
         page_size: Option<u32>,
-        #[cfg(google_cloud_unstable_gapic_streaming)] read_client: Option<Arc<ReadClient>>,
+        read_client: Option<Arc<ReadClient>>,
     ) -> Self {
         let cached_rows = VecDeque::from(std::mem::take(&mut res.rows));
         let cached_data = CachedData::Rows(cached_rows);
@@ -354,7 +343,6 @@ impl CompleteQuery {
             metadata,
             cached_data,
             page_size,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             read_client,
         )
     }
@@ -364,7 +352,7 @@ impl CompleteQuery {
         metadata: QueryMetadata,
         cached_data: CachedData,
         page_size: Option<u32>,
-        #[cfg(google_cloud_unstable_gapic_streaming)] read_client: Option<Arc<ReadClient>>,
+        read_client: Option<Arc<ReadClient>>,
     ) -> Self {
         let job_ref = metadata.job_reference.clone();
         let metadata = CompleteQueryMetadata::from(metadata);
@@ -374,7 +362,6 @@ impl CompleteQuery {
             metadata,
             cached_data,
             page_size,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             read_client,
         )
     }
@@ -385,7 +372,7 @@ impl CompleteQuery {
         metadata: CompleteQueryMetadata,
         cached_data: CachedData,
         page_size: Option<u32>,
-        #[cfg(google_cloud_unstable_gapic_streaming)] read_client: Option<Arc<ReadClient>>,
+        read_client: Option<Arc<ReadClient>>,
     ) -> Self {
         let page_token = if metadata.page_token.is_empty() {
             None
@@ -394,7 +381,6 @@ impl CompleteQuery {
         };
         Self {
             job_service,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             read_client,
             job_ref,
             cached_data,
@@ -438,19 +424,15 @@ impl CompleteQuery {
     /// ```
     /// # use google_cloud_bigquery::client::BigQuery;
     /// # async fn sample(client: BigQuery) -> anyhow::Result<()> {
-    /// # #[cfg(google_cloud_unstable_gapic_streaming)]
-    /// # {
     /// let stream = client
     ///     .query("SELECT 100 AS score")
     ///     .until_done()
     ///     .await?
     ///     .to_arrow_c_stream()
     ///     .await?;
-    /// # }
     /// # Ok(())
     /// # }
     /// ```
-    #[cfg(google_cloud_unstable_gapic_streaming)]
     pub async fn to_arrow_c_stream(self) -> std::result::Result<ArrowArrayStream, RowError> {
         crate::query::c_stream::query_to_arrow_c_stream(self).await
     }
@@ -702,8 +684,8 @@ mod tests {
     use crate::query::retry_policy::RetryableJobErrors;
     use crate::query::tests::{MockJobService, create_job_service, create_test_backoff_policy};
     use google_cloud_bigquery_v2::model::{
-        ErrorProto, GetQueryResultsResponse, Job, JobConfiguration, JobReference, QueryResponse,
-        TableFieldSchema, TableSchema,
+        ArrowRecordBatch, ArrowSchema, ErrorProto, GetQueryResultsResponse, Job, JobConfiguration,
+        JobReference, QueryResponse, TableFieldSchema, TableSchema,
     };
     use google_cloud_gax::error::Error as GaxError;
     use google_cloud_gax::error::rpc::{Code, Status};
@@ -718,16 +700,9 @@ mod tests {
             mut query_res: QueryResponse,
             page_size: Option<u32>,
         ) -> Self {
-            let cached_rows = CachedData::Rows(VecDeque::from(std::mem::take(&mut query_res.rows)));
+            let cached_data = CachedData::Rows(VecDeque::from(std::mem::take(&mut query_res.rows)));
             let metadata = QueryMetadata::from(query_res);
-            Self::from_query_metadata(
-                job_service,
-                metadata,
-                cached_rows,
-                page_size,
-                #[cfg(google_cloud_unstable_gapic_streaming)]
-                None,
-            )
+            Self::from_query_metadata(job_service, metadata, cached_data, page_size, None)
         }
     }
 
@@ -745,14 +720,7 @@ mod tests {
             .set_rows([wkt::Struct::new()])
             .set_cache_hit(true);
 
-        let query = Query::from_query_response(
-            job_service,
-            query_res,
-            None,
-            None,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
-            None,
-        );
+        let query = Query::from_query_response(job_service, query_res, None, None, None);
 
         let completed = query.until_done().await?;
         assert_eq!(completed.job_ref.as_ref().unwrap().job_id, "some_job_id");
@@ -771,6 +739,42 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_query_until_done_already_completed_arrow() -> TestResult {
+        let job_service = create_job_service(MockJobService::new());
+        let job_ref = JobReference::new()
+            .set_project_id("some_project")
+            .set_job_id("some_job_id");
+        let query_res = QueryResponse::new()
+            .set_job_complete(true)
+            .set_job_reference(job_ref.clone())
+            .set_arrow_schema(
+                ArrowSchema::new().set_serialized_schema(Bytes::from_static(b"test_schema")),
+            )
+            .set_arrow_record_batch(
+                ArrowRecordBatch::new()
+                    .set_serialized_record_batch(Bytes::from_static(b"test_batch")),
+            )
+            .set_cache_hit(true);
+
+        let query = Query::from_query_response(job_service, query_res, None, None, None);
+
+        let completed = query.until_done().await?;
+        assert_eq!(completed.job_ref.as_ref().unwrap().job_id, "some_job_id");
+        match &completed.cached_data {
+            CachedData::Arrow {
+                serialized_record_batch,
+                serialized_schema,
+            } => {
+                assert_eq!(serialized_record_batch, &Bytes::from_static(b"test_batch"));
+                assert_eq!(serialized_schema, &Bytes::from_static(b"test_schema"));
+            }
+            _ => panic!("expected arrow cached data"),
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn test_query_until_done_preserves_page_size() -> TestResult {
         let job_service = create_job_service(MockJobService::new());
         let job_ref = JobReference::new()
@@ -781,14 +785,7 @@ mod tests {
             .set_job_reference(job_ref.clone())
             .set_schema(TableSchema::new());
 
-        let query = Query::from_query_response(
-            job_service,
-            query_res,
-            None,
-            Some(42),
-            #[cfg(google_cloud_unstable_gapic_streaming)]
-            None,
-        );
+        let query = Query::from_query_response(job_service, query_res, None, Some(42), None);
 
         let completed = query.until_done().await?;
         assert_eq!(completed.page_size, Some(42));
@@ -824,14 +821,7 @@ mod tests {
             .set_job_complete(false)
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(
-            job_service,
-            query_res,
-            None,
-            None,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
-            None,
-        );
+        let query = Query::from_query_response(job_service, query_res, None, None, None);
 
         let completed = query.until_done().await?;
         assert_eq!(completed.job_ref.as_ref().unwrap().job_id, "some_job_id");
@@ -911,14 +901,7 @@ mod tests {
             .set_job_complete(false)
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(
-            job_service,
-            query_res,
-            None,
-            None,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
-            None,
-        );
+        let query = Query::from_query_response(job_service, query_res, None, None, None);
 
         let err = query.until_done().await.unwrap_err();
         let errors = match err {
@@ -955,14 +938,7 @@ mod tests {
             .set_job_complete(false)
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(
-            job_service,
-            query_res,
-            None,
-            None,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
-            None,
-        );
+        let query = Query::from_query_response(job_service, query_res, None, None, None);
 
         let err = query.until_done().await.unwrap_err();
         let source = match err {
@@ -1063,14 +1039,7 @@ mod tests {
         let mut retry_context = RetryContext::new(query_builder);
         retry_context.state.attempt_count = 1;
 
-        let query = Query::from_query_response(
-            job_service,
-            query_res,
-            Some(&retry_context),
-            None,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
-            None,
-        );
+        let query = Query::from_query_response(job_service, query_res, Some(&retry_context), None, None);
 
         let completed = query.until_done().await?;
         assert_eq!(
@@ -1152,7 +1121,6 @@ mod tests {
             query_res,
             Some(&retry_context),
             None,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             None,
         );
 
@@ -1194,7 +1162,6 @@ mod tests {
             query_res.clone(),
             None,
             None,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             None,
         );
         let job = query.get_job().unwrap().send().await?;
@@ -1222,7 +1189,6 @@ mod tests {
             query_res.clone(),
             None,
             None,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             None,
         );
         assert!(query.get_job().is_none(), "{query:?}");
@@ -1256,7 +1222,6 @@ mod tests {
             query_res.clone(),
             None,
             None,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
             None,
         );
         let req = query.get_job().unwrap();
@@ -1280,14 +1245,7 @@ mod tests {
             .set_job_reference(job_ref)
             .set_configuration(JobConfiguration::new().set_dry_run(true));
 
-        let query = Query::from_job(
-            job_service,
-            job,
-            None,
-            None,
-            #[cfg(google_cloud_unstable_gapic_streaming)]
-            None,
-        );
+        let query = Query::from_job(job_service, job, None, None, None);
         let err = query.until_done().await.unwrap_err();
         assert!(
             matches!(err, QueryError::DryRun),
@@ -1326,7 +1284,7 @@ mod tests {
             .set_job_reference(job_ref);
 
         let start = tokio::time::Instant::now();
-        let query = Query::from_query_response(job_service, query_res, None, None);
+        let query = Query::from_query_response(job_service, query_res, None, None, None);
         let _completed = query.until_done().await?;
         let elapsed = start.elapsed();
 
@@ -1457,7 +1415,7 @@ mod tests {
                         ),
                 );
 
-        let query = Query::from_job(job_service, job, None, None);
+        let query = Query::from_job(job_service, job, None, None, None);
         let complete = query.until_done().await?;
         let meta = complete.metadata();
 

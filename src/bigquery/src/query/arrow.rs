@@ -13,22 +13,18 @@
 // limitations under the License.
 
 use crate::error::ConvertError;
-#[cfg(google_cloud_unstable_gapic_streaming)]
 use crate::error::RowError;
 use crate::query::ColumnIndex;
 use arrow::array::ArrayRef;
-#[cfg(google_cloud_unstable_gapic_streaming)]
 use arrow::record_batch::RecordBatch;
 use std::sync::Arc;
 
-#[cfg(google_cloud_unstable_gapic_streaming)]
 #[derive(Debug)]
 pub(crate) struct ArrowStreamDecoder {
     decoder: arrow::ipc::reader::StreamDecoder,
     schema: Option<arrow::datatypes::SchemaRef>,
 }
 
-#[cfg(google_cloud_unstable_gapic_streaming)]
 impl ArrowStreamDecoder {
     pub(crate) fn new() -> Self {
         Self {
@@ -62,9 +58,8 @@ impl ArrowStreamDecoder {
 }
 
 /// A reference to a single cell within an Arrow array.
-#[doc(hidden)]
 #[derive(Clone, Debug)]
-pub struct ArrowCell {
+pub(crate) struct ArrowCell {
     array: ArrayRef,
     pub(crate) row_idx: usize,
 }
@@ -447,5 +442,133 @@ impl ArrowCell {
                 got: self.data_type_str(),
             }),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use arrow::array::{
+        BinaryArray, BooleanArray, Float32Array, Float64Array, Int32Array, Int64Array,
+        LargeBinaryArray, LargeStringArray, StringArray,
+    };
+    use arrow::datatypes::DataType;
+    use std::sync::Arc;
+    use test_case::test_case;
+
+    #[derive(Debug, PartialEq)]
+    enum TestConvertError {
+        NotNull,
+        TypeMismatch { expected: String, got: String },
+        Convert(String),
+        MissingField(String),
+    }
+
+    impl TestConvertError {
+        fn type_mismatch(expected: &str, got: &str) -> Self {
+            Self::TypeMismatch {
+                expected: expected.to_string(),
+                got: got.to_string(),
+            }
+        }
+    }
+
+    impl From<ConvertError> for TestConvertError {
+        fn from(err: ConvertError) -> Self {
+            match err {
+                ConvertError::NotNull => Self::NotNull,
+                ConvertError::TypeMismatch { expected, got } => {
+                    Self::TypeMismatch { expected, got }
+                }
+                ConvertError::Convert(e) => Self::Convert(e.to_string()),
+                ConvertError::MissingField(f) => Self::MissingField(f),
+            }
+        }
+    }
+
+    #[test]
+    fn cell_metadata() {
+        let arr: ArrayRef = Arc::new(Int64Array::from(vec![Some(10), None]));
+
+        let cell_row0 = ArrowCell::new(arr.clone(), 0);
+        let cell_row1 = ArrowCell::new(arr, 1);
+
+        assert!(!cell_row0.is_null());
+        assert!(cell_row1.is_null());
+        assert_eq!(cell_row0.data_type(), &DataType::Int64);
+        assert_eq!(cell_row0.data_type_str(), "Int64");
+        assert_eq!(cell_row0.clone(), cell_row0);
+        assert_ne!(cell_row0, cell_row1);
+    }
+
+    #[test_case(Arc::new(BooleanArray::from(vec![Some(true)])), 0 => Ok(true) ; "bool true")]
+    #[test_case(Arc::new(BooleanArray::from(vec![Some(false)])), 0 => Ok(false) ; "bool false")]
+    #[test_case(Arc::new(BooleanArray::from(vec![None])), 0 => Err(TestConvertError::NotNull) ; "bool null")]
+    #[test_case(Arc::new(Int64Array::from(vec![1])), 0 => Err(TestConvertError::type_mismatch("BooleanArray", "Int64")) ; "bool type mismatch")]
+    fn as_bool(arr: ArrayRef, row_idx: usize) -> Result<bool, TestConvertError> {
+        ArrowCell::new(arr, row_idx)
+            .as_bool()
+            .map_err(TestConvertError::from)
+    }
+
+    #[test_case(Arc::new(Int64Array::from(vec![Some(42)])), 0 => Ok(42) ; "i64 valid")]
+    #[test_case(Arc::new(Int64Array::from(vec![None])), 0 => Err(TestConvertError::NotNull) ; "i64 null")]
+    #[test_case(Arc::new(BooleanArray::from(vec![true])), 0 => Err(TestConvertError::type_mismatch("Int64Array", "Boolean")) ; "i64 type mismatch")]
+    fn as_i64(arr: ArrayRef, row_idx: usize) -> Result<i64, TestConvertError> {
+        ArrowCell::new(arr, row_idx)
+            .as_i64()
+            .map_err(TestConvertError::from)
+    }
+
+    #[test_case(Arc::new(Int32Array::from(vec![Some(123)])), 0 => Ok(123) ; "i32 from Int32Array")]
+    #[test_case(Arc::new(Int32Array::from(vec![None])), 0 => Err(TestConvertError::NotNull) ; "i32 null")]
+    #[test_case(Arc::new(Int64Array::from(vec![Some(456)])), 0 => Ok(456) ; "i32 from Int64Array")]
+    #[test_case(Arc::new(Int64Array::from(vec![Some(i64::from(i32::MAX) + 1)])), 0 => Err(TestConvertError::Convert("out of range integral type conversion attempted".to_string())) ; "i32 overflow from Int64Array")]
+    #[test_case(Arc::new(BooleanArray::from(vec![true])), 0 => Err(TestConvertError::type_mismatch("Int64Array or Int32Array", "Boolean")) ; "i32 type mismatch")]
+    fn as_i32(arr: ArrayRef, row_idx: usize) -> Result<i32, TestConvertError> {
+        ArrowCell::new(arr, row_idx)
+            .as_i32()
+            .map_err(TestConvertError::from)
+    }
+
+    #[test_case(Arc::new(Float64Array::from(vec![Some(3.25)])), 0 => Ok(3.25) ; "f64 valid")]
+    #[test_case(Arc::new(Float64Array::from(vec![None])), 0 => Err(TestConvertError::NotNull) ; "f64 null")]
+    #[test_case(Arc::new(Int64Array::from(vec![1])), 0 => Err(TestConvertError::type_mismatch("Float64Array", "Int64")) ; "f64 type mismatch")]
+    fn as_f64(arr: ArrayRef, row_idx: usize) -> Result<f64, TestConvertError> {
+        ArrowCell::new(arr, row_idx)
+            .as_f64()
+            .map_err(TestConvertError::from)
+    }
+
+    #[test_case(Arc::new(Float32Array::from(vec![Some(1.5_f32)])), 0 => Ok(1.5) ; "f32 from Float32Array")]
+    #[test_case(Arc::new(Float32Array::from(vec![None])), 0 => Err(TestConvertError::NotNull) ; "f32 null")]
+    #[test_case(Arc::new(Float64Array::from(vec![Some(2.5_f64)])), 0 => Ok(2.5) ; "f32 from Float64Array")]
+    #[test_case(Arc::new(Int64Array::from(vec![1])), 0 => Err(TestConvertError::type_mismatch("Float64Array or Float32Array", "Int64")) ; "f32 type mismatch")]
+    fn as_f32(arr: ArrayRef, row_idx: usize) -> Result<f32, TestConvertError> {
+        ArrowCell::new(arr, row_idx)
+            .as_f32()
+            .map_err(TestConvertError::from)
+    }
+
+    #[test_case(Arc::new(StringArray::from(vec![Some("hello")])), 0 => Ok("hello".to_string()) ; "str from StringArray")]
+    #[test_case(Arc::new(StringArray::from(vec![None::<&str>])), 0 => Err(TestConvertError::NotNull) ; "str null")]
+    #[test_case(Arc::new(LargeStringArray::from(vec![Some("world")])), 0 => Ok("world".to_string()) ; "str from LargeStringArray")]
+    #[test_case(Arc::new(Int64Array::from(vec![1])), 0 => Err(TestConvertError::type_mismatch("StringArray or LargeStringArray", "Int64")) ; "str type mismatch")]
+    fn as_str(arr: ArrayRef, row_idx: usize) -> Result<String, TestConvertError> {
+        ArrowCell::new(arr, row_idx)
+            .as_str()
+            .map(str::to_owned)
+            .map_err(TestConvertError::from)
+    }
+
+    #[test_case(Arc::new(BinaryArray::from(vec![Some(b"abc".as_slice())])), 0 => Ok(b"abc".to_vec()) ; "bytes from BinaryArray")]
+    #[test_case(Arc::new(BinaryArray::from(vec![None::<&[u8]>])), 0 => Err(TestConvertError::NotNull) ; "bytes null")]
+    #[test_case(Arc::new(LargeBinaryArray::from(vec![Some(b"xyz".as_slice())])), 0 => Ok(b"xyz".to_vec()) ; "bytes from LargeBinaryArray")]
+    #[test_case(Arc::new(Int64Array::from(vec![1])), 0 => Err(TestConvertError::type_mismatch("BinaryArray or LargeBinaryArray", "Int64")) ; "bytes type mismatch")]
+    fn as_bytes(arr: ArrayRef, row_idx: usize) -> Result<Vec<u8>, TestConvertError> {
+        ArrowCell::new(arr, row_idx)
+            .as_bytes()
+            .map(<[u8]>::to_vec)
+            .map_err(TestConvertError::from)
     }
 }
