@@ -402,13 +402,7 @@ mod tests {
         let request = PostQueryRequest::new();
         let executor = PostQueryExecutor::new(job_service.clone(), request);
         let res = executor.execute().await?;
-        let query = QueryHandle::from_query_response(
-            job_service,
-            res,
-            None,
-            None,
-            None,
-        );
+        let query = QueryHandle::from_query_response(job_service, res, None, None, None);
 
         assert!(query.completed, "{query:?}");
         let job_ref = query
@@ -563,13 +557,7 @@ mod tests {
         let req = InsertJobRequest::new().set_job(job);
         let executor = InsertJobExecutor::new(job_service.clone(), req);
         let job = executor.execute().await?;
-        let query = QueryHandle::from_job(
-            job_service,
-            job,
-            None,
-            None,
-            None,
-        );
+        let query = QueryHandle::from_job(job_service, job, None, None, None);
 
         assert_eq!(query.completed, completed);
         assert_eq!(query.metadata.job_reference, Some(job_ref));

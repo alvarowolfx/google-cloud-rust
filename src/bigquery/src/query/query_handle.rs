@@ -1039,7 +1039,8 @@ mod tests {
         let mut retry_context = RetryContext::new(query_builder);
         retry_context.state.attempt_count = 1;
 
-        let query = Query::from_query_response(job_service, query_res, Some(&retry_context), None, None);
+        let query =
+            Query::from_query_response(job_service, query_res, Some(&retry_context), None, None);
 
         let completed = query.until_done().await?;
         assert_eq!(
@@ -1116,13 +1117,8 @@ mod tests {
         let mut retry_context = RetryContext::new(query_builder);
         retry_context.state.attempt_count = 1;
 
-        let query = Query::from_query_response(
-            job_service,
-            query_res,
-            Some(&retry_context),
-            None,
-            None,
-        );
+        let query =
+            Query::from_query_response(job_service, query_res, Some(&retry_context), None, None);
 
         let err = query.until_done().await.unwrap_err();
         let errors = match err {
@@ -1157,13 +1153,8 @@ mod tests {
             .set_schema(TableSchema::new())
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(
-            job_service.clone(),
-            query_res.clone(),
-            None,
-            None,
-            None,
-        );
+        let query =
+            Query::from_query_response(job_service.clone(), query_res.clone(), None, None, None);
         let job = query.get_job().unwrap().send().await?;
         assert_eq!(job.user_email, "test@example.com");
 
@@ -1184,13 +1175,8 @@ mod tests {
             .set_schema(TableSchema::new())
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(
-            job_service.clone(),
-            query_res.clone(),
-            None,
-            None,
-            None,
-        );
+        let query =
+            Query::from_query_response(job_service.clone(), query_res.clone(), None, None, None);
         assert!(query.get_job().is_none(), "{query:?}");
 
         let complete_query = CompleteQuery::from_query_response(job_service, query_res, None);
@@ -1217,13 +1203,8 @@ mod tests {
             .set_schema(TableSchema::new())
             .set_job_reference(job_ref);
 
-        let query = Query::from_query_response(
-            job_service.clone(),
-            query_res.clone(),
-            None,
-            None,
-            None,
-        );
+        let query =
+            Query::from_query_response(job_service.clone(), query_res.clone(), None, None, None);
         let req = query.get_job().unwrap();
         let err = req.send().await.unwrap_err();
         assert_eq!(err.status().unwrap().code, Code::NotFound);

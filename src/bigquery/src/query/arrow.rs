@@ -22,14 +22,12 @@ use std::sync::Arc;
 #[derive(Debug)]
 pub(crate) struct ArrowStreamDecoder {
     decoder: arrow::ipc::reader::StreamDecoder,
-    schema: Option<arrow::datatypes::SchemaRef>,
 }
 
 impl ArrowStreamDecoder {
     pub(crate) fn new() -> Self {
         Self {
             decoder: arrow::ipc::reader::StreamDecoder::new(),
-            schema: None,
         }
     }
 
@@ -38,7 +36,6 @@ impl ArrowStreamDecoder {
         while let Some(_msg) = self.decoder.decode(&mut buf).map_err(|e| {
             RowError::InvalidRowFormat(format!("failed to decode arrow schema: {e}"))
         })? {}
-        self.schema = self.decoder.schema();
         Ok(())
     }
 
@@ -50,10 +47,6 @@ impl ArrowStreamDecoder {
         self.decoder
             .decode(&mut buf)
             .map_err(|e| RowError::InvalidRowFormat(format!("failed to decode arrow batch: {e}")))
-    }
-
-    pub(crate) fn schema(&self) -> Option<arrow::datatypes::SchemaRef> {
-        self.schema.clone()
     }
 }
 

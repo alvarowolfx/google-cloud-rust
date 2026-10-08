@@ -42,7 +42,13 @@ impl Iterator for BigQueryRecordBatchReader {
     type Item = std::result::Result<RecordBatch, ArrowError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.rx.blocking_recv() {
+        let next_item = match tokio::runtime::Handle::try_current() {
+            Ok(handle) if handle.runtime_flavor() == tokio::runtime::RuntimeFlavor::MultiThread => {
+                tokio::task::block_in_place(|| self.rx.blocking_recv())
+            }
+            _ => self.rx.blocking_recv(),
+        };
+        match next_item {
             Some(Ok(batch)) => Some(Ok(batch)),
             Some(Err(e)) => Some(Err(ArrowError::ExternalError(Box::new(e)))),
             None => None,
