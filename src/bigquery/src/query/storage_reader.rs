@@ -95,8 +95,133 @@ impl StorageReader {
         !matches!(self.state, ReaderState::Unopened)
     }
 
-    /// Retrieves the next [`RecordBatch`] from the buffered batches, or fetches from the streams.
-    pub(crate) async fn next_batch(&mut self) -> Result<Option<RecordBatch>, RowError> {
+    async fn try_create_multi_stream_session(
+        read_client: Arc<ReadClient>,
+        job_service: Arc<JobService>,
+        project_id: String,
+        job_id: String,
+        location: Option<String>,
+    ) -> Result<Option<mpsc::UnboundedReceiver<Result<RecordBatch, RowError>>>, RowError> {
+        // 1. Fetch destination table reference from query job
+        let mut req = job_service
+            .get_job()
+            .set_job_id(job_id)
+            .set_project_id(project_id.clone());
+
+        if let Some(loc) = location {
+            req = req.set_location(loc);
+        }
+
+        let Ok(job) = req.send().await else {
+            return Ok(None);
+        };
+
+        let dest_table = job
+            .configuration
+            .and_then(|c| c.query)
+            .and_then(|q| q.destination_table);
+
+        let Some(dest_table) = dest_table else {
+            return Ok(None);
+        };
+
+        let table_path = format!(
+            "projects/{}/datasets/{}/tables/{}",
+            dest_table.project_id, dest_table.dataset_id, dest_table.table_id
+        );
+
+        // 2. Create ReadSession on the destination table with LZ4 buffer compression
+        let session_req = CreateReadSessionRequest::new()
+            .set_parent(format!("projects/{project_id}"))
+            .set_read_session(
+                ReadSession::new()
+                    .set_table(table_path)
+                    .set_data_format(DataFormat::Arrow)
+                    .set_read_options(
+                        TableReadOptions::new().set_arrow_serialization_options(
+                            ArrowSerializationOptions::new()
+                                .set_buffer_compression(CompressionCodec::Lz4Frame),
+                        ),
+                    ),
+            );
+
+        let Ok(session) = read_client
+            .create_read_session()
+            .with_request(session_req)
+            .send()
+            .await
+        else {
+            return Ok(None);
+        };
+
+        if session.streams.len() <= 1 {
+            return Ok(None);
+        }
+
+        // 3. Spawn parallel worker tasks for each stream into an unbounded channel
+        let (tx, rx) = mpsc::unbounded_channel();
+        for stream in session.streams {
+            let read_client = read_client.clone();
+            let stream_name = stream.name;
+            let tx = tx.clone();
+            tokio::spawn(async move {
+                let stream_res = read_client
+                    .read_rows()
+                    .set_read_stream(stream_name)
+                    .set_offset(0)
+                    .send()
+                    .await;
+
+                let mut s = match stream_res {
+                    Ok(s) => s,
+                    Err(e) => {
+                        let _ = tx.send(Err(RowError::Rpc { source: e }));
+                        return;
+                    }
+                };
+
+                let mut decoder = crate::query::arrow::ArrowStreamDecoder::new();
+                while let Some(res) = s.next().await {
+                    match res {
+                        Ok(response) => {
+                            if let Some(ReadRowsResponseSchema::ArrowSchema(arrow_schema)) =
+                                response.schema
+                                && let Err(e) =
+                                    decoder.set_schema_bytes(&arrow_schema.serialized_schema)
+                            {
+                                let _ = tx.send(Err(e));
+                                return;
+                            }
+                            if let Some(Rows::ArrowRecordBatch(batch)) = response.rows {
+                                match decoder.decode_batch(&batch.serialized_record_batch) {
+                                    Ok(Some(rb)) => {
+                                        if rb.num_rows() > 0 && tx.send(Ok(rb)).is_err() {
+                                            return;
+                                        }
+                                    }
+                                    Ok(None) => {}
+                                    Err(e) => {
+                                        let _ = tx.send(Err(e));
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            let _ = tx.send(Err(RowError::Rpc { source: e }));
+                            return;
+                        }
+                    }
+                }
+            });
+        }
+
+        Ok(Some(rx))
+    }
+}
+
+impl crate::query::arrow::RecordBatchSource for StorageReader {
+    async fn next_record_batch(&mut self) -> Result<Option<RecordBatch>, RowError> {
         if let Some(batch) = self.buffer.pop_front() {
             return Ok(Some(batch));
         }
@@ -223,129 +348,5 @@ impl StorageReader {
                 },
             }
         }
-    }
-
-    async fn try_create_multi_stream_session(
-        read_client: Arc<ReadClient>,
-        job_service: Arc<JobService>,
-        project_id: String,
-        job_id: String,
-        location: Option<String>,
-    ) -> Result<Option<mpsc::UnboundedReceiver<Result<RecordBatch, RowError>>>, RowError> {
-        // 1. Fetch destination table reference from query job
-        let mut req = job_service
-            .get_job()
-            .set_job_id(job_id)
-            .set_project_id(project_id.clone());
-
-        if let Some(loc) = location {
-            req = req.set_location(loc);
-        }
-
-        let Ok(job) = req.send().await else {
-            return Ok(None);
-        };
-
-        let dest_table = job
-            .configuration
-            .and_then(|c| c.query)
-            .and_then(|q| q.destination_table);
-
-        let Some(dest_table) = dest_table else {
-            return Ok(None);
-        };
-
-        let table_path = format!(
-            "projects/{}/datasets/{}/tables/{}",
-            dest_table.project_id, dest_table.dataset_id, dest_table.table_id
-        );
-
-        // 2. Create ReadSession on the destination table with LZ4 buffer compression
-        let session_req = CreateReadSessionRequest::new()
-            .set_parent(format!("projects/{project_id}"))
-            .set_read_session(
-                ReadSession::new()
-                    .set_table(table_path)
-                    .set_data_format(DataFormat::Arrow)
-                    .set_read_options(
-                        TableReadOptions::new().set_arrow_serialization_options(
-                            ArrowSerializationOptions::new()
-                                .set_buffer_compression(CompressionCodec::Lz4Frame),
-                        ),
-                    ),
-            );
-
-        let Ok(session) = read_client
-            .create_read_session()
-            .with_request(session_req)
-            .send()
-            .await
-        else {
-            return Ok(None);
-        };
-
-        if session.streams.len() <= 1 {
-            return Ok(None);
-        }
-
-        // 3. Spawn parallel worker tasks for each stream into an unbounded channel
-        let (tx, rx) = mpsc::unbounded_channel();
-        for stream in session.streams {
-            let read_client = read_client.clone();
-            let stream_name = stream.name;
-            let tx = tx.clone();
-            tokio::spawn(async move {
-                let stream_res = read_client
-                    .read_rows()
-                    .set_read_stream(stream_name)
-                    .set_offset(0)
-                    .send()
-                    .await;
-
-                let mut s = match stream_res {
-                    Ok(s) => s,
-                    Err(e) => {
-                        let _ = tx.send(Err(RowError::Rpc { source: e }));
-                        return;
-                    }
-                };
-
-                let mut decoder = crate::query::arrow::ArrowStreamDecoder::new();
-                while let Some(res) = s.next().await {
-                    match res {
-                        Ok(response) => {
-                            if let Some(ReadRowsResponseSchema::ArrowSchema(arrow_schema)) =
-                                response.schema
-                                && let Err(e) =
-                                    decoder.set_schema_bytes(&arrow_schema.serialized_schema)
-                            {
-                                let _ = tx.send(Err(e));
-                                return;
-                            }
-                            if let Some(Rows::ArrowRecordBatch(batch)) = response.rows {
-                                match decoder.decode_batch(&batch.serialized_record_batch) {
-                                    Ok(Some(rb)) => {
-                                        if rb.num_rows() > 0 && tx.send(Ok(rb)).is_err() {
-                                            return;
-                                        }
-                                    }
-                                    Ok(None) => {}
-                                    Err(e) => {
-                                        let _ = tx.send(Err(e));
-                                        return;
-                                    }
-                                }
-                            }
-                        }
-                        Err(e) => {
-                            let _ = tx.send(Err(RowError::Rpc { source: e }));
-                            return;
-                        }
-                    }
-                }
-            });
-        }
-
-        Ok(Some(rx))
     }
 }

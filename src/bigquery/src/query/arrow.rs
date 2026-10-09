@@ -32,6 +32,9 @@ impl ArrowStreamDecoder {
     }
 
     pub(crate) fn set_schema_bytes(&mut self, schema_bytes: &[u8]) -> Result<(), RowError> {
+        if schema_bytes.is_empty() {
+            return Ok(());
+        }
         let mut buf = arrow::buffer::Buffer::from_slice_ref(schema_bytes);
         while let Some(_msg) = self.decoder.decode(&mut buf).map_err(|e| {
             RowError::InvalidRowFormat(format!("failed to decode arrow schema: {e}"))
@@ -44,9 +47,91 @@ impl ArrowStreamDecoder {
         batch_bytes: &[u8],
     ) -> Result<Option<RecordBatch>, RowError> {
         let mut buf = arrow::buffer::Buffer::from_slice_ref(batch_bytes);
+        self.decode_buffer(&mut buf)
+    }
+
+    pub(crate) fn decode_buffer(
+        &mut self,
+        buf: &mut arrow::buffer::Buffer,
+    ) -> Result<Option<RecordBatch>, RowError> {
         self.decoder
-            .decode(&mut buf)
+            .decode(buf)
             .map_err(|e| RowError::InvalidRowFormat(format!("failed to decode arrow batch: {e}")))
+    }
+
+    pub(crate) fn finish(&mut self) -> Result<(), RowError> {
+        self.decoder
+            .finish()
+            .map_err(|e| RowError::InvalidRowFormat(format!("failed to decode arrow stream: {e}")))
+    }
+}
+
+pub(crate) trait RecordBatchSource {
+    async fn next_record_batch(&mut self) -> Result<Option<RecordBatch>, RowError>;
+}
+
+#[derive(Debug)]
+pub(crate) struct ArrowResponseReader {
+    decoder: ArrowStreamDecoder,
+    schema_bytes: Option<bytes::Bytes>,
+    batch_buf: arrow::buffer::Buffer,
+}
+
+impl ArrowResponseReader {
+    pub(crate) fn new(
+        serialized_schema: bytes::Bytes,
+        serialized_record_batch: bytes::Bytes,
+    ) -> Self {
+        Self {
+            decoder: ArrowStreamDecoder::new(),
+            schema_bytes: (!serialized_schema.is_empty()).then_some(serialized_schema),
+            batch_buf: arrow::buffer::Buffer::from(serialized_record_batch),
+        }
+    }
+}
+
+impl RecordBatchSource for ArrowResponseReader {
+    async fn next_record_batch(&mut self) -> Result<Option<RecordBatch>, RowError> {
+        if let Some(schema_bytes) = self.schema_bytes.take() {
+            self.decoder.set_schema_bytes(&schema_bytes)?;
+        }
+        while !self.batch_buf.is_empty() {
+            let prev_len = self.batch_buf.len();
+            if let Some(batch) = self.decoder.decode_buffer(&mut self.batch_buf)?
+                && batch.num_rows() > 0
+            {
+                return Ok(Some(batch));
+            }
+            if self.batch_buf.len() == prev_len {
+                break;
+            }
+        }
+        self.decoder.finish()?;
+        Ok(None)
+    }
+}
+
+#[derive(Debug)]
+pub(crate) enum ArrowReader {
+    Response(ArrowResponseReader),
+    Storage(crate::query::storage_reader::StorageReader),
+}
+
+impl RecordBatchSource for ArrowReader {
+    async fn next_record_batch(&mut self) -> Result<Option<RecordBatch>, RowError> {
+        match self {
+            Self::Response(r) => r.next_record_batch().await,
+            Self::Storage(r) => r.next_record_batch().await,
+        }
+    }
+}
+
+impl ArrowReader {
+    pub(crate) fn can_fallback_to_rest(&self) -> bool {
+        match self {
+            Self::Response(_) => false,
+            Self::Storage(r) => !r.is_stream_opened(),
+        }
     }
 }
 

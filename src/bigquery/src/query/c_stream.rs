@@ -14,15 +14,13 @@
 
 use crate::error::RowError;
 use crate::query::CompleteQuery;
+use crate::query::arrow::{ArrowReader, ArrowResponseReader, RecordBatchSource};
 use crate::query::query_handle::CachedData;
 use crate::query::storage_reader::StorageReader;
 use arrow::datatypes::{Schema, SchemaRef};
 use arrow::error::ArrowError;
 use arrow::ffi_stream::FFI_ArrowArrayStream;
-use arrow::ipc::reader::StreamReader;
 use arrow::record_batch::{RecordBatch, RecordBatchReader};
-use std::collections::VecDeque;
-use std::io::{Cursor, Read};
 use std::sync::Arc;
 use tokio::sync::mpsc::{Receiver, channel};
 
@@ -66,34 +64,16 @@ impl RecordBatchReader for BigQueryRecordBatchReader {
 pub(crate) async fn query_to_arrow_c_stream(
     q: CompleteQuery,
 ) -> Result<ArrowArrayStream, RowError> {
-    let (mut initial_batches, initial_schema) = match q.cached_data {
+    let has_cached_arrow = match &q.cached_data {
         CachedData::Arrow {
             serialized_record_batch,
-            serialized_schema,
-        } => {
-            let reader = StreamReader::try_new(
-                Cursor::new(serialized_schema.as_ref())
-                    .chain(Cursor::new(serialized_record_batch.as_ref())),
-                None,
-            )
-            .map_err(|e| {
-                RowError::InvalidRowFormat(format!("failed to parse arrow schema: {e}"))
-            })?;
-            let schema = reader.schema();
-            let batches = reader
-                .collect::<std::result::Result<VecDeque<_>, _>>()
-                .map_err(|e| {
-                    RowError::InvalidRowFormat(format!("failed to parse arrow batches: {e}"))
-                })?;
-            (batches, Some(schema))
-        }
-        CachedData::Rows(_) => (VecDeque::new(), None),
+            ..
+        } => !serialized_record_batch.is_empty(),
+        CachedData::Rows(_) => false,
     };
 
-    let mut storage_reader = match (q.read_client, q.job_ref) {
-        (Some(read_client), Some(job_ref))
-            if q.page_token.is_some() || initial_batches.is_empty() =>
-        {
+    let storage_reader = match (q.read_client, q.job_ref) {
+        (Some(read_client), Some(job_ref)) if q.page_token.is_some() || !has_cached_arrow => {
             Some(StorageReader::new(
                 read_client,
                 job_ref,
@@ -104,11 +84,24 @@ pub(crate) async fn query_to_arrow_c_stream(
         _ => None,
     };
 
+    let mut arrow_reader = match (storage_reader, q.cached_data) {
+        (Some(reader), _) => Some(ArrowReader::Storage(reader)),
+        (
+            None,
+            CachedData::Arrow {
+                serialized_record_batch,
+                serialized_schema,
+            },
+        ) => Some(ArrowReader::Response(ArrowResponseReader::new(
+            serialized_schema,
+            serialized_record_batch,
+        ))),
+        (None, CachedData::Rows(_)) => None,
+    };
+
     let mut preloaded_batch = None;
-    let schema = if let Some(schema) = initial_schema {
-        schema
-    } else if let Some(ref mut reader) = storage_reader {
-        match reader.next_batch().await {
+    let schema = if let Some(ref mut reader) = arrow_reader {
+        match reader.next_record_batch().await {
             Ok(Some(batch)) => {
                 let schema = batch.schema();
                 preloaded_batch = Some(batch);
@@ -124,21 +117,15 @@ pub(crate) async fn query_to_arrow_c_stream(
     let (tx, rx) = channel(64);
 
     let handle = tokio::spawn(async move {
-        while let Some(batch) = initial_batches.pop_front() {
-            if tx.send(Ok(batch)).await.is_err() {
-                return;
-            }
-        }
-
         if let Some(batch) = preloaded_batch
             && tx.send(Ok(batch)).await.is_err()
         {
             return;
         }
 
-        if let Some(mut reader) = storage_reader {
+        if let Some(mut reader) = arrow_reader {
             loop {
-                match reader.next_batch().await {
+                match reader.next_record_batch().await {
                     Ok(Some(batch)) => {
                         if tx.send(Ok(batch)).await.is_err() {
                             return;

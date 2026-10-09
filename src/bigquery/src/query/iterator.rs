@@ -13,15 +13,14 @@
 // limitations under the License.
 
 use crate::error::RowError;
+use crate::query::arrow::{ArrowReader, ArrowResponseReader, RecordBatchSource};
 use crate::query::query_handle::CachedData;
 use crate::query::storage_reader::StorageReader;
 use crate::query::{CompleteQuery, Row, Schema};
-use arrow::ipc::reader::StreamReader;
 use arrow::record_batch::RecordBatch;
 use google_cloud_bigquery_v2::client::JobService;
 use google_cloud_bigquery_v2::model::{DataFormatOptions, GetQueryResultsRequest, JobReference};
 use std::collections::VecDeque;
-use std::io::{Cursor, Read};
 use std::sync::Arc;
 
 pub type Result<T> = std::result::Result<T, RowError>;
@@ -58,40 +57,23 @@ pub struct RowIterator {
     job_ref: Option<JobReference>,
     schema: Arc<Schema>,
     page_token: Option<String>,
-    record_batches: VecDeque<Arc<RecordBatch>>,
+    current_batch: Option<Arc<RecordBatch>>,
     row_index: usize,
     rows: VecDeque<wkt::Struct>,
     page_size: Option<u32>,
-    storage_reader: Option<StorageReader>,
+    arrow_reader: Option<ArrowReader>,
 }
 
 impl RowIterator {
     pub(crate) fn new(q: CompleteQuery) -> Self {
-        let (rows, record_batches, schema, has_cached) = match q.cached_data {
-            CachedData::Rows(rows) => {
-                let has = !rows.is_empty();
-                // DDL/DML queries have no schema.
-                let schema = q.metadata.schema.unwrap_or_default();
-                (rows, VecDeque::new(), Arc::new(Schema::new(schema)), has)
-            }
+        // DDL/DML or Arrow queries may have no TableSchema in metadata initially.
+        let schema = Arc::new(Schema::new(q.metadata.schema.unwrap_or_default()));
+        let has_cached = match &q.cached_data {
+            CachedData::Rows(rows) => !rows.is_empty(),
             CachedData::Arrow {
                 serialized_record_batch,
-                serialized_schema,
-            } => {
-                let reader = StreamReader::try_new(
-                    Cursor::new(serialized_schema.clone())
-                        .chain(Cursor::new(serialized_record_batch)),
-                    None,
-                )
-                .expect("valid arrow IPC stream"); // TODO: convert error
-                let schema = Arc::new(Schema::from_arrow_schema(&reader.schema()));
-                let batches = reader
-                    .map(|res| res.map(Arc::new))
-                    .collect::<std::result::Result<VecDeque<_>, _>>()
-                    .expect("valid record batches"); // TODO: convert error
-                let has = !batches.is_empty();
-                (VecDeque::new(), batches, schema, has)
-            }
+                ..
+            } => !serialized_record_batch.is_empty(),
         };
 
         let storage_reader =
@@ -114,16 +96,37 @@ impl RowIterator {
                 None
             };
 
+        let (rows, arrow_reader) = match (storage_reader, q.cached_data) {
+            (Some(reader), CachedData::Rows(rows)) => (rows, Some(ArrowReader::Storage(reader))),
+            (Some(reader), CachedData::Arrow { .. }) => {
+                (VecDeque::new(), Some(ArrowReader::Storage(reader)))
+            }
+            (None, CachedData::Rows(rows)) => (rows, None),
+            (
+                None,
+                CachedData::Arrow {
+                    serialized_record_batch,
+                    serialized_schema,
+                },
+            ) => (
+                VecDeque::new(),
+                Some(ArrowReader::Response(ArrowResponseReader::new(
+                    serialized_schema,
+                    serialized_record_batch,
+                ))),
+            ),
+        };
+
         Self {
             job_service: q.job_service,
             job_ref: q.job_ref,
             schema,
             page_token: q.page_token,
-            record_batches,
+            current_batch: None,
             row_index: 0,
             rows,
             page_size: q.page_size,
-            storage_reader,
+            arrow_reader,
         }
     }
 
@@ -169,29 +172,35 @@ impl RowIterator {
     /// ```
     pub async fn next(&mut self) -> Option<Result<Row>> {
         loop {
-            while let Some(batch) = self.record_batches.front() {
+            if let Some(batch) = &self.current_batch {
                 if self.row_index < batch.num_rows() {
                     let idx = self.row_index;
                     self.row_index += 1;
                     return Some(Row::try_new_from_arrow(batch, idx, &self.schema));
                 }
-                self.record_batches.pop_front();
+                self.current_batch = None;
                 self.row_index = 0;
             }
 
-            if let Some(ref mut storage_reader) = self.storage_reader {
-                match storage_reader.next_batch().await {
+            if let Some(ref mut arrow_reader) = self.arrow_reader {
+                match arrow_reader.next_record_batch().await {
                     Ok(Some(batch)) => {
-                        self.record_batches.push_back(Arc::new(batch));
+                        if self.schema.len() == 0 {
+                            self.schema = Arc::new(Schema::from_arrow_schema(&batch.schema()));
+                        }
+                        self.current_batch = Some(Arc::new(batch));
                         self.row_index = 0;
                         continue;
                     }
                     Ok(None) => return None,
-                    Err(_err) if !storage_reader.is_stream_opened() => {
+                    Err(_err) if arrow_reader.can_fallback_to_rest() => {
                         // Fall back to JSON pagination if read stream opening failed
-                        self.storage_reader = None;
+                        self.arrow_reader = None;
                     }
-                    Err(err) => return Some(Err(err)),
+                    Err(err) => {
+                        self.arrow_reader = None;
+                        return Some(Err(err));
+                    }
                 }
             }
             if let Some(raw_row) = self.rows.pop_front() {
@@ -202,7 +211,7 @@ impl RowIterator {
                 return Some(Err(e));
             }
 
-            if self.record_batches.is_empty() && self.rows.is_empty() && self.page_token.is_none() {
+            if self.current_batch.is_none() && self.rows.is_empty() && self.page_token.is_none() {
                 return None;
             }
         }
@@ -530,15 +539,7 @@ mod tests {
         writer.write(&batch)?;
         let batch_buf = batch_buf[schema_buf.len()..].to_vec();
 
-        let table_schema = TableSchema::new().set_fields([
-            TableFieldSchema::new().set_name("col").set_type("STRING"),
-            TableFieldSchema::new().set_name("num").set_type("INTEGER"),
-        ]);
         let job_service = create_job_service(MockJobService::new());
-        let metadata = crate::generated::CompleteQueryMetadata {
-            schema: Some(table_schema),
-            ..Default::default()
-        };
         let q = CompleteQuery {
             job_service,
             read_client: None,
@@ -548,7 +549,7 @@ mod tests {
                 serialized_record_batch: batch_buf.into(),
             },
             page_token: None,
-            metadata,
+            metadata: Default::default(),
             page_size: None,
         };
 
@@ -562,6 +563,30 @@ mod tests {
         assert_eq!(row2.get::<i64, _>("num")?, 100);
 
         assert!(iter.next().await.is_none());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_row_iterator_cached_arrow_invalid_bytes() -> TestResult {
+        let job_service = create_job_service(MockJobService::new());
+        let q = CompleteQuery {
+            job_service,
+            read_client: None,
+            job_ref: None,
+            cached_data: CachedData::Arrow {
+                serialized_schema: b"invalid_schema_bytes".as_slice().into(),
+                serialized_record_batch: b"invalid_batch_bytes".as_slice().into(),
+            },
+            page_token: None,
+            metadata: Default::default(),
+            page_size: None,
+        };
+
+        let mut iter = q.read();
+        let err = iter.next().await.expect("should return error").unwrap_err();
+        assert!(matches!(err, RowError::InvalidRowFormat(_)), "{err:?}");
+        assert!(iter.next().await.is_none(), "{iter:?}");
 
         Ok(())
     }
