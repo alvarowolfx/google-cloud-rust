@@ -76,13 +76,16 @@ impl RowIterator {
             } => !serialized_record_batch.is_empty(),
         };
 
+        let has_remaining_rows =
+            q.page_token.is_some() || (!has_cached && q.metadata.total_rows.unwrap_or(0) > 0);
+        let exceeds_rest_threshold = q
+            .metadata
+            .total_rows
+            .is_none_or(|r| r > crate::query::storage_reader::rest_row_threshold());
+
         let storage_reader =
             if let (Some(read_client), Some(job_ref)) = (q.read_client, q.job_ref.clone()) {
-                let total_rows = q.metadata.total_rows.unwrap_or(0);
-                if (q.page_token.is_some() || !has_cached)
-                    && (total_rows == 0
-                        || total_rows > crate::query::storage_reader::rest_row_threshold())
-                {
+                if has_remaining_rows && exceeds_rest_threshold {
                     Some(StorageReader::new(
                         read_client,
                         job_ref,
@@ -96,12 +99,9 @@ impl RowIterator {
                 None
             };
 
-        let (rows, arrow_reader) = match (storage_reader, q.cached_data) {
-            (Some(reader), CachedData::Rows(rows)) => (rows, Some(ArrowReader::Storage(reader))),
-            (Some(reader), CachedData::Arrow { .. }) => {
-                (VecDeque::new(), Some(ArrowReader::Storage(reader)))
-            }
-            (None, CachedData::Rows(rows)) => (rows, None),
+        let (rows, page_token, arrow_reader) = match (storage_reader, q.cached_data) {
+            (Some(reader), _) => (VecDeque::new(), None, Some(ArrowReader::Storage(reader))),
+            (None, CachedData::Rows(rows)) => (rows, q.page_token, None),
             (
                 None,
                 CachedData::Arrow {
@@ -110,6 +110,7 @@ impl RowIterator {
                 },
             ) => (
                 VecDeque::new(),
+                q.page_token,
                 Some(ArrowReader::Response(ArrowResponseReader::new(
                     serialized_schema,
                     serialized_record_batch,
@@ -121,7 +122,7 @@ impl RowIterator {
             job_service: q.job_service,
             job_ref: q.job_ref,
             schema,
-            page_token: q.page_token,
+            page_token,
             current_batch: None,
             row_index: 0,
             rows,
@@ -192,9 +193,7 @@ impl RowIterator {
                         self.row_index = 0;
                         continue;
                     }
-                    Ok(None) => return None,
-                    Err(_err) if arrow_reader.can_fallback_to_rest() => {
-                        // Fall back to JSON pagination if read stream opening failed
+                    Ok(None) => {
                         self.arrow_reader = None;
                     }
                     Err(err) => {
@@ -568,6 +567,68 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_row_iterator_cached_arrow_multi_page() -> TestResult {
+        use arrow::array::StringArray;
+        use arrow::datatypes::{DataType, Field, Schema as ArrowSchema};
+        use arrow::ipc::writer::StreamWriter;
+
+        let arrow_schema = Arc::new(ArrowSchema::new(vec![Field::new(
+            "col",
+            DataType::Utf8,
+            false,
+        )]));
+
+        let mut schema_buf = Vec::new();
+        let _ = StreamWriter::try_new(&mut schema_buf, &arrow_schema)?;
+
+        let col = StringArray::from(vec!["page1_row1", "page1_row2"]);
+        let batch = RecordBatch::try_new(arrow_schema.clone(), vec![Arc::new(col)])?;
+
+        let mut batch_buf = Vec::new();
+        let mut writer = StreamWriter::try_new(&mut batch_buf, &arrow_schema)?;
+        writer.write(&batch)?;
+        let batch_buf = batch_buf[schema_buf.len()..].to_vec();
+
+        let mut mock = MockJobService::new();
+        mock.expect_get_query_results()
+            .times(1)
+            .returning(|req, _| {
+                assert_eq!(req.page_token, "token_page_2");
+                let res =
+                    GetQueryResultsResponse::new().set_rows(vec![create_test_row("page2_row1")]);
+                Ok(Response::from(res))
+            });
+
+        let job_service = create_job_service(mock);
+        let q = CompleteQuery {
+            job_service,
+            read_client: None,
+            job_ref: Some(create_test_job_ref()),
+            cached_data: CachedData::Arrow {
+                serialized_schema: schema_buf.into(),
+                serialized_record_batch: batch_buf.into(),
+            },
+            page_token: Some("token_page_2".to_string()),
+            metadata: Default::default(),
+            page_size: None,
+        };
+
+        let mut iter = q.read();
+        let row1 = iter.next().await.expect("row 1")?;
+        assert_eq!(row1.get::<String, _>("col")?, "page1_row1");
+
+        let row2 = iter.next().await.expect("row 2")?;
+        assert_eq!(row2.get::<String, _>("col")?, "page1_row2");
+
+        let row3 = iter.next().await.expect("row 3")?;
+        assert_eq!(row3.get::<String, _>("col")?, "page2_row1");
+
+        assert!(iter.next().await.is_none());
+
+        Ok(())
+    }
+
+    #[tokio::test]
     async fn test_row_iterator_cached_arrow_invalid_bytes() -> TestResult {
         let job_service = create_job_service(MockJobService::new());
         let q = CompleteQuery {
@@ -643,6 +704,154 @@ mod tests {
 
         let row = iter.next().await.expect("should have row")?;
         assert_eq!(row.get::<String, _>("col")?, "page2_row");
+        assert!(iter.next().await.is_none(), "{iter:?}");
+
+        Ok(())
+    }
+
+    mockall::mock! {
+        #[derive(Debug)]
+        Read {}
+        impl crate::stub::Read for Read {
+            async fn create_read_session(
+                &self,
+                req: crate::model::CreateReadSessionRequest,
+                options: crate::RequestOptions,
+            ) -> crate::Result<crate::Response<crate::model::ReadSession>>;
+            async fn read_rows(
+                &self,
+                req: crate::model::ReadRowsRequest,
+                options: crate::RequestOptions,
+            ) -> crate::Result<google_cloud_gax::streaming::ResponseStream<crate::model::ReadRowsResponse>>;
+        }
+    }
+
+    #[tokio::test]
+    async fn test_row_iterator_empty_query_with_storage_read_does_not_open_stream() -> TestResult {
+        for total_rows in [None, Some(0)] {
+            let mut mock_job = MockJobService::new();
+            mock_job.expect_get_query_results().never();
+
+            let mut mock_read = MockRead::new();
+            mock_read.expect_read_rows().never();
+            mock_read.expect_create_read_session().never();
+
+            let job_service = create_job_service(mock_job);
+            let read_client = Arc::new(crate::client::Read::from_stub(mock_read));
+
+            let mut q =
+                create_test_complete_query(job_service, Some(create_test_job_ref()), vec![], None);
+            q.read_client = Some(read_client);
+            q.metadata.total_rows = total_rows;
+
+            let mut iter = q.read();
+            assert!(iter.next().await.is_none(), "{iter:?}");
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_row_iterator_storage_read_error_surfaces_without_fallback() -> TestResult {
+        let mut mock_job = MockJobService::new();
+        mock_job.expect_get_query_results().never();
+
+        let mut mock_read = MockRead::new();
+        mock_read.expect_read_rows().times(1).returning(|req, _| {
+            assert_eq!(
+                req.read_stream,
+                "projects/test_project/locations/US/jobs/test_job/streams/_default"
+            );
+            let status = Status::default()
+                .set_code(Code::PermissionDenied)
+                .set_message("storage read permission denied");
+            Err(GaxError::service(status))
+        });
+
+        let job_service = create_job_service(mock_job);
+        let read_client = Arc::new(crate::client::Read::from_stub(mock_read));
+
+        let mut q = create_test_complete_query(
+            job_service,
+            Some(create_test_job_ref()),
+            vec![create_test_row("cached_rest_row")],
+            Some("rest_page_token".to_string()),
+        );
+        q.read_client = Some(read_client);
+        q.metadata.total_rows = Some(20_000);
+
+        let mut iter = q.read();
+        let err = iter
+            .next()
+            .await
+            .expect("should return an item")
+            .unwrap_err();
+        assert!(matches!(err, RowError::Rpc { .. }), "{err:?}");
+        assert!(
+            err.to_string().contains("storage read permission denied"),
+            "{err:?}"
+        );
+        assert!(iter.next().await.is_none(), "{iter:?}");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_row_iterator_multi_stream_error_surfaces_without_fallback() -> TestResult {
+        use google_cloud_bigquery_v2::model::{
+            Job, JobConfiguration, JobConfigurationQuery, TableReference,
+        };
+
+        let mut mock_job = MockJobService::new();
+        mock_job.expect_get_query_results().never();
+        mock_job.expect_get_job().times(1).returning(|_, _| {
+            let dest_table = TableReference::new()
+                .set_project_id("test_project")
+                .set_dataset_id("temp_ds")
+                .set_table_id("temp_tbl");
+            let job = Job::new().set_configuration(
+                JobConfiguration::new()
+                    .set_query(JobConfigurationQuery::new().set_destination_table(dest_table)),
+            );
+            Ok(Response::from(job))
+        });
+
+        let mut mock_read = MockRead::new();
+        mock_read.expect_read_rows().never();
+        mock_read
+            .expect_create_read_session()
+            .times(1)
+            .returning(|_, _| {
+                let status = Status::default()
+                    .set_code(Code::PermissionDenied)
+                    .set_message("create read session permission denied");
+                Err(GaxError::service(status))
+            });
+
+        let job_service = create_job_service(mock_job);
+        let read_client = Arc::new(crate::client::Read::from_stub(mock_read));
+
+        let mut q = create_test_complete_query(
+            job_service,
+            Some(create_test_job_ref()),
+            vec![create_test_row("cached_rest_row")],
+            Some("rest_page_token".to_string()),
+        );
+        q.read_client = Some(read_client);
+        q.metadata.total_rows = Some(6_000_000);
+
+        let mut iter = q.read();
+        let err = iter
+            .next()
+            .await
+            .expect("should return an item")
+            .unwrap_err();
+        assert!(matches!(err, RowError::Rpc { .. }), "{err:?}");
+        assert!(
+            err.to_string()
+                .contains("create read session permission denied"),
+            "{err:?}"
+        );
         assert!(iter.next().await.is_none(), "{iter:?}");
 
         Ok(())

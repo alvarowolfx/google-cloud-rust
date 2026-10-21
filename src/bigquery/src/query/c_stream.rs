@@ -72,15 +72,16 @@ pub(crate) async fn query_to_arrow_c_stream(
         CachedData::Rows(_) => false,
     };
 
+    let has_rows_to_fetch =
+        q.page_token.is_some() || (!has_cached_arrow && q.metadata.total_rows.unwrap_or(0) > 0);
+
     let storage_reader = match (q.read_client, q.job_ref) {
-        (Some(read_client), Some(job_ref)) if q.page_token.is_some() || !has_cached_arrow => {
-            Some(StorageReader::new(
-                read_client,
-                job_ref,
-                Some(q.job_service.clone()),
-                q.metadata.total_rows,
-            ))
-        }
+        (Some(read_client), Some(job_ref)) if has_rows_to_fetch => Some(StorageReader::new(
+            read_client,
+            job_ref,
+            Some(q.job_service.clone()),
+            q.metadata.total_rows,
+        )),
         _ => None,
     };
 

@@ -90,11 +90,6 @@ impl StorageReader {
         }
     }
 
-    /// Returns true if a stream has already been opened.
-    pub(crate) fn is_stream_opened(&self) -> bool {
-        !matches!(self.state, ReaderState::Unopened)
-    }
-
     async fn try_create_multi_stream_session(
         read_client: Arc<ReadClient>,
         job_service: Arc<JobService>,
@@ -112,9 +107,7 @@ impl StorageReader {
             req = req.set_location(loc);
         }
 
-        let Ok(job) = req.send().await else {
-            return Ok(None);
-        };
+        let job = req.send().await?;
 
         let dest_table = job
             .configuration
@@ -145,14 +138,11 @@ impl StorageReader {
                     ),
             );
 
-        let Ok(session) = read_client
+        let session = read_client
             .create_read_session()
             .with_request(session_req)
             .send()
-            .await
-        else {
-            return Ok(None);
-        };
+            .await?;
 
         if session.streams.len() <= 1 {
             return Ok(None);
@@ -187,13 +177,13 @@ impl StorageReader {
                             if let Some(ReadRowsResponseSchema::ArrowSchema(arrow_schema)) =
                                 response.schema
                                 && let Err(e) =
-                                    decoder.set_schema_bytes(&arrow_schema.serialized_schema)
+                                    decoder.set_schema_bytes(arrow_schema.serialized_schema)
                             {
                                 let _ = tx.send(Err(e));
                                 return;
                             }
                             if let Some(Rows::ArrowRecordBatch(batch)) = response.rows {
-                                match decoder.decode_batch(&batch.serialized_record_batch) {
+                                match decoder.decode_batch(batch.serialized_record_batch) {
                                     Ok(Some(rb)) => {
                                         if rb.num_rows() > 0 && tx.send(Ok(rb)).is_err() {
                                             return;
@@ -234,15 +224,14 @@ impl crate::query::arrow::RecordBatchSource for StorageReader {
                         .estimated_total_rows
                         .map(|r| r > self.multi_stream_threshold)
                         .unwrap_or(false)
-                        && let Some(ref job_service) = self.job_service
+                        && let Some(job_service) = self.job_service.take()
                     {
-                        let job_service = job_service.clone();
                         let read_client = self.read_client.clone();
                         let project_id = self.job_ref.project_id.clone();
                         let job_id = self.job_ref.job_id.clone();
                         let location = self.job_ref.location.clone();
 
-                        if let Ok(Some(rx)) = Self::try_create_multi_stream_session(
+                        match Self::try_create_multi_stream_session(
                             read_client,
                             job_service,
                             project_id,
@@ -251,8 +240,15 @@ impl crate::query::arrow::RecordBatchSource for StorageReader {
                         )
                         .await
                         {
-                            self.state = ReaderState::MultiStream { rx };
-                            continue;
+                            Ok(Some(rx)) => {
+                                self.state = ReaderState::MultiStream { rx };
+                                continue;
+                            }
+                            Ok(None) => {}
+                            Err(err) => {
+                                self.state = ReaderState::Completed;
+                                return Err(err);
+                            }
                         }
                     }
 
@@ -262,13 +258,20 @@ impl crate::query::arrow::RecordBatchSource for StorageReader {
                     let stream_name = format!(
                         "projects/{project}/locations/{location}/jobs/{job_id}/streams/_default"
                     );
-                    let stream = self
+                    let stream = match self
                         .read_client
                         .read_rows()
                         .set_read_stream(stream_name)
                         .set_offset(0)
                         .send()
-                        .await?;
+                        .await
+                    {
+                        Ok(stream) => stream,
+                        Err(err) => {
+                            self.state = ReaderState::Completed;
+                            return Err(RowError::Rpc { source: err });
+                        }
+                    };
 
                     self.state = ReaderState::SingleStream { stream };
                 }
@@ -279,13 +282,13 @@ impl crate::query::arrow::RecordBatchSource for StorageReader {
                                 response.schema
                             {
                                 self.decoder
-                                    .set_schema_bytes(&arrow_schema.serialized_schema)?;
+                                    .set_schema_bytes(arrow_schema.serialized_schema)?;
                             }
 
                             let maybe_batch =
                                 if let Some(Rows::ArrowRecordBatch(batch)) = response.rows {
                                     self.decoder
-                                        .decode_batch(&batch.serialized_record_batch)?
+                                        .decode_batch(batch.serialized_record_batch)?
                                         .filter(|record_batch| record_batch.num_rows() > 0)
                                 } else {
                                     None
@@ -295,15 +298,14 @@ impl crate::query::arrow::RecordBatchSource for StorageReader {
                             let total_estimated =
                                 response.total_estimated_row_count.unwrap_or(0) as u64;
                             if total_estimated > self.multi_stream_threshold
-                                && let Some(ref job_service) = self.job_service
+                                && let Some(job_service) = self.job_service.take()
                             {
-                                let job_service = job_service.clone();
                                 let read_client = self.read_client.clone();
                                 let project_id = self.job_ref.project_id.clone();
                                 let job_id = self.job_ref.job_id.clone();
                                 let location = self.job_ref.location.clone();
 
-                                if let Ok(Some(rx)) = Self::try_create_multi_stream_session(
+                                match Self::try_create_multi_stream_session(
                                     read_client,
                                     job_service,
                                     project_id,
@@ -312,8 +314,15 @@ impl crate::query::arrow::RecordBatchSource for StorageReader {
                                 )
                                 .await
                                 {
-                                    self.state = ReaderState::MultiStream { rx };
-                                    continue;
+                                    Ok(Some(rx)) => {
+                                        self.state = ReaderState::MultiStream { rx };
+                                        continue;
+                                    }
+                                    Ok(None) => {}
+                                    Err(err) => {
+                                        self.state = ReaderState::Completed;
+                                        return Err(err);
+                                    }
                                 }
                             }
 

@@ -31,11 +31,11 @@ impl ArrowStreamDecoder {
         }
     }
 
-    pub(crate) fn set_schema_bytes(&mut self, schema_bytes: &[u8]) -> Result<(), RowError> {
+    pub(crate) fn set_schema_bytes(&mut self, schema_bytes: bytes::Bytes) -> Result<(), RowError> {
         if schema_bytes.is_empty() {
             return Ok(());
         }
-        let mut buf = arrow::buffer::Buffer::from_slice_ref(schema_bytes);
+        let mut buf = arrow::buffer::Buffer::from(schema_bytes);
         while let Some(_msg) = self.decoder.decode(&mut buf).map_err(|e| {
             RowError::InvalidRowFormat(format!("failed to decode arrow schema: {e}"))
         })? {}
@@ -44,9 +44,9 @@ impl ArrowStreamDecoder {
 
     pub(crate) fn decode_batch(
         &mut self,
-        batch_bytes: &[u8],
+        batch_bytes: bytes::Bytes,
     ) -> Result<Option<RecordBatch>, RowError> {
-        let mut buf = arrow::buffer::Buffer::from_slice_ref(batch_bytes);
+        let mut buf = arrow::buffer::Buffer::from(batch_bytes);
         self.decode_buffer(&mut buf)
     }
 
@@ -93,17 +93,13 @@ impl ArrowResponseReader {
 impl RecordBatchSource for ArrowResponseReader {
     async fn next_record_batch(&mut self) -> Result<Option<RecordBatch>, RowError> {
         if let Some(schema_bytes) = self.schema_bytes.take() {
-            self.decoder.set_schema_bytes(&schema_bytes)?;
+            self.decoder.set_schema_bytes(schema_bytes)?;
         }
         while !self.batch_buf.is_empty() {
-            let prev_len = self.batch_buf.len();
             if let Some(batch) = self.decoder.decode_buffer(&mut self.batch_buf)?
                 && batch.num_rows() > 0
             {
                 return Ok(Some(batch));
-            }
-            if self.batch_buf.len() == prev_len {
-                break;
             }
         }
         self.decoder.finish()?;
@@ -122,15 +118,6 @@ impl RecordBatchSource for ArrowReader {
         match self {
             Self::Response(r) => r.next_record_batch().await,
             Self::Storage(r) => r.next_record_batch().await,
-        }
-    }
-}
-
-impl ArrowReader {
-    pub(crate) fn can_fallback_to_rest(&self) -> bool {
-        match self {
-            Self::Response(_) => false,
-            Self::Storage(r) => !r.is_stream_opened(),
         }
     }
 }
